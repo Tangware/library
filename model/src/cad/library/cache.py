@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from contextvars import Context
 from functools import wraps
 from typing import Protocol
 
@@ -27,7 +28,7 @@ class Designed[**P, R](Cached[P, R]):
 
 
 def plainly[**P, R](builder: Cached[P, R], /, *args: P.args, **kwargs: P.kwargs) -> R:
-    return builder.build(*args, **kwargs)
+    return Context().run(builder.build, *args, **kwargs)
 
 
 # The build service puts its part cache here.
