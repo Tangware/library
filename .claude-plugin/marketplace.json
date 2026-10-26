@@ -1,0 +1,14 @@
+{
+  "name": "tangware",
+  "description": "Tangware: hardware designed as code",
+  "owner": {
+    "name": "Tangware"
+  },
+  "plugins": [
+    {
+      "name": "tangware",
+      "source": "./plugin",
+      "description": "Designs hardware as code with the Tangware CAD library, and drives the Tangware studio"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+id: no-coordinate-reads
+valid:
+  - Axis.X
+  - Plane.XY
+  - Align.MIN
+  - hole.position = at
+  - shape.size
+  - "'%s' % name"
+invalid:
+  - hole.position
+  - plane.origin
+  - axis.Z
+  - shape.to_local_coords(at)
+  - face.center()
+  - part.bounding_box()
+  - extent(part).max
+  - edge @ 0.5
+  - edge % 0
+  - between(Plane.YZ, Plane(tip))

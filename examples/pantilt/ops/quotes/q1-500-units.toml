@@ -1,0 +1,206 @@
+release = "none: the gate fails on R8, so no tag exists"
+quantity = 500
+currency = "USD"
+parts_per_unit = 79.11  # made parts: PAHT-CF mass at $80/kg plus printing at $60/kg, both estimates
+shipping_and_duties_per_unit = 11.87  # estimate: 15% of parts, not quoted
+landed_per_unit = 90.98
+target_landed_per_unit = 45.00  # founder
+estimates_flagged = true
+
+[[line]]
+name = "base"
+kind = "made"
+qty = 1
+supplier = "JLC3DP"
+part_number = ""
+unit_price = 4.5
+moq = 1
+source = "32.2 g of PAHT-CF, black, 1.75 mm at 80 USD/kg (estimate: a 0.5 kg spool, not opened), FDM PAHT-CF, black at 60 USD/kg (estimate: a print service's FDM rate of about 100 USD/kg for engineering nylon, less the filament; no quote, no page opened)"
+estimate = true
+
+[[line]]
+name = "lid"
+kind = "made"
+qty = 1
+supplier = "JLC3DP"
+part_number = ""
+unit_price = 1.51
+moq = 1
+source = "10.8 g of PAHT-CF, black, 1.75 mm at 80 USD/kg (estimate: a 0.5 kg spool, not opened), FDM PAHT-CF, black at 60 USD/kg (estimate: a print service's FDM rate of about 100 USD/kg for engineering nylon, less the filament; no quote, no page opened)"
+estimate = true
+
+[[line]]
+name = "arm"
+kind = "made"
+qty = 1
+supplier = "JLC3DP"
+part_number = ""
+unit_price = 10.31
+moq = 1
+source = "73.7 g of PAHT-CF, black, 1.75 mm at 80 USD/kg (estimate: a 0.5 kg spool, not opened), FDM PAHT-CF, black at 60 USD/kg (estimate: a print service's FDM rate of about 100 USD/kg for engineering nylon, less the filament; no quote, no page opened)"
+estimate = true
+
+[[line]]
+name = "cap"
+kind = "made"
+qty = 1
+supplier = "JLC3DP"
+part_number = ""
+unit_price = 1.7
+moq = 1
+source = "12.1 g of PAHT-CF, black, 1.75 mm at 80 USD/kg (estimate: a 0.5 kg spool, not opened), FDM PAHT-CF, black at 60 USD/kg (estimate: a print service's FDM rate of about 100 USD/kg for engineering nylon, less the filament; no quote, no page opened)"
+estimate = true
+
+[[line]]
+name = "cradle"
+kind = "made"
+qty = 1
+supplier = "JLC3DP"
+part_number = ""
+unit_price = 9.99
+moq = 1
+source = "71.3 g of PAHT-CF, black, 1.75 mm at 80 USD/kg (estimate: a 0.5 kg spool, not opened), FDM PAHT-CF, black at 60 USD/kg (estimate: a print service's FDM rate of about 100 USD/kg for engineering nylon, less the filament; no quote, no page opened)"
+estimate = true
+
+[[line]]
+name = "jaw"
+kind = "made"
+qty = 1
+supplier = "JLC3DP"
+part_number = ""
+unit_price = 1.58
+moq = 1
+source = "11.3 g of PAHT-CF, black, 1.75 mm at 80 USD/kg (estimate: a 0.5 kg spool, not opened), FDM PAHT-CF, black at 60 USD/kg (estimate: a print service's FDM rate of about 100 USD/kg for engineering nylon, less the filament; no quote, no page opened)"
+estimate = true
+
+[[line]]
+name = "CNC Kitchen M3 x 5.7 heat-set insert 4270002316409"
+kind = "bought"
+qty = 9
+supplier = "CNC Kitchen"
+part_number = "4270002316409"
+unit_price = 0.12
+moq = 100
+source = "estimate: a 100-piece pack at about 12 USD; the store refused the fetch (429)"
+estimate = true
+
+[[line]]
+name = "CNC Kitchen M2 x 3 heat-set insert 4262391010013"
+kind = "bought"
+qty = 10
+supplier = "CNC Kitchen"
+part_number = "4262391010013"
+unit_price = 0.1
+moq = 100
+source = "estimate: a 100-piece pack at about 10 USD, not opened"
+estimate = true
+
+[[line]]
+name = "Adafruit 6121 TMC2209 driver"
+kind = "bought"
+qty = 2
+supplier = "Adafruit"
+part_number = "6121"
+unit_price = 7.16
+moq = 1
+source = "https://www.adafruit.com/product/6121, 100+ tier, page read 2026-10-23"
+estimate = false
+
+[[line]]
+name = "Adafruit 4090 USB-C breakout"
+kind = "bought"
+qty = 1
+supplier = "Adafruit"
+part_number = "4090"
+unit_price = 2.36
+moq = 1
+source = "https://www.adafruit.com/product/4090, 100+ tier, page read 2026-10-23"
+estimate = false
+
+[[line]]
+name = "M2 x 4 socket head cap screw"
+kind = "bought"
+qty = 10
+supplier = "Accu"
+part_number = "SSCF-M2-4-A2"
+unit_price = 0.06
+moq = 100
+source = "estimate: ISO 4762 A2 in packs of 100; the Accu page refused the fetch (403)"
+estimate = true
+
+[[line]]
+name = "pan motor, StepperOnline 17HS08-1004S"
+kind = "bought"
+qty = 1
+supplier = "StepperOnline"
+part_number = "17HS08-1004S"
+unit_price = 6.67
+moq = 1
+source = "https://www.omc-stepperonline.com/nema-17-bipolar-1-8deg-16ncm-22-6oz-in-1a-3-7v-42x42x20mm-4-wires-17hs08-1004s, opened 2026-10-23: from $7.99, 'as low as $6.67' by volume"
+estimate = false
+
+[[line]]
+name = "M3 x 6 socket head cap screw"
+kind = "bought"
+qty = 17
+supplier = "Accu"
+part_number = "SSCF-M3-6-A2"
+unit_price = 0.06
+moq = 100
+source = "estimate: ISO 4762 A2 in packs of 100; the Accu page refused the fetch (403)"
+estimate = true
+
+[[line]]
+name = "tilt motor, StepperOnline 17HS08-1004S"
+kind = "bought"
+qty = 1
+supplier = "StepperOnline"
+part_number = "17HS08-1004S"
+unit_price = 6.67
+moq = 1
+source = "https://www.omc-stepperonline.com/nema-17-bipolar-1-8deg-16ncm-22-6oz-in-1a-3-7v-42x42x20mm-4-wires-17hs08-1004s, opened 2026-10-23: from $7.99, 'as low as $6.67' by volume"
+estimate = false
+
+[[line]]
+name = "Seeed XIAO ESP32S3 Sense"
+kind = "bought"
+qty = 1
+supplier = "Seeed Studio"
+part_number = "113991115"
+unit_price = 13.9
+moq = 1
+source = "https://www.seeedstudio.com/XIAO-ESP32S3-Sense-p-5639.html, single-unit price read 2026-10-23; no volume tier listed"
+estimate = false
+
+[[line]]
+name = "extension spring LE 031C 05 S"
+kind = "bought"
+qty = 1
+supplier = "Lee Spring"
+part_number = "LE 031C 05 S"
+unit_price = 1.5
+moq = 1
+source = "estimate: a stock stainless extension spring, not opened"
+estimate = true
+
+[[line]]
+name = "Dupont jumper harness, 3 wires, 500 mm"
+kind = "bought"
+qty = 1
+supplier = "AliExpress"
+part_number = ""
+unit_price = 0.3
+moq = 1
+source = "estimate: 3 of a 40-wire female-female 500 mm ribbon at about $3.50, not opened"
+estimate = true
+
+[[line]]
+name = "Dupont jumper harness, 2 wires, 150 mm"
+kind = "bought"
+qty = 1
+supplier = "AliExpress"
+part_number = ""
+unit_price = 0.1
+moq = 1
+source = "estimate: 2 of a 40-wire female-female ribbon, not opened"
+estimate = true

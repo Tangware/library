@@ -1,0 +1,13 @@
+id: no-geometry-queries
+valid:
+  - plane.offset(depth)
+  - a | b
+invalid:
+  - plane.intersect(Plane.YZ)
+  - body.is_inside(at)
+  - common(body, room)
+  - body & room
+  - body &= room
+  - shell.find_intersection_points(line)
+  - shape.distance_to_with_closest_points(wall)
+  - body.section(Plane.XY)

@@ -1,0 +1,5 @@
+# Order o1: not placed. The founder has not accepted q1 (05-make step 5 is [person]).
+quote = "q1"
+status = "not placed"
+order_first = ["Raspberry Pi SC0623 (30 weeks)", "Littelfuse 57140-000 (19 weeks)", "Raspberry Pi Pico 2 W (18 weeks)", "Littelfuse 59140 (16 weeks)"]
+before_ordering = ["JLC3DP FDM quote for the five parts", "DFM review of the five parts (reviews/<date>-dfm.md)", "founder questions 1-5 in reviews/2026-10-24-concept.md"]

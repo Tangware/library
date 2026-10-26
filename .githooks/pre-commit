@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ── Manual invocation (just check) ───────────────────────────────────────────
+# `just check` runs this same script directly, not through git, so it can offer the identical
+# checks without a second implementation to drift out of sync. A real commit hook has no
+# working-tree/staged distinction to make — git hands it exactly the staged snapshot — but a
+# manual dry-run is more useful scoped to everything changed since `origin/main`, staged or not,
+# so `just check` answers "is what I've touched so far okay" rather than requiring a `git add`
+# first.
+manual=0
+[ "${1:-}" = "--manual" ] && manual=1
+
+ROOT="$(git rev-parse --show-toplevel)"
+LOGDIR="$(mktemp -d)"
+trap 'rm -rf "$LOGDIR"' EXIT
+
+# ── Which areas can this commit actually have broken? ───────────────────────
+# Same idea as `land`'s own `want()` — a commit touching one side of the repo should not pay
+# for the other. Every rule below fails toward RUNNING EVERYTHING: this hook is the fast, cheap,
+# per-commit half of the gate, so a wrong skip here is a defect that reaches a push (and from
+# there `just land`, and from there `main`) unchecked, while a wrong run costs seconds.
+if [ "$manual" -eq 1 ]; then
+    base="$(git merge-base origin/main HEAD 2>/dev/null || true)"
+    if [ -z "$base" ]; then
+        run_all=1
+        changed=""
+    else
+        run_all=0
+        changed="$(git diff --name-only "$base" 2>/dev/null || echo FORCE_ALL)"
+    fi
+else
+    changed="$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || echo FORCE_ALL)"
+    run_all=0
+fi
+case "$changed" in *FORCE_ALL*) run_all=1;; esac
+
+# Markdown is prose, everywhere in this repo — see `land`'s identical rule.
+changed="$(grep -vE '\.md$' <<<"$changed" || true)"
+
+want() {  # want <area> → should this area's checks run?
+    [ "$run_all" -eq 1 ] && return 0
+    case "$1" in
+        model)    grep -qE '^model/' <<<"$changed";;
+        plugin)   grep -qE '^(plugin/|\.claude-plugin/)' <<<"$changed";;
+        justfile) grep -qE '^Justfile$' <<<"$changed";;
+    esac
+}
+
+# Anything outside a known area forfeits filtering rather than being guessed at — the identical
+# set to `land`'s own fallback (kept in sync by hand; both read the same repo layout). `hooks` is
+# deliberately absent from `want()` here: its only content is a self-test, which is `land`-only
+# work. An unmatched bash `case` returns true (0), not false, so if `hooks` is ever added to the
+# `for a in ...` loop below, add an explicit `hooks) return 1;;` arm. `Justfile` sits in this safe
+# list rather than forfeiting to FULL: the one failure worth catching pre-commit is the Justfile
+# itself becoming unparseable (which bricks every recipe, including `just check`/`just land`
+# themselves) — see `stage_justfile` below.
+if [ "$run_all" -eq 0 ] && grep -qvE '^(model/|plugin/|\.claude-plugin/|\.claude/(hooks/|settings\.json$)|Justfile$|$)' <<<"$changed"; then
+    run_all=1
+fi
+
+echo "╔══════════════════════════════════════╗"
+echo "║  pre-commit: static analysis         ║"
+echo "╚══════════════════════════════════════╝"
+if [ "$run_all" -eq 1 ]; then
+    echo "  scope: FULL (no computable diff, or a change outside the mapped areas)"
+else
+    scope="$(for a in model plugin justfile; do want "$a" && printf '%s ' "$a"; done)" || true
+    echo "  scope: ${scope:-none — nothing staged maps to a checked area}"
+fi
+
+
+# ── Stage functions — one per area, static analysis only ───────────────────
+# Each stage calls the `just` recipe for its check — see each recipe's own definition in the
+# Justfile.
+
+stage_model() {
+echo "▶ Model: lint"
+(cd "$ROOT" && just lint)
+}
+
+stage_plugin() {
+echo "▶ Plugin: validate the marketplace and the plugin"
+(cd "$ROOT" && just lint-plugin)
+}
+
+stage_justfile() {
+echo "▶ Justfile: syntax check (just --list)"
+(cd "$ROOT" && just --list >/dev/null)
+}
+
+# ── Fan out: one background job per selected area, wall clock = max(area) ──────
+areas=()
+for a in model plugin justfile; do
+    want "$a" || continue
+    areas+=("$a")
+done
+
+if [ "${#areas[@]}" -gt 0 ]; then
+    echo ""
+    echo "→ running in parallel: ${areas[*]}"
+fi
+
+declare -A pids=()
+for a in "${areas[@]}"; do
+    ( "stage_$a" ) >"$LOGDIR/$a.log" 2>&1 &
+    pids["$a"]=$!
+done
+
+failed=()
+for a in "${areas[@]}"; do
+    if ! wait "${pids[$a]}"; then
+        failed+=("$a")
+    fi
+done
+
+for a in "${areas[@]}"; do
+    [ -s "$LOGDIR/$a.log" ] || continue
+    echo ""
+    echo "── $a ──"
+    cat "$LOGDIR/$a.log"
+done
+
+if [ "${#failed[@]}" -gt 0 ]; then
+    echo ""
+    echo "✗ failed: ${failed[*]}" >&2
+    exit 1
+fi
+
+echo ""
+echo "✓ pre-commit checks passed."

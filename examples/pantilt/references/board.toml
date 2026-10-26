@@ -1,0 +1,65 @@
+# One [[item]] per reference: title, image (path or url), job, note,
+# set = "core" | "negative" | "decoy".
+
+[[item]]
+title = "Sachtler fluid tripod head"
+image = "https://www.sachtler.com/en/products/fluid-heads/"
+job = "how a pan and a tilt axis show as two plain cylinders meeting at right angles"
+note = "[derived] axes are honest and visible; no cover pretends they are not there"
+set = "core"
+
+[[item]]
+title = "OBSBOT Tiny PTZ webcam"
+image = "https://www.obsbot.com/obsbot-tiny-webcam"
+job = "how a single lens sits in a moving head without reading as an eye"
+note = "[derived] one lens, centred, in a dark face of the head; the head is a primitive"
+set = "core"
+
+[[item]]
+title = "Braun T3 radio (Dieter Rams, 1958)"
+image = "https://en.wikipedia.org/wiki/Braun_T3"
+job = "how few primitives, one radius and matte finish make a small object read as a precise tool"
+note = "[derived] one governing radius, nothing decorative"
+set = "core"
+
+[[item]]
+title = "DJI Osmo Mobile phone gimbal"
+image = "https://www.dji.com/osmo-mobile-6"
+job = "how a phone clamp is exposed as a clamp and finished"
+note = "[derived] the clamp reads as a camera accessory: a spring jaw with rubber pads"
+set = "core"
+
+[[item]]
+title = "Belkin Auto-Tracking Stand Pro"
+image = "https://www.belkin.com/au/auto-tracking-stand-pro-with-dockkit/MMA008au05BKAPL.html"
+job = "the category's leading stand; what a $180 product sets as the bar for quiet motion"
+note = "[derived] its base was called bulky (T3); our footprint stays no wider than the phone's short side needs"
+set = "core"
+
+[[item]]
+title = "Kuri home robot"
+image = "https://techcrunch.com/2018/07/25/mayfield-robotics-ceases-production-of-kuri-robot-amid-a-questionable-future"
+job = "a moving head with eyes"
+note = "killed by P1: two eye-like features on a head read as a creature"
+set = "negative"
+
+[[item]]
+title = "Cheap 360° auto face-tracking stand with a camera dome"
+image = "https://sharperimage.com/view/product/Auto%2BTracking%2BSelfie%2BStand/208293"
+job = "a glossy dome with a lens on a stalk"
+note = "killed by P4 and S3: gloss and a lens dome read cheap and eye-like on camera"
+set = "negative"
+
+[[item]]
+title = "Anki Cozmo"
+image = "https://en.wikipedia.org/wiki/Cozmo_(robot)"
+job = "motion with personality"
+note = "killed by P2: expressive motion makes the stand cast, not crew"
+set = "negative"
+
+[[item]]
+title = "Lectern (decoy)"
+image = ""
+job = "a plausible concept aimed at the brief's weakest point"
+note = "killed by P2, P3, P6, R1: see design/decoy.md"
+set = "decoy"

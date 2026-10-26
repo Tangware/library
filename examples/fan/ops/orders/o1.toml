@@ -1,0 +1,6 @@
+# Order o1 against quote q1. Not placed: the founder has not accepted the quote or signed the DFM review.
+quote = "q1"
+release = "v1"
+status = "not placed"
+lines = []
+tracking = []

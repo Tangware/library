@@ -1,0 +1,12 @@
+id: no-pick-by-order
+valid:
+  - faces[0]
+  - part.faces().filter_by(Axis.Z)
+  - rows.first
+invalid:
+  - part.faces().first
+  - part.solids().last
+  - part.edges().filter_by(GeomType.LINE)[-1]
+  - part.wires()[0]
+  - part.faces().group_by(Axis.Z)[-1]
+  - part.vertices().sort_by(Axis.Z)

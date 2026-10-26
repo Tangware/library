@@ -1,0 +1,3 @@
+ruleDirs: [src/cad/lint/rules]
+testConfigs:
+  - testDir: lint/rule-tests

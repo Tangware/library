@@ -1,0 +1,125 @@
+# Quote q1: release v1, 1,000 units. Prices are the catalogue's (model/src/dispenser/catalogue.py),
+# each with its source there; estimates are flagged.
+release = "v1" # the per-unit figures cost the model after v1, printing included
+bought_per_unit = 31.33
+printed_per_unit = 62.50        # 763 g: PETG Matte Noctua Brown 41.88 USD/kg + printing 40 USD/kg (estimate)
+freight_and_duty_share = 0.10   # estimate, not quoted
+landed_per_unit = 103.21
+target_per_unit = 60.0
+printing = "estimate: a print service's PETG rate of about 70 USD/kg less the filament; JLC3DP quotes only after an upload"
+verdict = "over target by 43 USD; open founder question 5"
+
+[[made]]
+part = "base"
+process = "FDM PETG"
+partner = "JLC3DP"
+grams = 237.3
+note = "floor prints over supports"
+
+[[made]]
+part = "carousel"
+process = "FDM PETG"
+partner = "JLC3DP"
+grams = 214.7
+note = "web prints over supports"
+
+[[made]]
+part = "lid"
+process = "FDM PETG"
+partner = "JLC3DP"
+grams = 135.4
+
+[[made]]
+part = "plate"
+process = "FDM PETG"
+partner = "JLC3DP"
+grams = 108.9
+
+[[made]]
+part = "drawer"
+process = "FDM PETG"
+partner = "JLC3DP"
+grams = 67.2
+
+[[bought]]
+name = "Raspberry Pi Pico 2 W"
+qty = 1000
+unit = 7.00
+source = "Digi-Key 2648-SC1633TR-ND at 1,200"
+lead_weeks = 18
+
+[[bought]]
+name = "Raspberry Pi SC0623 12.5 W micro-USB power supply"
+qty = 1000
+unit = 8.00
+source = "Digi-Key 2648-SC0623-ND, only break listed"
+lead_weeks = 30
+flag = "longest lead in the bill: order first"
+
+[[bought]]
+name = "Adafruit 3297 DRV8833 breakout"
+qty = 1000
+unit = 4.76
+source = "adafruit.com 100+ break; no 1,000 break listed"
+lead_weeks = 4
+
+[[bought]]
+name = "Adafruit 858 28BYJ-48 stepper"
+qty = 1000
+unit = 3.96
+source = "adafruit.com 100+ break; Digi-Key stock 153, below the batch"
+lead_weeks = 4
+flag = "stock below 1,000 at Digi-Key"
+
+[[bought]]
+name = "Littelfuse 59140-1-S-02-A reed sensor"
+qty = 1000
+unit = 2.51436
+source = "Digi-Key HE573-ND at 1,000"
+lead_weeks = 16
+
+[[bought]]
+name = "Littelfuse 57140-000 actuator"
+qty = 1000
+unit = 1.36835
+source = "Digi-Key 57140-000-ND at 1,080"
+lead_weeks = 19
+
+[[bought]]
+name = "Same Sky CMI-1295-03TH buzzer"
+qty = 1000
+unit = 0.63117
+source = "Digi-Key at 1,000; stock 569, below the batch"
+lead_weeks = 8
+
+[[bought]]
+name = "Kingbright WP7113ID5V LED"
+qty = 1000
+unit = 0.22659
+source = "Digi-Key 754-1732-ND at 1,000"
+lead_weeks = 6
+
+[[bought]]
+name = "3M Bumpon SJ5302"
+qty = 4000
+unit = 0.10516
+source = "Digi-Key SJ5302-7-ND at 1,008; MOQ 144"
+lead_weeks = 4
+
+[[bought]]
+name = "heat-set inserts (M3 x 5.7 x 8, M2 x 3 x 4, M2.5 x 4 x 2)"
+qty = 14000
+unit = 0.10
+source = "cnckitchen.store 1,000 packs in EUR, converted at an estimated rate"
+
+[[bought]]
+name = "socket head cap screws (M3 x 6 x 6, M3 x 10 x 2, M2 x 3 x 4, M2.5 x 5 x 2)"
+qty = 14000
+unit = 0.05
+source = "accu.co.uk at 1,000 in GBP, converted at an estimated rate; lengths not each opened"
+
+[[bought]]
+name = "leads, 26 AWG, and the buzzer's 2N3904 switch"
+qty = 1000
+unit = 0.37
+source = "estimate, not quoted"

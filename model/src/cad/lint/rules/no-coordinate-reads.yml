@@ -1,0 +1,33 @@
+id: no-coordinate-reads
+language: python
+severity: error
+message: Points stay CAD locations; take it from a skeleton relation or a planes construction.
+files:
+  - src/cad/library/**
+  - src/*/parts/**
+  - src/*/assemblies/**
+ignores:
+  - src/cad/library/bought/**
+  - src/cad/library/features/planes.py
+  - src/cad/library/points.py
+rule:
+  any:
+    - kind: attribute
+      has:
+        field: attribute
+        regex: "^(position|origin|X|Y|Z|to_local_coords|center|bounding_box)$"
+    - kind: attribute
+      all:
+        - has: { field: attribute, regex: "^(min|max|size)$" }
+        - has: { field: object, kind: call }
+    - kind: binary_operator
+      has: { field: operator, regex: "^[@%]$" }
+      not: { has: { field: left, kind: string } }
+    - kind: call
+      all:
+        - has: { field: function, regex: "^between$" }
+        - has: { field: arguments, has: { regex: "^Plane\\.(XY|YZ|XZ)$" } }
+  not:
+    any:
+      - has: { field: object, kind: identifier, regex: "^[A-Z]" }
+      - inside: { field: left, kind: assignment }

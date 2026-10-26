@@ -1,0 +1,38 @@
+[importlinter]
+root_packages =
+    cad
+include_external_packages = True
+
+[importlinter:contract:layers]
+name = Layers
+type = layers
+layers =
+    cad.cli
+    cad.design
+    cad.assembly.tree
+    cad.library.extension_spring | cad.library.gears
+    cad.library.features
+    cad.library.bought.servos
+    cad.library.bought.boards
+    cad.library.bought.connectors
+    cad.library.standard.bearings | cad.library.standard.magnets | cad.library.standard.profiles
+    cad.library.bought.bearings
+    cad.library.bought.vendor
+    cad.library.bought.query | cad.library.standard.fasteners
+    cad.library.models
+    cad.cables.models
+    cad.library.cache | cad.library.mates
+    cad.library.shapes
+    cad.library.printing
+    cad.library.fits
+    cad.library.bought.catalogue
+    cad.library.points | cad.library.turns | cad.library.why | cad.library.provenance
+
+[importlinter:contract:features]
+name = Feature modules build on each other in one direction
+type = layers
+layers =
+    cad.library.features.bearings | cad.library.features.boards
+    cad.library.features.hardware
+    cad.library.features.cuts
+    cad.library.features.planes

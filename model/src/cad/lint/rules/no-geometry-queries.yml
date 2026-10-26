@@ -1,0 +1,22 @@
+id: no-geometry-queries
+language: python
+severity: error
+message: Don't measure built geometry; use a skeleton relation or a named planes construction.
+files:
+  - src/cad/library/**
+  - src/*/parts/**
+  - src/*/assemblies/**
+ignores:
+  - src/cad/library/bought/**
+  - src/cad/library/features/planes.py
+  - src/cad/library/points.py
+rule:
+  any:
+    - pattern: $SHAPE.intersect($$$)
+    - pattern: $SHAPE.is_inside($$$)
+    - pattern: common($$$)
+    - pattern: $A & $B
+    - pattern: $A &= $B
+    - pattern: $SHAPE.find_intersection_points($$$)
+    - pattern: $SHAPE.distance_to_with_closest_points($$$)
+    - pattern: $SHAPE.section($$$)

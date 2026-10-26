@@ -1,0 +1,80 @@
+#!/usr/bin/env node
+// tangware login: signs this machine in through the browser. tangware link: makes this folder of
+// its repo a project, the repo's root or a design folder inside it.
+const { execFileSync } = require("node:child_process");
+const { mkdirSync, writeFileSync } = require("node:fs");
+const { dirname } = require("node:path");
+const { studio, tokenFile, requireToken, path } = require("../scripts/studio.js");
+
+const POLL_MS = 3000;
+const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
+const run = (cmd, args) => {
+  try {
+    return execFileSync(cmd, args, { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
+  } catch {
+    return "";
+  }
+};
+const open = (url) => {
+  console.log(`Opening ${url}`);
+  run(process.platform === "darwin" ? "open" : "xdg-open", [url]);
+};
+const post = async (path, value, token) => {
+  const response = await fetch(`${studio}${path}`, {
+    method: "POST",
+    headers: token ? { authorization: `Bearer ${token}` } : {},
+    body: JSON.stringify(value),
+  });
+  return { status: response.status, body: await response.json() };
+};
+const fail = (message) => {
+  console.error(message);
+  process.exit(1);
+};
+
+async function login() {
+  const { code, secret, url } = (await post("/auth/cli/start", {})).body;
+  console.log(`Confirm the code ${code} in your browser.`);
+  open(new URL(url, studio).href);
+  for (;;) {
+    await sleep(POLL_MS);
+    const { status, body } = await post("/auth/cli/poll", { secret }).catch(() => ({ status: 0 }));
+    if (status === 200) {
+      mkdirSync(dirname(tokenFile), { recursive: true });
+      writeFileSync(tokenFile, body.token, { mode: 0o600 });
+      return console.log("Signed in to Tangware.");
+    }
+    if (status === 410) fail("The code expired. Run tangware login again.");
+  }
+}
+
+async function link() {
+  const token = requireToken();
+  const remote = /github\.com[:/]([^/]+)\/(.+?)(\.git)?$/.exec(run("git", ["remote", "get-url", "origin"]));
+  if (!remote) fail("This repo has no GitHub remote. Push it to GitHub first.");
+  const [, owner, repo] = remote;
+  const ids = run("gh", ["api", `repos/${owner}/${repo}`, "--jq", "[.id, .owner.id] | @tsv"]).split("\t");
+  const ask = { repo, path: path(), owner, id: Number(ids[0]) || undefined, ownerId: Number(ids[1]) || undefined };
+  let opened = false;
+  for (;;) {
+    const { status, body } = await post("/api/projects", ask, token).catch(() => ({ status: 0 }));
+    if (status === 0) {
+      await sleep(POLL_MS);
+      continue;
+    }
+    if (status === 200) return open(new URL(body.url, studio).href);
+    if (status === 401) fail("Your Tangware login was refused. Run tangware login again.");
+    if (status !== 409) fail(body.error);
+    if (!opened) {
+      console.log(`${body.error} Waiting for you to allow it on GitHub…`);
+      open(new URL(body.install, studio).href);
+      opened = true;
+    }
+    await sleep(POLL_MS);
+  }
+}
+
+const commands = { login, link };
+const command = commands[process.argv[2]];
+if (!command) fail("usage: tangware login | tangware link");
+command().catch((error) => fail(String(error)));

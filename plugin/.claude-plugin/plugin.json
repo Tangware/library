@@ -1,0 +1,9 @@
+{
+  "name": "tangware",
+  "version": "0.3.0",
+  "description": "Lets Claude Code design hardware as code with the Tangware CAD library, drive the studio, and run the guided tour",
+  "author": { "name": "Tangware" },
+  "homepage": "https://github.com/Tangware/library",
+  "repository": "https://github.com/Tangware/library",
+  "license": "Apache-2.0"
+}

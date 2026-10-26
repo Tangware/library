@@ -1,0 +1,11 @@
+extend = "../../../model/src/cad/lint/ruff.toml"
+
+[lint.isort]
+known-first-party = ["fan"]
+known-third-party = ["cad"]
+
+[lint.flake8-bugbear]
+extend-immutable-calls = ["cad.design.master.given"]
+
+[lint.per-file-ignores]
+"tests/*" = ["S101"]

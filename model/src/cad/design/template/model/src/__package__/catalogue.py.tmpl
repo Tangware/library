@@ -1,0 +1,21 @@
+from cad.design.catalogue import IN_HOUSE, Item, Kind
+
+CATALOGUE = (
+    Item(
+        name="plate",
+        kind=Kind.MADE,
+        process="FDM PETG",
+        partner=IN_HOUSE,
+        supplier=IN_HOUSE,
+        price_source="in-house printing, priced by the build",
+        stocked=True,
+        moq=1,
+        lead_weeks=None,
+    ),
+    Item(
+        name="PETG, white, 1.75 mm",
+        kind=Kind.CONSUMABLE,
+        material="PETG white",
+        price_source="",
+    ),
+)

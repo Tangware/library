@@ -1,0 +1,114 @@
+# Quote q2 for release v2: q1 with the tape pad and the two hook-up wire runs billed as lines. Every price carries its source; "estimate" flags those not read on a supplier page.
+release = "v2"
+quantity = 200
+currency = "USD"
+
+[made]
+partner = "in-house: the founder's own FDM printers"
+process = "FDM PETG"
+note = "PETG at Prusament list ~$28/kg (estimate from 105 ILS); printer time, electricity and labour not costed"
+lines = [
+  { part = "puck", grams = 54, unit = 1.51 },
+  { part = "head", grams = 85, unit = 2.38 },
+  { part = "cover", grams = 26, unit = 0.73 },
+  { part = "floor", grams = 42, unit = 1.18 },
+]
+
+[[bought]]
+name = "Same Sky CFM-A225C-015-287-22 fan"
+supplier = "Mouser 179-CFMA225C01528722"
+qty = 510
+unit = 9.61
+source = "Mouser page, opened; MOQ 510, 17 weeks; 310 carried to batches 2 and 3"
+[[bought]]
+name = "Adafruit 858 28BYJ-48 stepper"
+supplier = "Adafruit"
+qty = 200
+unit = 3.96
+source = "adafruit.com/product/858, opened, 100+ tier"
+[[bought]]
+name = "Seeed Studio XIAO RP2040"
+supplier = "Seeed Studio 102010428"
+qty = 200
+unit = 3.50
+source = "seeedstudio.com, opened, 10+ tier"
+[[bought]]
+name = "Adafruit DRV8833 breakout"
+supplier = "Adafruit 3297"
+qty = 200
+unit = 4.76
+source = "adafruit.com/product/3297, opened, 100+ tier"
+[[bought]]
+name = "Adafruit 1445 16 mm pushbutton"
+supplier = "Adafruit 1445"
+qty = 200
+unit = 0.76
+source = "adafruit.com/product/1445, opened, 100+ tier; out of stock on 23 Oct 2026"
+[[bought]]
+name = "CNC Kitchen M3 x 5.7 heat-set insert"
+supplier = "CNC Kitchen 4270002316409"
+qty = 1200
+unit = 0.085
+source = "estimate: 1000-pack 300 ILS, opened, converted"
+[[bought]]
+name = "CNC Kitchen M2.5 x 4 heat-set insert"
+supplier = "CNC Kitchen 4262391011980"
+qty = 400
+unit = 0.09
+source = "estimate: 1000-pack 319 ILS, opened, converted"
+[[bought]]
+name = "M3 x 6 socket head cap screw"
+supplier = "Accu SSCF-M3-6-A2"
+qty = 800
+unit = 0.16
+source = "Accu page, opened, qty 200 tier"
+[[bought]]
+name = "M3 x 30 socket head cap screw"
+supplier = "Accu SSCF-M3-30-A2"
+qty = 400
+unit = 0.20
+source = "estimate: page not opened"
+[[bought]]
+name = "M2.5 x 5 socket head cap screw"
+supplier = "Accu SSCF-M2-5-5-A2"
+qty = 400
+unit = 0.16
+source = "Accu page, opened, qty 200 tier"
+[[bought]]
+name = "3M Bumpon SJ5302"
+supplier = "Digi-Key SJ5302-7-ND"
+qty = 800
+unit = 0.1245
+source = "Digi-Key page, opened"
+
+[[bought]]
+name = "3M VHB 5952 pad"
+supplier = "Digi-Key, 3M 5952 roll cut to pads"
+qty = 200
+unit = 0.05
+source = "estimate: roll price not opened"
+[[bought]]
+name = "button leads, 2 x 26 AWG silicone wire"
+supplier = "Adafruit"
+qty = 200
+unit = 0.10
+source = "estimate: spool price not opened"
+[[bought]]
+name = "driver leads, 6 x 26 AWG silicone wire"
+supplier = "Adafruit"
+qty = 200
+unit = 0.30
+source = "estimate: spool price not opened"
+
+[consumables]
+per_unit = 0.05
+source = "estimate: solder"
+
+[landed]
+parts_per_unit = 31.45
+freight_and_duty_share = 0.10
+freight_source = "estimate: small-parcel freight and duty, not quoted"
+per_unit = 34.59
+target = 35.0
+cash_for_batch = 6918.0
+cash_note = "200 × $34.59 plus the 310 extra fans of the 510 lot (310 × $9.61 = $2,979) is about $9,900 up front; estimate"

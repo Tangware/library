@@ -1,0 +1,33 @@
+id: no-fallbacks
+valid:
+  - names or ["part"]
+  - max(gaps)
+  - mapping[key]
+  - mapping.get(key)
+  - |
+    try:
+        load()
+    except KeyError:
+        raise LookupError(key)
+  - |
+    try:
+        load()
+    except KeyError:
+        pass
+        log(key)
+invalid:
+  - springs or []
+  - kwargs or {}
+  - max(gaps, default=0.0)
+  - min(gaps, default=0.0)
+  - mapping.get(key, [])
+  - |
+    try:
+        load()
+    except KeyError:
+        return None
+  - |
+    try:
+        load()
+    except KeyError:
+        pass

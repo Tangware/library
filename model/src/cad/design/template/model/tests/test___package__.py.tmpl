@@ -1,0 +1,9 @@
+import pytest
+
+from {{package}}.master import MASTER
+from {{package}}.parts.plate import plate
+
+
+@pytest.mark.check(does_not_catch="Strength, fit and finish.", subjects=("plate",))
+def test_m3_the_plate_builds_from_the_master_alone() -> None:
+    assert plate(MASTER).solid().is_valid

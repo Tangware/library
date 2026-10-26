@@ -1,0 +1,39 @@
+from dataclasses import dataclass
+
+from build123d import Plane
+from cad.design.master import Master, given
+from cad.library.printing import PRINT_SETTINGS_UNITS, PrintSettings
+
+
+@dataclass(frozen=True)
+class ProductMaster(Master):
+    width: float = given(60.0, "mm", why="Fits the palm of a hand", source="design input")
+    depth: float = given(40.0, "mm", why="Fits the palm of a hand", source="design input")
+    thickness: float = given(
+        3.0, "mm", why="Stiff enough to carry by a corner", source="design input"
+    )
+    print_settings: PrintSettings = given(
+        PrintSettings(
+            preset="structural",
+            walls=4,
+            top_layers=5,
+            bottom_layers=5,
+            infill=0.15,
+            extrusion_width=0.45,
+            layer_height=0.2,
+        ),
+        PRINT_SETTINGS_UNITS,
+        why="Every printed part takes the structural preset",
+        source="estimate: a common 0.4 mm nozzle profile",
+    )
+
+    @property
+    def base(self) -> Plane:
+        return Plane.XY
+
+    @property
+    def corner(self) -> float:
+        return self.thickness
+
+
+MASTER = ProductMaster()

@@ -1,0 +1,68 @@
+# One [[item]] per reference: title, image (path or url), source, credit, job, note,
+# set = "core" | "negative" | "decoy".
+
+[[item]]
+title = "Braun HL 1 desk fan (Reinhold Weiss, 1961)"
+image = "https://www.vitra.com/en-us/magazine/details/hl-70-braun"
+job = "a fan that reads as an object: a plain cylinder housing, slots instead of a cage, no visible fixings"
+note = "[derived] yields: the air path is a cut in a closed form, not a cage around blades"
+set = "core"
+
+[[item]]
+title = "Muji desk fan / Naoto Fukasawa CD player"
+image = "references/images/muji-cd-player.jpg"
+source = "https://commons.wikimedia.org/wiki/File:Muji_NYC_inside_CD_players.jpg"
+credit = "Gwern, public domain"
+job = "one control placed where the hand already is; nothing else on the surface"
+note = "[derived] yields: one button, on top, flush or nearly flush"
+set = "core"
+
+[[item]]
+title = "Noctua NF-A12x25"
+image = "references/images/noctua-nf-a12x25.jpg"
+source = "https://commons.wikimedia.org/wiki/File:Noctua_NF-A12x25_G2_fans_at_Computex_2025.jpg"
+credit = "4300streetcar, CC BY 4.0"
+job = "how quiet comes from a large, slow fan, not from a cage or foam"
+note = "[derived] yields: the largest fan the footprint allows, run slow"
+set = "core"
+
+[[item]]
+title = "Audioengine A1 desk speaker"
+image = "https://audioengine.com/shop/poweredspeakers/a1-wireless-speaker/"
+job = "a powered desk object with no screw on its face and its cable at the back"
+note = "[derived] yields: fixings and cable on the back and underside only"
+set = "core"
+
+[[item]]
+title = "Clip-on USB fan with blue LED ring"
+image = "references/images/usb-led-fan.jpg"
+source = "https://commons.wikimedia.org/wiki/File:LED_and_USB_mini_fan.jpg"
+credit = "AntanO, CC BY-SA 4.0"
+job = "the gadget the founder refuses"
+note = "killed by principle P2 (no light that announces itself) and the refusal ▸ \"blue LEDs\""
+set = "negative"
+
+[[item]]
+title = "Vornado-style circulator with exposed grille screws"
+image = "references/images/vornado-533.jpg"
+source = "https://commons.wikimedia.org/wiki/File:Vornado_533_Fan.jpg"
+credit = "TaurusEmerald, CC BY-SA 4.0"
+job = "an appliance cage with front fixings"
+note = "killed by S1 (no screw seen from the front) and P1 (an object, not an appliance)"
+set = "negative"
+
+[[item]]
+title = "Dyson bladeless desk fan"
+image = "references/images/dyson-fans.jpg"
+source = "https://commons.wikimedia.org/wiki/File:Fans_by_Dyson_1_2018-06-02.jpg"
+credit = "FASTILY, CC BY-SA 4.0"
+job = "premium cue bought with noise and a remote"
+note = "killed by R1 (quiet above all) and P4 (everything at the object, no remote)"
+set = "negative"
+
+[[item]]
+title = "Halo Breeze (decoy)"
+image = "design/decoy.md"
+job = "a plausible concept aimed at the brief's weakest point"
+note = "killed by R1, R4, R5, P2, P4 and the formal material positions; exposed the missing size rule, now S4"
+set = "decoy"

@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# A push is allowed to a draft PR (or a branch with no PR yet) and denied to a ready one — the
+# entire rule. `.githooks/pre-commit` already checked every commit on the way here (static
+# analysis, per commit); `.githooks/land` (via `just land`) is the only path a PR is allowed to
+# reach `main` through — it runs the full local suite, flips the PR ready, and merges. A ready PR that could still be pushed to directly would let a fix
+# reach `main` with none of that having run again, so this hook exists to make that impossible —
+# not to run any checks of its own. See AGENTS.md > Running it for the full design.
+#
+# BOUNDED, ALWAYS: this hook runs one `gh pr view` call and nothing else, capped at 10s (see
+# below) — there is no scenario, including `gh` hanging outright, where it should ever run longer
+# than that. If a push seems to hang here, it is this hook stuck on `gh`, not a real check
+# running; Ctrl-C is safe (the push itself has not started yet) and worth reporting, since it
+# means the 10s bound below did not hold.
+#
+# Git hands a pre-push hook the refs being pushed on stdin. Nothing here reads them, but they
+# still have to be drained before this hook exits: closing stdin unread races git's own write to
+# it — if git has not written yet when this process exits, git takes EPIPE and dies of SIGPIPE
+# *after* this hook has already exited 0, so the push reports success and the ref never lands.
+# Reading (and discarding) the pipe first guarantees a reader, so the race cannot be lost.
+# Skipped when stdin is a terminal, which only happens running this by hand — a terminal never
+# sends EOF, so draining one would hang here with no indication why.
+[ -t 0 ] || cat >/dev/null
+
+command -v gh >/dev/null 2>&1 || exit 0
+
+# Bounded via Python's own `subprocess.run(timeout=...)`, not the standalone `timeout` binary —
+# this host does not have one on PATH at all (neither GNU's nor uutils' variant), and `gh` can
+# hang indefinitely with no output —
+# a stale/expired token trying an interactive re-auth prompt (a browser + a wait on a TTY,
+# neither of which stdin closed above touches), or a plain network stall. Nothing here must ever
+# be able to block a push forever: a timeout is treated exactly like any other "gh can't answer"
+# case, allowing the push.
+# exits 1 only when confirmed ready (not draft, open) -- 0 for every "cannot tell, so allow" case,
+# checked as an `if` condition (never a bare statement) so its exit status is TESTED rather than
+# tripping `set -e` before the deny/allow decision below ever runs. The whole body sits inside one
+# `except Exception` -- not just the two cases historically expected (a timeout, unparseable
+# JSON) -- because ANY unhandled exception here (an unexpected `gh` output shape, `gh` vanishing
+# between the `command -v` check above and this call, ...) must fail OPEN the same way a timeout
+# does; a narrower catch would turn an unrelated bug in this block into a deny that blocks every
+# push from the branch.
+if ! python3 -c '
+import json, subprocess, sys
+try:
+    result = subprocess.run(
+        ["gh", "pr", "view", "--json", "isDraft,state"],
+        capture_output=True, text=True, timeout=10,
+    )
+    if result.returncode != 0:
+        sys.exit(0)  # no PR (or gh errored) — allow
+    d = json.loads(result.stdout)
+    sys.exit(1 if (d.get("isDraft") is False and d.get("state") == "OPEN") else 0)
+except Exception:
+    sys.exit(0)  # cannot tell — allow, same as every other "cannot tell" case
+'; then
+    echo "This PR is ready (not a draft) — pushing directly to it is disabled." >&2
+    echo "Run \`gh pr ready --undo\` to put it back in draft, or \`just land\` to land it." >&2
+    exit 1
+fi
+
+exit 0

@@ -1,0 +1,33 @@
+[importlinter]
+root_packages =
+    pantilt
+    cad
+
+[importlinter:contract:steps]
+name = Assemblies read parts and the master; parts read only the master
+type = layers
+layers =
+    pantilt.assemblies
+    pantilt.parts
+    pantilt.master
+
+[importlinter:contract:parts]
+name = A part never reads another part
+type = independence
+modules =
+    pantilt.parts.*
+
+[importlinter:contract:hardware]
+name = Only assemblies add hardware, bought parts and mates
+type = forbidden
+source_modules =
+    pantilt.parts
+forbidden_modules =
+    pantilt.catalogue
+    cad.assembly
+    cad.library.mates
+    cad.library.bought.vendor
+    cad.library.standard.fasteners
+    cad.library.standard.magnets
+    cad.library.standard.bearings
+allow_indirect_imports = True

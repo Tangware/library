@@ -1,0 +1,10 @@
+extend = "src/cad/lint/ruff.toml"
+
+[lint.isort]
+known-first-party = ["cad"]
+
+[lint.per-file-ignores]
+"tests/*" = ["S101", "S105", "S106", "S311", "ANN401", "SLF001"]
+"src/cad/library/*" = ["SLF001"]
+"src/cad/generators/*" = ["TID251"]
+"src/cad/cables/*" = ["TID251"]

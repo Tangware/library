@@ -1,0 +1,260 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# `just land` runs this. It is the ONLY path a PR is allowed to reach `main` through: pushing to
+# an already-ready PR is denied by `.githooks/pre-push`, and `gh pr ready`/`gh pr merge` run
+# directly are denied by `.claude/hooks/require_draft_pr.py` — both point here instead.
+#
+# Static analysis is NOT re-run here — `.githooks/pre-commit` already ran it per commit.
+#
+# The sequence: refuse a dirty tree and confirm HEAD matches the remote (the diff below has to
+# describe what's actually being tested) -> run every test suite the diff selects, concurrently
+# -> on green, flip the PR out of draft and merge.
+
+# `gh` can hang indefinitely on a stale/expired token attempting an interactive re-auth prompt —
+# the same failure mode `.githooks/pre-push` guards against on its own `gh pr view` call. Defined
+# up top, before the very first `gh` call below, rather than next to the ready/merge calls near
+# the bottom that motivated it — a helper that only shows up once the expensive local suite has
+# already run isn't actually guarding the first (and cheapest, most hang-prone) `gh` call land
+# makes.
+run_gh() {
+    python3 -c '
+import subprocess, sys
+try:
+    result = subprocess.run(["gh", *sys.argv[1:]], timeout=30)
+except subprocess.TimeoutExpired:
+    cmd = " ".join(sys.argv[1:])
+    print("gh " + cmd + " did not respond within 30s (stuck on auth?)", file=sys.stderr)
+    sys.exit(1)
+sys.exit(result.returncode)
+' "$@"
+}
+
+if [ -n "$(git status --porcelain)" ]; then
+    echo "just land refuses on a dirty tree — commit or stash first, then re-run." >&2
+    exit 1
+fi
+
+# `gh pr ready`/`gh run view`/`gh pr merge` below all act on whatever HEAD the REMOTE branch
+# carries, not on this checkout — so unpushed local commits would validate one tree here and
+# merge a different, older one on GitHub with no error at any step. Refuse rather than land the
+# wrong commit.
+branch="$(git rev-parse --abbrev-ref HEAD)"
+git fetch --quiet origin "$branch" 2>/dev/null || true
+if [ "$(git rev-parse HEAD)" != "$(git rev-parse "origin/$branch" 2>/dev/null || echo "")" ]; then
+    echo "just land refuses: HEAD does not match origin/$branch — push first, then re-run." >&2
+    exit 1
+fi
+
+# Cheap up front, not after paying for the whole local suite below: `gh pr ready` needs a PR to
+# exist for this branch at all, so check that now rather than discovering it after several
+# minutes of tests.
+pr_number="$(run_gh pr view --json number --jq .number 2>/dev/null || true)"
+if [ -z "$pr_number" ]; then
+    echo "just land refuses: no PR exists for $branch yet — run \`just pr\` first." >&2
+    exit 1
+fi
+
+# GraphQL's `mergePullRequest`, which `gh pr merge` calls, refuses a PR that belongs to a GitHub
+# stack; those merge only through `gh stack merge`, which takes every member up to and including
+# the target in one all-or-nothing operation. The REST payload's `stack` field is GitHub's own
+# answer, so it decides which merge call runs below — `gh stack view` does not, it only knows
+# stacks this checkout tracks locally and calls a linked-on-GitHub-only stack "not part of a
+# stack". An unreadable answer leaves `stack_number` empty and takes the ordinary `gh pr merge`
+# path, whose failure mode on a stacked PR is GitHub refusing before anything lands.
+stack_number=""
+stack_position=""
+stack_info="$(run_gh api "repos/{owner}/{repo}/pulls/$pr_number" \
+    --jq '.stack | select(. != null) | "\(.number) \(.position)"' 2>/dev/null || true)"
+if [ -n "$stack_info" ]; then
+    read -r stack_number stack_position <<<"$stack_info"
+    # Detecting a stack is server-side and works on any `gh`; merging one needs a `gh` new enough
+    # to have the subcommand. Refuse now, before the local suite and before any draft is flipped.
+    if ! grep -qF 'gh stack merge [' <<<"$(run_gh stack merge --help 2>/dev/null || true)"; then
+        echo "just land refuses: PR #$pr_number is in a stack, which only \`gh stack merge\` can land — upgrade gh." >&2
+        exit 1
+    fi
+fi
+
+ROOT="$(git rev-parse --show-toplevel)"
+LOGDIR="$(mktemp -d)"
+
+# Safety net for the gap between `gh pr ready` succeeding and this script reaching a clean
+# merge-or-revert decision: every explicit failure branch below already calls
+# `revert_marked_ready` itself, but an UNEXPECTED exit in that window (a bug in this script, a
+# signal, `gh` itself crashing) skips all of that and leaves a PR sitting ready with nothing
+# watching it -- exactly what happened live once already (an unrelated bash bug aborted the
+# script right after the ready flip). `marked_ready` holds every PR this script itself flipped
+# and nothing else, and every path that handles those PRs' state on its own (each explicit
+# revert, and a successful merge) empties it, so this only fires for the unanticipated case.
+marked_ready=()
+
+# A PR whose undo failed stays in `marked_ready` instead of being dropped, so the trap gets
+# another go at it; the explicit callers below run under `set -e`, so the non-zero return exits
+# straight into that retry.
+revert_marked_ready() {
+    local pr
+    local -a remaining=()
+    for pr in "${marked_ready[@]}"; do
+        if ! run_gh pr ready --undo "$pr" >/dev/null 2>&1; then
+            remaining+=("$pr")
+        fi
+    done
+    marked_ready=("${remaining[@]}")
+    [ "${#marked_ready[@]}" -eq 0 ]
+}
+
+land_cleanup() {
+    rm -rf "$LOGDIR"
+    if [ "${#marked_ready[@]}" -gt 0 ]; then
+        echo "" >&2
+        echo "✗ land exiting without a clean merge/revert decision -- reverting PR(s) ${marked_ready[*]} to draft so nothing is left stuck ready with nothing watching it." >&2
+        revert_marked_ready || true
+    fi
+}
+trap land_cleanup EXIT
+
+# ── Which areas can this PR actually have broken? ───────────────────────────
+# Same idea as `.githooks/pre-commit`'s own `want()` — scoped against the PR's own base. `just land` refused a dirty tree above, so tree state and HEAD already
+# agree by the time this runs.
+run_all=1
+changed=""
+base="$(git merge-base origin/main HEAD 2>/dev/null || true)"
+if [ -n "$base" ]; then
+    run_all=0
+    changed="$(git diff --name-only "$base" 2>/dev/null || echo FORCE_ALL)"
+fi
+case "$changed" in *FORCE_ALL*) run_all=1;; esac
+changed="$(grep -vE '\.md$' <<<"$changed" || true)"
+
+want() {  # want <area> → should this area's checks run?
+    [ "$run_all" -eq 1 ] && return 0
+    case "$1" in
+        model)  grep -qE '^model/' <<<"$changed";;
+        hooks)  grep -qE '^\.claude/hooks/' <<<"$changed";;
+    esac
+}
+
+# `Justfile` sits in this safe list rather than forfeiting to FULL, same reasoning as
+# `.githooks/pre-commit`'s identical fallback: nothing here has a test to run for a Justfile-only
+# change (its one check, a syntax parse, is `pre-commit`-only static analysis — see that file's
+# `stage_justfile`), but a bare Justfile edit still shouldn't force the full suite either. The
+# plugin's only check, its validation, is static analysis too.
+if [ "$run_all" -eq 0 ] && grep -qvE '^(model/|plugin/|\.claude-plugin/|\.claude/(hooks/|settings\.json$)|Justfile$|$)' <<<"$changed"; then
+    run_all=1
+fi
+
+echo "╔══════════════════════════════════════╗"
+echo "║  land: running the full local suite  ║"
+echo "╚══════════════════════════════════════╝"
+if [ "$run_all" -eq 1 ]; then
+    echo "  scope: FULL (no computable diff, or a change outside the mapped areas)"
+else
+    scope="$(for a in hooks model; do want "$a" && printf '%s ' "$a"; done)" || true
+    echo "  scope: ${scope:-none — nothing this PR changed maps to a checked area}"
+fi
+
+# ── Stage functions ──────────────────────────────────────────────────────────
+# One function per area that has a TEST to run. Static analysis (ruff/mypy/the import contracts/
+# ast-grep/the plugin validation) is NOT re-run here — `.githooks/pre-commit` already ran it per
+# commit; `hooks` never had static analysis in the first place (its only content is a self-test).
+
+stage_hooks() {
+echo "▶ Claude hooks: block_main_branch self-test"
+(cd "$ROOT" && python3 .claude/hooks/test_block_main_branch.py)
+
+echo "▶ Claude hooks: require_draft_pr self-test"
+(cd "$ROOT" && python3 .claude/hooks/test_require_draft_pr.py)
+}
+
+stage_model() {
+echo "▶ Model: pytest"
+(cd "$ROOT" && just test)
+}
+
+# ── Fan out: one background job per selected area, wall clock = max(area) ──────
+areas=()
+for a in hooks model; do
+    want "$a" || continue
+    areas+=("$a")
+done
+
+if [ "${#areas[@]}" -gt 0 ]; then
+    echo ""
+    echo "→ running in parallel: ${areas[*]}"
+fi
+
+declare -A pids=()
+declare -A starts=()
+for a in "${areas[@]}"; do
+    ( "stage_$a" ) >"$LOGDIR/$a.log" 2>&1 &
+    pids["$a"]=$!
+    starts["$a"]="$SECONDS"
+done
+
+# One line per area as it finishes, not just at the end -- `trap ... EXIT` above deletes $LOGDIR
+# on the way out, so a Ctrl-C partway through this otherwise prints nothing at all about what had
+# already passed.
+failed=()
+for a in "${areas[@]}"; do
+    if wait "${pids[$a]}"; then
+        echo "✓ $a ($(( SECONDS - starts[$a] ))s)"
+    else
+        echo "✗ $a ($(( SECONDS - starts[$a] ))s)" >&2
+        failed+=("$a")
+    fi
+done
+
+for a in "${areas[@]}"; do
+    [ -s "$LOGDIR/$a.log" ] || continue
+    echo ""
+    echo "── $a ──"
+    cat "$LOGDIR/$a.log"
+done
+
+if [ "${#failed[@]}" -gt 0 ]; then
+    echo ""
+    echo "✗ failed locally: ${failed[*]} — not touching the PR's draft/ready state." >&2
+    exit 1
+fi
+
+echo ""
+echo "✓ local suite passed — marking the PR ready and merging."
+
+# `gh stack merge` refuses unless every PR it is about to merge is open and not a draft, so a
+# stacked PR readies each member below it as well, skipping any that is already ready. Ordered
+# bottom-to-top.
+ready_targets=("$pr_number")
+if [ -n "$stack_number" ]; then
+    stack_ready="$(run_gh api "repos/{owner}/{repo}/stacks/$stack_number" \
+        --jq ".pull_requests[0:$stack_position][] | select(.state == \"open\" and (.draft or .number == $pr_number)) | .number")"
+    mapfile -t ready_targets < <(printf '%s' "$stack_ready")
+fi
+
+for pr in "${ready_targets[@]}"; do
+    run_gh pr ready "$pr"
+    marked_ready+=("$pr")
+done
+
+# NOT --delete-branch: `gh pr merge`'s local-branch cleanup runs `git checkout <base>` in
+# this checkout before deleting the head branch, and every branch here lives in its own
+# linked worktree (see AGENTS.md > Running it) — `main` is checked out in the PRIMARY
+# worktree, so that checkout fails ("'main' is already used by worktree at …") *after* the
+# merge itself has already gone through on GitHub, making `land` report failure on a PR that
+# in fact merged. With the repo's `delete_branch_on_merge` setting on, GitHub deletes the remote
+# head branch itself as part of the squash merge; with it off, the explicit remote delete below
+# does it (and only warns on failure). The local worktree/branch is manual cleanup after.
+# A stack merge is deliberately NOT bounded by `run_gh`'s 30s: GitHub runs it asynchronously
+# and `gh` waits it out, so a timeout firing mid-merge would revert PRs GitHub is in the
+# middle of merging. Auth is already proven working by every bounded call above.
+if [ -n "$stack_number" ]; then
+    gh stack merge "$pr_number" --squash --yes
+else
+    run_gh pr merge --squash
+fi
+marked_ready=()
+if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+    if ! git push origin --delete "$branch" >/dev/null 2>&1; then
+        echo "note: could not delete remote branch $branch — clean it up manually." >&2
+    fi
+fi

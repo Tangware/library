@@ -1,0 +1,17 @@
+id: no-fallbacks
+language: python
+severity: error
+message: Fail loudly; never guess a missing value.
+files: [src/**]
+rule:
+  any:
+    - pattern: $VALUE or []
+    - pattern: $VALUE or {}
+    - pattern: max($$$, default=$DEFAULT)
+    - pattern: min($$$, default=$DEFAULT)
+    - pattern: $MAPPING.get($KEY, $DEFAULT)
+    - kind: except_clause
+      has:
+        kind: block
+        has: { regex: "^(pass|return None)$", nthChild: 1 }
+        not: { has: { nthChild: 2 } }

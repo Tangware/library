@@ -1,0 +1,20 @@
+line-length = 100
+target-version = "py314"
+
+[lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "PLC0415", "ASYNC", "S", "RUF", "LOG", "G", "DTZ", "PT", "C4", "PIE", "RET", "ERA", "PTH", "PGH004", "TID", "ANN401", "D200", "D201", "D202", "D205", "D209", "D210", "D401", "D403", "D415", "D419", "SLF001"]
+
+[lint.flake8-tidy-imports.banned-api]
+"math".msg = "Maths lives only in the folders M18 names."
+"numpy".msg = "Maths lives only in the folders M18 names."
+"scipy".msg = "Maths lives only in the folders M18 names."
+"build123d.Vector".msg = "Maths lives only in the folders M18 names."
+"importlib.import_module".msg = "The part cache keys on the code a builder references, so import by name (M3)."
+"importlib.reload".msg = "The part cache keys on the code a builder references, so import by name (M3)."
+"importlib.util".msg = "The part cache keys on the code a builder references, so import by name (M3)."
+"pytest.skip".msg = "A test passes or fails; it never skips."
+"pytest.importorskip".msg = "A test passes or fails; it never skips."
+"pytest.mark.skip".msg = "A test passes or fails; it never skips."
+"pytest.mark.skipif".msg = "A test passes or fails; it never skips."
+"pytest.xfail".msg = "A test passes or fails; it is never expected to fail."
+"pytest.mark.xfail".msg = "A test passes or fails; it is never expected to fail."

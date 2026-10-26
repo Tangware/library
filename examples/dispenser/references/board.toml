@@ -1,0 +1,44 @@
+# One [[item]] per reference: title, image (path or url), job, note,
+# set = "core" | "negative" | "decoy".
+
+[[item]]
+title = "Typhoon / Brabantia round breadbin"
+image = "https://www.brabantia.com/"
+job = "a drum with one opening that reads as kitchen, not device"
+note = "[derived] gives S2: one drum, one seam"
+set = "core"
+
+[[item]]
+title = "OXO Good Grips kitchen tools"
+image = "https://www.oxo.com/"
+job = "controls sized for weak hands without looking medical"
+note = "[derived] gives R7: the pull wider than a hand"
+set = "core"
+
+[[item]]
+title = "Braun ET66 calculator / Braun kitchen timers"
+image = "https://www.braun.com/"
+job = "one light, nothing else on the face"
+note = "[derived] gives S3 and P4"
+set = "core"
+
+[[item]]
+title = "Clear-lid automatic pill carousel"
+image = "https://www.epill.com/"
+job = "the category residual"
+note = "[derived] killed by P1 and P2: clear lid shows every dose, clinical white"
+set = "negative"
+
+[[item]]
+title = "Pillo / Pria pill robot"
+image = "https://newatlas.com/pillo-pill-dispensing-robot/44076"
+job = "the failed robot companion"
+note = "[derived] killed by P4 and P6: a face, a voice, a camera"
+set = "negative"
+
+[[item]]
+title = "Locked cabinet dispenser with a screen"
+image = "https://www.herohealth.com/"
+job = "the clinical cabinet"
+note = "[derived] killed by P1 and P3: screen and buttons, cabinet look"
+set = "negative"

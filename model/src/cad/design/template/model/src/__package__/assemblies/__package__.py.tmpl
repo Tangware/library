@@ -1,0 +1,12 @@
+from cad.assembly.tree import Assembly, job
+from cad.cables.models import Route
+
+from {{package}}.master import MASTER, ProductMaster
+from {{package}}.parts.plate import plate
+
+
+def harness(m: ProductMaster) -> list[Route]:
+    return []
+
+
+PRODUCT = Assembly("{{package}}", job(plate, MASTER), cables=lambda: harness(MASTER))

@@ -1,0 +1,20 @@
+id: no-pick-by-order
+language: python
+severity: error
+message: Pick by a named relation or an exact-count query, never by order.
+files: [src/**]
+utils:
+  shape-query:
+    kind: call
+    has:
+      field: function
+      has: { field: attribute, regex: "^(faces|edges|vertices|solids|wires|filter_by|group_by)$" }
+rule:
+  any:
+    - pattern: $LIST.first
+    - pattern: $LIST.last
+    - pattern: $LIST[0]
+    - pattern: $LIST[-1]
+    - pattern: $LIST.sort_by($$$)
+constraints:
+  LIST: { matches: shape-query }
