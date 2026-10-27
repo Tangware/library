@@ -6,7 +6,7 @@ currency = "USD"
 [made]
 partner = "in-house: the founder's own FDM printers"
 process = "FDM PETG"
-note = "PETG at Prusament list ~$28/kg (estimate from 105 ILS); printer time, electricity and labour not costed"
+note = "PETG at Prusament list ~$28/kg (estimate, converted); printer time, electricity and labour not costed"
 lines = [
   { part = "puck", grams = 54, unit = 1.51 },
   { part = "head", grams = 85, unit = 2.38 },
@@ -49,13 +49,13 @@ name = "CNC Kitchen M3 x 5.7 heat-set insert"
 supplier = "CNC Kitchen 4270002316409"
 qty = 1200
 unit = 0.085
-source = "estimate: 1000-pack 300 ILS, opened, converted"
+source = "estimate: 1000-pack list, opened, converted"
 [[bought]]
 name = "CNC Kitchen M2.5 x 4 heat-set insert"
 supplier = "CNC Kitchen 4262391011980"
 qty = 400
 unit = 0.09
-source = "estimate: 1000-pack 319 ILS, opened, converted"
+source = "estimate: 1000-pack list, opened, converted"
 [[bought]]
 name = "M3 x 6 socket head cap screw"
 supplier = "Accu SSCF-M3-6-A2"
