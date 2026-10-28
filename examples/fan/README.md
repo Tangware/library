@@ -1,4 +1,4 @@
-# fan
+Fan: a quiet desk fan whose head sweeps side to side on a stepper.
 
 ▸ "A quiet desk fan that slowly sweeps side to side, for a hot home-office desk."
 

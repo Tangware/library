@@ -19,7 +19,7 @@ claude plugin install tangware@tangware
 
 ## Examples
 
-Each design in `examples/` is a full repo, from `discover/` to `ops/`, with its model in `model/`; build it in the studio.
+Each design in `examples/` is a full repo, from `discover/` to its model in `model/`; build it in the studio.
 
 - `box`: a printed box that holds a Raspberry Pi Pico 2 and sticks to steel by magnets.
 - `fan`: a quiet desk fan whose head sweeps side to side on a stepper.

@@ -1,4 +1,6 @@
-pantilt: ▸ "A phone stand that turns and tilts to keep my face in frame while I teach online."
+Pantilt: a phone stand that pans and tilts to keep a face in frame.
+
+▸ "A phone stand that turns and tilts to keep my face in frame while I teach online."
 
 Build it in Tanġware Studio, which runs the checks.
 

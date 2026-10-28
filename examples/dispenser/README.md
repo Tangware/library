@@ -1,4 +1,4 @@
-# dispenser
+Dispenser: a pill dispenser whose carousel gives each dose at its time.
 
 ▸ "A pill dispenser that gives my dad the right pills at the right time, and tells me if he missed them."
 
