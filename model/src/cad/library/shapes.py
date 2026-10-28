@@ -380,11 +380,12 @@ class Part:
     print_settings: PrintSettings | None = None
     ships_with: str = ""
     connectors: dict[str, Seat] = field(default_factory=dict, compare=False)
+    _unposed: Brep | None = field(default=None, init=False, repr=False, compare=False)
     _solid: Brep | None = field(default=None, init=False, repr=False, compare=False)
     _published: dict[str, Seat] | None = field(default=None, init=False, repr=False, compare=False)
 
     def __getstate__(self) -> dict[str, object]:
-        return {**vars(self), "_solid": None, "_published": None}
+        return {**vars(self), "_unposed": None, "_solid": None, "_published": None}
 
     def solid(self) -> Brep:
         if self._solid is None:
@@ -392,10 +393,12 @@ class Part:
         return self._solid
 
     def build(self) -> Brep:
-        return self.pose * self.shape()
+        return self.pose * self.unposed()
 
     def unposed(self) -> Brep:
-        return self.pose.inverse() * self.solid()
+        if self._unposed is None:
+            self._unposed = self.shape()
+        return self._unposed
 
     def published(self) -> dict[str, Seat]:
         return self.connectors
