@@ -23,7 +23,7 @@ const auth = { authorization: `Bearer ${requireToken()}` };
 const repo = repoName();
 const base = `${studio}/api/repos/${encodeURIComponent(repo)}`;
 const json = (r) => {
-  if (r.status === 401) { console.error("Your Tangware login was refused. Run tangware login again."); process.exit(1); }
+  if (r.status === 401) { console.error("Your Tanġware login was refused. Run tangware login again."); process.exit(1); }
   return r.json();
 };
 const printMap = (m) => {

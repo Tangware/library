@@ -1,6 +1,6 @@
 ---
 name: studio
-description: Drives the Tangware studio the person has open in their browser, showing what you talk about. Use for every answer about something the studio shows (a requirement, constraint, design idea, part, check, bill line, board, recording, shot, test, quote or commit), and to give the first tour of the studio.
+description: Drives the Tanġware studio the person has open in their browser, showing what you talk about. Use for every answer about something the studio shows (a requirement, constraint, design idea, part, check, bill line, board, recording, shot, test, quote or commit), and to give the first tour of the studio.
 ---
 
 The studio is a read-only view of this repo at one commit. You drive it: open a page, select something, and spotlight it with a short caption, while you answer in the terminal. Show something whenever your answer is about something visible, without being asked. The person clicks anywhere in the studio to take over.

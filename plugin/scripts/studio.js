@@ -16,7 +16,7 @@ const token = () => {
 const requireToken = () => {
   const found = token();
   if (found) return found;
-  console.error("You are not logged in to Tangware. Run tangware login.");
+  console.error("You are not logged in to Tanġware. Run tangware login.");
   process.exit(1);
 };
 const gitAsk = (args, fallback) => {

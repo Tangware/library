@@ -8,7 +8,7 @@ fetch(`${studio}/api/repos`, { headers: { authorization: `Bearer ${found}` }, si
   .then((r) => (r.ok ? r.json() : []))
   .then((repos) => {
     if (!repos.some((r) => r.name === name)) return;
-    const additionalContext = `The Tangware studio is open at ${studio}, showing this repo (${name}). Use the studio skill: whenever you talk about something the studio shows, show it there. In your first reply, offer in one line to give the first tour of the studio (the studio skill has it written out).`;
+    const additionalContext = `The Tanġware studio is open at ${studio}, showing this repo (${name}). Use the studio skill: whenever you talk about something the studio shows, show it there. In your first reply, offer in one line to give the first tour of the studio (the studio skill has it written out).`;
     console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext } }));
   })
   .catch(() => {})

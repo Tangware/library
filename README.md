@@ -1,6 +1,6 @@
-# Tangware CAD library
+# Tanġware CAD library
 
-Mechanical design as code, on build123d: parts mated as in CAD and assembled. The build in the Tangware studio exports the STEP, GLB and print STLs and runs the checks, simulation, stress and bill. A coding agent takes a product from idea to a priced, buildable design by following `runbooks/`, under the rules in `AGENTS.md`.
+Mechanical design as code, on build123d: parts mated as in CAD and assembled. The build in the Tanġware studio exports the STEP, GLB and print STLs and runs the checks, simulation, stress and bill. A coding agent takes a product from idea to a priced, buildable design by following `runbooks/`, under the rules in `AGENTS.md`.
 
 Needs git and [uv](https://docs.astral.sh/uv/).
 
@@ -13,7 +13,7 @@ uv run cad new ../../my-product --name "My product"
 
 ## Claude Code plugin
 
-`plugin/` lets Claude Code design with this library and drive the Tangware studio. Install it with:
+`plugin/` lets Claude Code design with this library and drive the Tanġware studio. Install it with:
 
 ```sh
 claude plugin marketplace add Tangware/library

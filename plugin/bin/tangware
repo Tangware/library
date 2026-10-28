@@ -43,7 +43,7 @@ async function login() {
     if (status === 200) {
       mkdirSync(dirname(tokenFile), { recursive: true });
       writeFileSync(tokenFile, body.token, { mode: 0o600 });
-      return console.log("Signed in to Tangware.");
+      return console.log("Signed in to Tanġware.");
     }
     if (status === 410) fail("The code expired. Run tangware login again.");
   }
@@ -64,7 +64,7 @@ async function link() {
       continue;
     }
     if (status === 200) return open(new URL(body.url, studio).href);
-    if (status === 401) fail("Your Tangware login was refused. Run tangware login again.");
+    if (status === 401) fail("Your Tanġware login was refused. Run tangware login again.");
     if (status !== 409) fail(body.error);
     if (!opened) {
       console.log(`${body.error} Waiting for you to allow it on GitHub…`);
