@@ -6,7 +6,7 @@ from cad.library.bought.catalogue import Catalogue, ServoKind
 from cad.library.bought.query import LENGTH_TOLERANCE, cylinders, exactly, on_axis
 from cad.library.bought.vendor import Bought, solids_of
 from cad.library.derived import derived
-from cad.library.shapes import Seat, radius_of, seat_of
+from cad.library.shapes import Outside, Seat, radius_of, seat_of
 
 SPLINE = "spline"
 CASE_SEAT = "case seat"
@@ -53,6 +53,6 @@ class Servo(Bought):
     def published(self) -> dict[str, Seat]:
         return {
             SPLINE: seat_of(spline(self.item), Location()),
-            CASE_SEAT: seat_of(self.unposed().faces(), Location()),
+            CASE_SEAT: Outside(self.unposed()),
             **self.connectors,
         }

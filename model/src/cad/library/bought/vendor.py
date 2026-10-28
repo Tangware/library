@@ -40,7 +40,18 @@ from cad.library.bought.query import (
 )
 from cad.library.bought.step import Look, Named, coloured_step
 from cad.library.derived import derived
-from cad.library.shapes import OUTSIDE, Block, Brep, Part, Seat, Shaped, common, radius_of, seat_of
+from cad.library.shapes import (
+    OUTSIDE,
+    Block,
+    Brep,
+    Outside,
+    Part,
+    Seat,
+    Shaped,
+    common,
+    radius_of,
+    seat_of,
+)
 
 DOWNLOADS = Path.cwd() / "build" / "downloads"
 DOWNLOAD_TIMEOUT_SECONDS = 600
@@ -331,7 +342,7 @@ class Bought(Part):
 
     def published(self) -> dict[str, Seat]:
         points = {point.name: seat_of([], point.at) for point in self.item.connection_points}
-        return {OUTSIDE: seat_of(self.unposed().faces(), Location()), **points, **self.connectors}
+        return {OUTSIDE: Outside(self.unposed()), **points, **self.connectors}
 
     def coloured_solids(self) -> list[tuple[Brep, Rgb | None]]:
         return [

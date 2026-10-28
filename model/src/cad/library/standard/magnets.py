@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from build123d import Align, Cylinder, Location
+from build123d import Align, Cylinder
 
-from cad.library.shapes import OUTSIDE, Brep, Part, Seat, seat_of
+from cad.library.shapes import OUTSIDE, Brep, Outside, Part, Seat
 
 
 @dataclass(frozen=True)
@@ -34,4 +34,4 @@ class Disc(Part):
         )
 
     def published(self) -> dict[str, Seat]:
-        return {OUTSIDE: seat_of(self.unposed().faces(), Location())}
+        return {OUTSIDE: Outside(self.unposed())}

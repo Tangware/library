@@ -85,11 +85,11 @@ def unseated(mate: Mate) -> list[str]:
     faults = []
     for connector in (mate.child, mate.parent):
         try:
-            faces = connector.seat.faces
+            bare = connector.seat.bare()
         except ValueError as missing:
             missing.add_note(f"named by the mate {mate.name}")
             raise
-        if not faces:
+        if bare:
             faults.append(f"{mate.name}: {connector.name} on {named(connector.part)}")
     return faults
 

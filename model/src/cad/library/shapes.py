@@ -1,6 +1,7 @@
 import io
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from functools import cached_property
 from typing import Literal, cast
 
 from build123d import (
@@ -36,6 +37,8 @@ from OCP.BinTools import BinTools, BinTools_FormatVersion
 from OCP.BRepAdaptor import BRepAdaptor_Surface
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Section
 from OCP.BRepFeat import BRepFeat_SplitShape
+from OCP.TopAbs import TopAbs_FACE
+from OCP.TopExp import TopExp_Explorer
 from OCP.TopoDS import TopoDS_Shape
 
 from cad.library.bought.catalogue import Catalogue
@@ -109,6 +112,25 @@ class Seat:
     frame: Location
     faces: list[Face]
     instances: tuple[Seat, ...] = ()
+
+    def bare(self) -> bool:
+        return not self.faces
+
+
+class Outside(Seat):
+    shape: Brep
+
+    def __init__(self, shape: Brep) -> None:
+        object.__setattr__(self, "frame", Location())
+        object.__setattr__(self, "instances", ())
+        object.__setattr__(self, "shape", shape)
+
+    @cached_property
+    def faces(self) -> list[Face]:
+        return self.shape.faces()
+
+    def bare(self) -> bool:
+        return not TopExp_Explorer(self.shape.wrapped, TopAbs_FACE).More()
 
 
 def seat_of(faces: Sequence[Face], frame: Location) -> Seat:
@@ -583,7 +605,7 @@ class FlatCable(Part):
         return FilletPolyline(*points(self.path), radius=self.section.bend).length
 
     def published(self) -> dict[str, Seat]:
-        return {OUTSIDE: seat_of(self.unposed().faces(), Location())}
+        return {OUTSIDE: Outside(self.unposed())}
 
     def shape(self) -> Brep:
         return flat_run(self.path, Plane(self.width_along_x_of).x_dir, self.section)
