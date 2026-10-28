@@ -17,6 +17,7 @@ class Spring:
     wire: float
     outer_diameter: float
     free_length: float
+    body_length: float
     rate: float
     preload: float
     rated_force: float

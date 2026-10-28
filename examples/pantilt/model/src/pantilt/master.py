@@ -39,6 +39,7 @@ SPRING_UNITS = {
     "wire": "mm",
     "outer_diameter": "mm",
     "free_length": "mm",
+    "body_length": "mm",
     "rate": "N/mm",
     "preload": "N",
     "rated_force": "N",
@@ -173,19 +174,20 @@ class ProductMaster(Master):
         Spring(
             part="LE 031C 05 S",
             wire=0.787,
-            outer_diameter=6.1,
+            outer_diameter=6.35,
             free_length=38.1,
-            rate=0.665,
-            preload=3.11,
+            body_length=28.55,
+            rate=0.555,
+            preload=2.594,
             rated_force=23.1,
             rated_stretch=30.1,
             hook_pin=0.0,
         ),
         SPRING_UNITS,
         why="Pulls the jaw down onto the phone's top edge (R1, R5)",
-        source="Lee Spring LE-031C-5SS via the Olander listing (search summary, not opened): "
-        "0.031 in wire, 1.500 in free, 0.7 lb initial tension, 3.8 lb/in, 5.20 lb max; "
-        "outside diameter 0.240 in is an estimate",
+        source="leespring.com's LE 031C 05 S page: 0.031 in wire, 0.25 in outside diameter, "
+        "1.500 in free, 1.12 in body, 0.5831 lb initial tension, 3.17 lb/in; 5.20 lb max "
+        "from the Olander LE-031C-5SS listing",
     )
     spring_preload_stretch: float = given(
         2.0, "mm", why="The spring stays taut on the narrowest phone", source="estimate"

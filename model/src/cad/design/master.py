@@ -2,6 +2,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 
 from cad.library.derived import Skeleton
+from cad.library.mates import JointRelation
 from cad.library.shapes import Block
 
 
@@ -42,3 +43,7 @@ class Master(Skeleton):
     @property
     def poses(self) -> tuple[Pose, ...]:
         return (REST,)
+
+    @property
+    def relations(self) -> dict[str, JointRelation]:
+        return {}
