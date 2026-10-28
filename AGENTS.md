@@ -11,7 +11,7 @@ Model lengths in mm, forces in N, torques in Nm, angles in degrees.
 - `assembly/` — the part tree.
 - `design/` and `cli.py` — a design package (master, `@part` builders, assemblies, catalogue) and `cad new` and `cad upgrade`; `examples/box/` is the worked example.
 
-The part cache, the export, the checks, the gate, analysis, the MJCF, the bill and the renders run on the build service, which adds `cad gate` and `cad export` to the same `cad` command.
+The part cache, the export, the checks, analysis, the MJCF, the bill and the renders run on the build service, which adds `cad export` and `cad check` to the same `cad` command.
 
 ---
 

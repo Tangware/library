@@ -22,5 +22,5 @@ strict = true
 empty_parameter_set_mark = "fail_at_collect"
 markers = [
     "check(does_not_catch, subjects): what a design check misses and the parts it covers",
-    "study: a slow check run on demand; the gate reads its last verdict",
+    "study: a slow check run on demand; the checks read its last verdict",
 ]
