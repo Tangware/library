@@ -9,4 +9,4 @@ while [ "$dir" != / ]; do
   fi
   dir=$(dirname "$dir")
 done
-exec uvx --quiet --from tangware==0.1.0 cad "$@"
+exec uvx --quiet --from tangware==0.1.1 cad "$@"

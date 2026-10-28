@@ -5,7 +5,7 @@ Mechanical design as code, on build123d: parts mated as in CAD and assembled. Th
 Needs git and [uv](https://docs.astral.sh/uv/).
 
 ```sh
-uvx --from tangware==0.1.0 cad new my-product --name "My product"
+uvx --from tangware==0.1.1 cad new my-product --name "My product"
 ```
 
 ## Claude Code plugin

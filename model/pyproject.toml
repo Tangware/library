@@ -1,6 +1,6 @@
 [project]
 name = "tangware"
-version = "0.1.0"
+version = "0.1.1"
 description = "Mechanical design as code: parts, mates and assemblies on build123d"
 readme = "README.md"
 license = "Apache-2.0"
