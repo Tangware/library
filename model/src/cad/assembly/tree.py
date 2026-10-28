@@ -81,6 +81,7 @@ def instance_keys(parts: list[Part]) -> dict[int, str]:
     return {id(part): next(keys[part.name]) for part in parts}
 
 
+@derived
 def unseated(mate: Mate) -> list[str]:
     faults = []
     for connector in (mate.child, mate.parent):
