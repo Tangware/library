@@ -535,5 +535,5 @@ PRODUCT = Assembly(
     Assembly("carousel", job(turning_carousel, MASTER), job(closed_lid, MASTER)),
     Assembly("drawer", job(drawer, MASTER), job(actuator, MASTER), bench=True),
     job(sliding_drawer, MASTER),
-    cables=lambda: harness(MASTER),
+    cables=lambda _: harness(MASTER),
 )

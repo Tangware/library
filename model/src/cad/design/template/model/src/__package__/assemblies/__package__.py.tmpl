@@ -9,4 +9,4 @@ def harness(m: ProductMaster) -> list[Route]:
     return []
 
 
-PRODUCT = Assembly("{{package}}", job(plate, MASTER), cables=lambda: harness(MASTER))
+PRODUCT = Assembly("{{package}}", job(plate, MASTER), cables=lambda _: harness(MASTER))

@@ -120,5 +120,5 @@ BOX = Assembly(
     Assembly("base", job(body, MASTER), job(inserts, MASTER), job(magnets, MASTER)),
     job(board, MASTER),
     job(closed, MASTER),
-    cables=lambda: usb_cable(MASTER),
+    cables=lambda _: usb_cable(MASTER),
 )

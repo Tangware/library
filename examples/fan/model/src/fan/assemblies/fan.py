@@ -413,5 +413,5 @@ PRODUCT = Assembly(
     ),
     job(closed, MASTER),
     job(feet, MASTER),
-    cables=lambda: harness(MASTER),
+    cables=lambda _: harness(MASTER),
 )

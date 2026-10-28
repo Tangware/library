@@ -49,7 +49,7 @@ class Assembly:
         why: tuple[ModuleType, ...] = (),
         stress_analysed: bool = True,
         bench: bool = False,
-        cables: Callable[[], Sequence[Route]] | None = None,
+        cables: Callable[[Fastening], Sequence[Route]] | None = None,
     ) -> None:
         self.name = name
         self.holds = holds
