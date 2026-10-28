@@ -50,7 +50,7 @@ Offer it at the start. When the person accepts, give one step at a time: run the
 7. `show.sh go engineering --select check:<a failing check's id, or the first check's> --highlight .insp --caption "<what it checks, and its verdict>."`
    Say: each check says what it covers and what it doesn't catch. If one fails, say why in plain words.
 8. `show.sh go media --highlight .shot-card --caption "Shots rendered from the same model."`
-   Say: promotional shots are plain scripts run on every build; framing and motion are approved before render time is spent.
+   Say: promotional shots are plain scripts run on request; framing and motion are approved before render time is spent.
 9. `show.sh go marketing --select price --highlight .insp --caption "Tested before tooling."`
    Say: each campaign puts one question to people, its variants read against a go line, and the decision links to what it changed in the spec, design or engineering.
 10. `show.sh go production --select quotes --highlight .card --caption "A quote you can order."`
