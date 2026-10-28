@@ -7,7 +7,6 @@ import zipfile
 from collections import Counter
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, replace
-from functools import reduce
 from http.client import BAD_GATEWAY, GATEWAY_TIMEOUT, OK, SERVICE_UNAVAILABLE, HTTPSConnection
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -59,7 +58,6 @@ DOWNLOAD_TIMEOUT_SECONDS = 600
 USER_AGENT = "tangware"
 DOWNLOAD_ATTEMPTS = 3
 GATEWAY_ERRORS = {BAD_GATEWAY, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT}
-SMALL_SOLID = 0.02
 
 
 def maker_step(source: Download, body: bytes) -> bytes:
@@ -103,21 +101,7 @@ def boxed(found: BoundBox) -> Solid:
 
 
 def simplified_step(path: Path) -> list[Named]:
-    found = coloured_step(path)
-    boxes = [solid.bounding_box() for solid, _, _ in found]
-    smallest = SMALL_SOLID * reduce(BoundBox.add, boxes).diagonal
-    return [
-        _in_its_box(named, box)
-        if box.diagonal < smallest and min(box.size) > LENGTH_TOLERANCE
-        else named
-        for named, box in zip(found, boxes, strict=True)
-    ]
-
-
-def _in_its_box(found: Named, box: BoundBox) -> Named:
-    _, look, name = found
-    solid = boxed(box)
-    return solid, evenly(solid, look), name
+    return coloured_step(path)
 
 
 @derived
