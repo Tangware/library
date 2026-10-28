@@ -28,7 +28,7 @@ from build123d import (
     Plane,
 )
 
-from cad.library.cache import cached
+from cad.library.derived import derived
 from cad.library.fits import (
     BRASS,
     NUT_PROOF_MPA,
@@ -282,7 +282,7 @@ def counterbored_hole(
     )
 
 
-@cached
+@derived
 def _screw(size: Metric, length: float) -> Brep:
     return SocketHeadCapScrew(size, length, SOCKET_HEAD, simple=True)
 
@@ -320,7 +320,7 @@ class Screw(Part):
         return screw_connectors(self.unposed())
 
 
-@cached
+@derived
 def _pan_head(size: Metric, length: float) -> Brep:
     return PanHeadScrew(size, length, PAN_HEAD, simple=True)
 
@@ -367,7 +367,7 @@ class PanScrew(Part):
         return screw_connectors(self.unposed())
 
 
-@cached
+@derived
 def _nut(size: Metric, standard: Literal["iso4032", "iso4035"]) -> Brep:
     return HexNut(size, standard, simple=True)
 
@@ -414,7 +414,7 @@ def lock_nut_across_flats(screw: Metric) -> float:
     return din985_lock_nut.SIZES[screw.size].across_flats
 
 
-@cached
+@derived
 def _lock_nut(size: Metric) -> Brep:
     return din985_lock_nut.lock_nut(size.size, size.diameter)
 
@@ -451,7 +451,7 @@ def hex_bolt_across_flats(screw: Metric) -> float:
     return float(_data(HexHeadScrew, HEX_BOLT, screw)["s"])
 
 
-@cached
+@derived
 def _hex_bolt(size: Metric, length: float) -> Brep:
     return HexHeadScrew(size, length, HEX_BOLT, simple=True)
 
@@ -485,7 +485,7 @@ class HexBolt(Part):
         return screw_connectors(self.unposed())
 
 
-@cached
+@derived
 def _shoulder_screw(size: Metric, length: float) -> Brep:
     return FastenerShoulderScrew(size, length, SHOULDER_SCREW, simple=True)
 
@@ -517,7 +517,7 @@ class ShoulderScrew(Part):
         return {**screw_connectors(self.unposed()), SHOULDER: shoulder}
 
 
-@cached
+@derived
 def _washer(size: Metric) -> Brep:
     return PlainWasher(size.size, PLAIN_WASHER)
 
@@ -580,7 +580,7 @@ class Pin(Part):
         return {OUTSIDE: seat_of(round_faces(self.unposed(), self.diameter / 2), Location())}
 
 
-@cached
+@derived
 def _heat_set_nut(designation: str, maker: str) -> Brep:
     insert: type[FastenerNut] = HeatSetNut
     return insert(designation, maker)

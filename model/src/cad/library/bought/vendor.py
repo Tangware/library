@@ -39,7 +39,7 @@ from cad.library.bought.query import (
     planes,
 )
 from cad.library.bought.step import Look, Named, coloured_step
-from cad.library.cache import cached
+from cad.library.derived import derived
 from cad.library.shapes import OUTSIDE, Block, Brep, Part, Seat, Shaped, common, radius_of, seat_of
 
 DOWNLOADS = Path.cwd() / "build" / "downloads"
@@ -84,7 +84,7 @@ def downloaded(source: Download) -> Path:
     return path
 
 
-@cached
+@derived
 def placed_solids(
     shape: Path | Download | Callable[[], Brep],
     correct: Callable[[list[Solid]], list[Solid]] | None,
@@ -180,7 +180,7 @@ def _one_solid_each(pieces: list[tuple[Brep, Look]]) -> list[tuple[Solid, Look]]
     return kept
 
 
-@cached
+@derived
 def vendor_solids(item: Catalogue) -> tuple[tuple[Solid, Look], ...]:
     raw = placed_solids(item.shape, item.cleanup.correct)
     chosen = raw if item.cleanup.piece is None else _of_the_piece(raw, item.cleanup.piece)
@@ -257,7 +257,7 @@ def solids_of(item: Catalogue) -> list[Solid]:
     return [solid for solid, _ in vendor_solids(item)]
 
 
-@cached
+@derived
 def _horn(item: Catalogue, in_front: bool) -> int:
     if not isinstance(item.kind, ServoKind):
         raise ValueError(f"{item.file} has no horn")
@@ -280,7 +280,7 @@ def vendor_shape(item: Catalogue) -> Brep:
     return Compound(solids_of(item))
 
 
-@cached
+@derived
 def vendor_reach(item: Catalogue, toward: Axis) -> float:
     facing = Plane(origin=toward.position, z_dir=toward.direction)
     return (facing.location.inverse() * vendor_shape(item)).bounding_box().max.Z
@@ -290,7 +290,7 @@ def vendor_extent(item: Catalogue) -> BoundBox:
     return vendor_box(item).bounding_box()
 
 
-@cached
+@derived
 def vendor_box(item: Catalogue) -> Solid:
     found = vendor_shape(item).bounding_box()
     size = found.size

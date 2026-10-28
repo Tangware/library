@@ -12,7 +12,7 @@ from cad.library.bought.boards import (
 )
 from cad.library.bought.catalogue import NO_BILL, Bill, Catalogue
 from cad.library.bought.vendor import Bought, vendor_shape
-from cad.library.cache import cached
+from cad.library.derived import derived
 from cad.library.features.boards import BOARD_ROLE, board_inserts, board_screws
 from cad.library.features.hardware import (
     INSERTS,
@@ -123,7 +123,7 @@ def cover_inserts(m: FanMaster) -> Hole:
     return insert_seats(front, facing_back(m, m.fan_front), m.screw, fits=m.fits, stock=m.stock)
 
 
-@cached
+@derived
 def puck_inserts(m: FanMaster) -> Fastening:
     base = puck(m)
     for_floor = set_in(
@@ -138,7 +138,7 @@ def puck_inserts(m: FanMaster) -> Fastening:
     return together([for_floor, for_stepper])
 
 
-@cached
+@derived
 def stepper_mounted(m: FanMaster) -> Fastening:
     held = stepper(m)
     tabs = stepper_tabs()
@@ -170,7 +170,7 @@ def stepper_mounted(m: FanMaster) -> Fastening:
     return together([screws, Fastening(parts=[rotor], mates=[turning])], [held])
 
 
-@cached
+@derived
 def button(m: FanMaster) -> Fastening:
     terminals = wired(BUTTON, Pos(Z=-models.BUTTON_TERMINALS))
     held = Bought(name=BUTTON_NAME, pose=m.button_at, item=BUTTON, connectors=terminals)
@@ -184,7 +184,7 @@ def button(m: FanMaster) -> Fastening:
     return Fastening(parts=[held], mates=[mate])
 
 
-@cached
+@derived
 def turning_head(m: FanMaster) -> Fastening:
     made = head(m)
     on_shaft = Mate(
@@ -200,7 +200,7 @@ def turning_head(m: FanMaster) -> Fastening:
     return Fastening(parts=[made, *inserts.parts], mates=[on_shaft, *inserts.mates])
 
 
-@cached
+@derived
 def fan(m: FanMaster) -> Fastening:
     lead = wired(FAN, m.fan_origin * Pos(X=m.fan_side / 2, Y=-(m.fan_depth + m.lead_reach / 2)))
     held = Bought(name=FAN_NAME, pose=m.fan_at, item=FAN, connectors=lead)
@@ -214,7 +214,7 @@ def fan(m: FanMaster) -> Fastening:
     return Fastening(parts=[held], mates=[mate])
 
 
-@cached
+@derived
 def closed_head(m: FanMaster) -> Fastening:
     back = cover(m)
     through = Hole(
@@ -228,7 +228,7 @@ def closed_head(m: FanMaster) -> Fastening:
     return together([screws], [back])
 
 
-@cached
+@derived
 def floor_inserts_set(m: FanMaster) -> Fastening:
     plate = floor(m)
     posts = board_inserts(m.driver_mount, m.driver_at, fits=m.fits, stock=m.stock)
@@ -237,7 +237,7 @@ def floor_inserts_set(m: FanMaster) -> Fastening:
     return together([inserts], [plate])
 
 
-@cached
+@derived
 def driver_mounted(m: FanMaster) -> Fastening:
     board = driver(m)
     posts = board_inserts(m.driver_mount, m.driver_at, fits=m.fits, stock=m.stock)
@@ -250,14 +250,14 @@ def tape(m: FanMaster) -> Bought:
     return Bought(name=TAPE_NAME, pose=m.tape_at, item=TAPE)
 
 
-@cached
+@derived
 def tape_pad(m: FanMaster) -> Fastening:
     pad = tape(m)
     mates = held_by([pad], OUTSIDE, Connector(floor(m), TAPE_SEAT))
     return Fastening(parts=[pad], mates=[replace(mate, approach=-Axis.Z) for mate in mates])
 
 
-@cached
+@derived
 def taped_board(m: FanMaster) -> Fastening:
     pads = wired(XIAO, xiao_five_volt_pad() * Pos(Z=models.XIAO_TOP))
     board = Bought(name=XIAO_NAME, pose=m.xiao_at, item=XIAO, connectors=pads)
@@ -265,14 +265,14 @@ def taped_board(m: FanMaster) -> Fastening:
     return Fastening(parts=[board], mates=[replace(mate, approach=-Axis.Z) for mate in mates])
 
 
-@cached
+@derived
 def feet(m: FanMaster) -> Fastening:
     pads = [Bought(name=BUMPER_NAME, pose=at, item=BUMPER) for at in m.feet_at]
     mates = held_by(pads, OUTSIDE, Connector(floor(m), FEET))
     return Fastening(parts=pads, mates=[replace(mate, approach=Axis.Z) for mate in mates])
 
 
-@cached
+@derived
 def closed(m: FanMaster) -> Fastening:
     through = Hole(
         face=m.floor_top,

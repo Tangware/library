@@ -10,7 +10,7 @@ from cad.cables.models import Cable, Jacketed, Plug, Route, RoutePoint, Wire
 from cad.library.bought.catalogue import NO_BILL
 from cad.library.bought.boards import MOUNTING_HOLES, board_connectors
 from cad.library.bought.vendor import Bought
-from cad.library.cache import cached
+from cad.library.derived import derived
 from cad.library.features.boards import BOARD_ROLE, board_inserts, board_screws
 from cad.library.features.hardware import (
     INSERTS,
@@ -58,7 +58,7 @@ def pico_inserts(m: BoxMaster) -> Hole:
     return board_inserts(m.mount, m.board_at, fits=m.fits, stock=m.stock)
 
 
-@cached
+@derived
 def inserts(m: BoxMaster) -> Fastening:
     base = body(m)
     for_lid = set_in(
@@ -74,13 +74,13 @@ def inserts(m: BoxMaster) -> Fastening:
     return together([for_lid, for_board])
 
 
-@cached
+@derived
 def magnets(m: BoxMaster) -> Fastening:
     made = discs_in(body(m), m.magnet_seats, m.magnet, MAGNETS)
     return replace(made, mates=[replace(mate, approach=Axis.Z) for mate in made.mates])
 
 
-@cached
+@derived
 def board(m: BoxMaster) -> Fastening:
     held = pico(m)
     holder = Connector(body(m), BOARD_INSERTS)
@@ -88,7 +88,7 @@ def board(m: BoxMaster) -> Fastening:
     return together([screws], [held])
 
 
-@cached
+@derived
 def closed(m: BoxMaster) -> Fastening:
     top = lid(m)
     through = Hole(

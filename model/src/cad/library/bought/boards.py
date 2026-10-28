@@ -28,7 +28,7 @@ from cad.library.bought.query import (
     off_axis,
 )
 from cad.library.bought.vendor import solids_of, vendor_box
-from cad.library.cache import cached
+from cad.library.derived import derived
 from cad.library.shapes import Seat, clamp_face, flat_faces, seat_of
 from cad.library.standard.fasteners import Metric, passing_range
 from cad.library.turns import UPSIDE_DOWN
@@ -57,7 +57,7 @@ class MountingHoles:
     faces: list[Face]
 
 
-@cached
+@derived
 def mounting_holes(item: Catalogue, narrowest: float, widest: float, count: int) -> MountingHoles:
     return holes_in(solids_of(item), narrowest, widest, count)
 

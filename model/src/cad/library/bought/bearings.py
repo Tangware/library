@@ -6,7 +6,7 @@ from build123d import Axis, Solid
 from cad.library.bought.catalogue import Catalogue
 from cad.library.bought.query import cylinders, on_axis
 from cad.library.bought.vendor import solids_of, vendor_reach
-from cad.library.cache import cached
+from cad.library.derived import derived
 from cad.library.shapes import radius_of, round_faces
 
 
@@ -26,7 +26,7 @@ def _turned(solids: Sequence[Solid]) -> list[float]:
     return [radius_of(f) for f in cylinders(solids, Axis.Z.direction) if on_axis(f)]
 
 
-@cached
+@derived
 def ring_sizes(item: Catalogue) -> RingSizes:
     solids = solids_of(item)
     bore = 2 * min(_turned(solids))

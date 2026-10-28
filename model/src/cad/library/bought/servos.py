@@ -5,7 +5,7 @@ from build123d import Axis, Face, Location
 from cad.library.bought.catalogue import Catalogue, ServoKind
 from cad.library.bought.query import LENGTH_TOLERANCE, cylinders, exactly, on_axis
 from cad.library.bought.vendor import Bought, solids_of
-from cad.library.cache import cached
+from cad.library.derived import derived
 from cad.library.shapes import Seat, radius_of, seat_of
 
 SPLINE = "spline"
@@ -22,7 +22,7 @@ class ServoModel:
     p_coefficient: int
 
 
-@cached
+@derived
 def spline(item: Catalogue) -> list[Face]:
     if not isinstance(item.kind, ServoKind):
         raise ValueError(f"{item.file} has no spline")

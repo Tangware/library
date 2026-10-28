@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from bd_warehouse.gear import SpurGearPlan
 from build123d import Align, Axis, GeomType, Location, Plane, Rotation, extrude
 
-from cad.library.cache import cached
+from cad.library.derived import derived
 from cad.library.features.planes import line_through, normal_to
 from cad.library.fits import Fits
 from cad.library.shapes import TEETH, Brep, Printed, SurfaceFaces, register
@@ -40,7 +40,7 @@ def gear_plan(teeth: int, module: float, rotation: float = 0.0) -> SpurGearPlan:
     )
 
 
-@cached
+@derived
 def gear_solid(teeth: int, width: float, module: float) -> Brep:
     return extrude(gear_plan(teeth, module), amount=width)
 

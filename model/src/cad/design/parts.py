@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from inspect import getsourcefile, signature
 
-from cad.library.cache import Designed
+from cad.library.derived import Designed
 from cad.library.shapes import Shaped
 
 

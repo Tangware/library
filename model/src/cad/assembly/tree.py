@@ -6,7 +6,7 @@ from types import ModuleType
 from build123d import Location
 
 from cad.cables.models import Route
-from cad.library.cache import Cached
+from cad.library.derived import Derived, derived
 from cad.library.features.hardware import Fastening
 from cad.library.mates import Connector, Mate, Reference, copy_keys, named
 from cad.library.shapes import Part
@@ -31,7 +31,7 @@ class Job:
         return Fastening(parts=[made], mates=[])
 
 
-def job[**P, R: Made](builder: Cached[P, R], *args: P.args, **kwargs: P.kwargs) -> Job:
+def job[**P, R: Made](builder: Derived[P, R], *args: P.args, **kwargs: P.kwargs) -> Job:
     return Job(
         make=lambda: builder(*args, **kwargs),
         builder=builder,
@@ -142,6 +142,7 @@ def placed(fastening: Fastening, made: list[tuple[str, Fastening]]) -> None:
         part.group = holder.group
 
 
+@derived
 def assembled(assembly: Assembly) -> Fastening:
     made = [
         (node, held.run() if isinstance(held, Job) else Fastening(parts=[], mates=[held]))

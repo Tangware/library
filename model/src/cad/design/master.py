@@ -1,7 +1,7 @@
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 
-from cad.library.cache import Skeleton
+from cad.library.derived import Skeleton
 from cad.library.shapes import Block
 
 

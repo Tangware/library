@@ -1,13 +1,13 @@
 import pytest
 from build123d import Box, BuildPart, Locations
 
-from cad.library.cache import cached
+from cad.library.derived import derived
 from cad.library.shapes import Brep, built
 
 SIDE_MM = 2.0
 
 
-@cached
+@derived
 def cube() -> Brep:
     with BuildPart() as made:
         Box(SIDE_MM, SIDE_MM, SIDE_MM)

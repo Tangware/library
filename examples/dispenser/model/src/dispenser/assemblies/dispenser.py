@@ -22,7 +22,7 @@ from cad.library.bought.boards import (
 )
 from cad.library.bought.catalogue import NO_BILL, Bill, Catalogue
 from cad.library.bought.vendor import Bought, vendor_block, vendor_shape
-from cad.library.cache import cached
+from cad.library.derived import derived
 from cad.library.features.boards import BOARD_ROLE, board_inserts, board_screws
 from cad.library.features.hardware import (
     INSERTS,
@@ -202,7 +202,7 @@ def mounted_boards(m: DispenserMaster) -> list[tuple[Bought, BoardMount, Locatio
     ]
 
 
-@cached
+@derived
 def board_posts(m: DispenserMaster) -> Fastening:
     made = []
     for board, mount, at, seat in mounted_boards(m):
@@ -212,7 +212,7 @@ def board_posts(m: DispenserMaster) -> Fastening:
     return together(made)
 
 
-@cached
+@derived
 def boards(m: DispenserMaster) -> Fastening:
     made = []
     for board, mount, at, seat in mounted_boards(m):
@@ -223,7 +223,7 @@ def boards(m: DispenserMaster) -> Fastening:
     return together(made)
 
 
-@cached
+@derived
 def sensor_mounted(m: DispenserMaster) -> Fastening:
     held = reed(m)
     holes = reed_holes()
@@ -244,28 +244,28 @@ def sensor_mounted(m: DispenserMaster) -> Fastening:
     return together([screws], [held])
 
 
-@cached
+@derived
 def light(m: DispenserMaster) -> Fastening:
     held = Bought(name=LED_NAME, pose=m.led_at, item=LED)
     mates = held_by([held], OUTSIDE, Connector(base(m), LIGHT_HOLE))
     return Fastening(parts=[held], mates=[replace(mate, approach=-Axis.Y) for mate in mates])
 
 
-@cached
+@derived
 def buzzer(m: DispenserMaster) -> Fastening:
     held = Bought(name=BUZZER_NAME, pose=m.buzzer_at, item=BUZZER)
     mates = held_by([held], OUTSIDE, Connector(plate(m), BUZZER_BORE))
     return Fastening(parts=[held], mates=[replace(mate, approach=-Axis.Z) for mate in mates])
 
 
-@cached
+@derived
 def actuator(m: DispenserMaster) -> Fastening:
     held = Bought(name=ACTUATOR_NAME, pose=m.actuator_at, item=ACTUATOR)
     mates = held_by([held], OUTSIDE, Connector(drawer(m), ACTUATOR_POCKET))
     return Fastening(parts=[held], mates=[replace(mate, approach=-Axis.Z) for mate in mates])
 
 
-@cached
+@derived
 def base_inserts(m: DispenserMaster) -> Fastening:
     made = base(m)
     for_stepper = set_in(
@@ -286,7 +286,7 @@ def base_inserts(m: DispenserMaster) -> Fastening:
     return together([for_stepper, for_plate, for_sensor])
 
 
-@cached
+@derived
 def stepper_mounted(m: DispenserMaster) -> Fastening:
     held = stepper(m)
     tabs = stepper_tabs()
@@ -318,7 +318,7 @@ def stepper_mounted(m: DispenserMaster) -> Fastening:
     return together([screws, Fastening(parts=[rotor], mates=[turning])], [held])
 
 
-@cached
+@derived
 def turning_carousel(m: DispenserMaster) -> Fastening:
     made = carousel(m)
     on_shaft = Mate(
@@ -331,7 +331,7 @@ def turning_carousel(m: DispenserMaster) -> Fastening:
     return Fastening(parts=[made], mates=[on_shaft])
 
 
-@cached
+@derived
 def closed_lid(m: DispenserMaster) -> Fastening:
     made = lid(m)
     seat = Mate(
@@ -344,14 +344,14 @@ def closed_lid(m: DispenserMaster) -> Fastening:
     return Fastening(parts=[made], mates=[seat])
 
 
-@cached
+@derived
 def feet(m: DispenserMaster) -> Fastening:
     pads = [Bought(name=BUMPER_NAME, pose=at, item=BUMPER) for at in m.feet_at]
     mates = held_by(pads, OUTSIDE, Connector(plate(m), FEET))
     return Fastening(parts=pads, mates=[replace(mate, approach=Axis.Z) for mate in mates])
 
 
-@cached
+@derived
 def closed_plate(m: DispenserMaster) -> Fastening:
     made = plate(m)
     heads = under(m.plate_spots)
@@ -370,7 +370,7 @@ def closed_plate(m: DispenserMaster) -> Fastening:
     )
 
 
-@cached
+@derived
 def sliding_drawer(m: DispenserMaster) -> Fastening:
     made = drawer(m)
     slide = Mate(

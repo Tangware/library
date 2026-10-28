@@ -21,7 +21,7 @@ layers =
     cad.library.bought.query | cad.library.standard.fasteners
     cad.library.models
     cad.cables.models
-    cad.library.cache | cad.library.mates
+    cad.library.derived | cad.library.mates
     cad.library.shapes
     cad.library.printing
     cad.library.fits

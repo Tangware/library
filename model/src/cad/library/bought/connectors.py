@@ -21,7 +21,7 @@ from cad.library.bought.query import (
     planes,
 )
 from cad.library.bought.vendor import named_solids, solids_of, vendor_reach, vendor_shape
-from cad.library.cache import cached
+from cad.library.derived import derived
 from cad.library.shapes import Seat, faces_on, seat_of
 
 HEADER_PITCH = 2.54
@@ -37,7 +37,7 @@ def of_the_instance(name: str, instance: str) -> bool:
     return instance in name.split("/")
 
 
-@cached
+@derived
 def port_seats(item: Catalogue, port: Port) -> dict[str, Seat]:
     frame = facing(port.mating, port.across)
     found = [solid for solid, name in named_solids(item) if of_the_instance(name, port.instance)]
@@ -63,7 +63,7 @@ def port_seats(item: Catalogue, port: Port) -> dict[str, Seat]:
     return {name: seat_of(faces, mouth) for name, mouth in zip(names, mouths, strict=True)}
 
 
-@cached
+@derived
 def pin_seats(item: Catalogue, pins: Pins) -> dict[str, Seat]:
     count = len(pins.lines[0])
     across = Plane(origin=(0, 0, 0), x_dir=pins.along.direction, z_dir=(0, 0, 1)).y_dir
@@ -103,7 +103,7 @@ def board_ports(item: Catalogue) -> dict[str, Seat]:
     }
 
 
-@cached
+@derived
 def cable_exit(item: Catalogue) -> Location:
     match item.frame:
         case PlugFace(leaving=Axis() as leaving):
@@ -120,7 +120,7 @@ def sideways(item: Catalogue, leaving: Axis) -> Location:
     return Location(Plane(origin=middle, x_dir=Axis.Z.direction, z_dir=leaving.direction))
 
 
-@cached
+@derived
 def plug_seats(item: Catalogue, leaving: Location) -> dict[str, Seat]:
     shape = vendor_shape(item)
     nose = Plane.XY.offset(-vendor_reach(item, -Axis.Z))

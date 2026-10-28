@@ -2,7 +2,7 @@ from build123d import Axis, GridLocations, Location, Locations, Plane, Pos
 from cad.assembly.tree import Assembly, job
 from cad.library.bought.boards import MOUNTING_HOLES, BoardMount, board_connectors
 from cad.library.bought.vendor import Bought
-from cad.library.cache import cached
+from cad.library.derived import derived
 from cad.library.extension_spring import HIGH_HOOK, LOW_HOOK, ExtensionSpring
 from cad.library.features.boards import BOARD_ROLE, board_inserts, board_screws
 from cad.library.features.hardware import (
@@ -201,7 +201,7 @@ def on_the_floor(m: ProductMaster) -> list[tuple[BoardMount, Bought, str]]:
     ]
 
 
-@cached
+@derived
 def base_inserts(m: ProductMaster) -> Fastening:
     cup = base(m)
     lid_into = insert_seats(m.pan_flange, m.lid_screws, m.screw, fits=m.fits, stock=m.stock)
@@ -213,7 +213,7 @@ def base_inserts(m: ProductMaster) -> Fastening:
     return together(made)
 
 
-@cached
+@derived
 def boards(m: ProductMaster) -> Fastening:
     cup = base(m)
     floor = on_the_floor(m)
@@ -225,13 +225,13 @@ def boards(m: ProductMaster) -> Fastening:
     return together(made, [board for _, board, _ in floor])
 
 
-@cached
+@derived
 def pan_motor(m: ProductMaster) -> Fastening:
     names = (PAN_MOTOR, PAN_ROTOR)
     return motor(m, names, m.pan_motor_at, m.pan_motor_screws, lid(m), (PAN, m.pan_range))
 
 
-@cached
+@derived
 def lid_on_base(m: ProductMaster) -> Fastening:
     top = lid(m)
     seated_on = Mate(
@@ -244,7 +244,7 @@ def lid_on_base(m: ProductMaster) -> Fastening:
     return Fastening(parts=[top], mates=[seated_on])
 
 
-@cached
+@derived
 def lid_screws(m: ProductMaster) -> Fastening:
     through = Hole(
         face=m.pan_flange,
@@ -258,7 +258,7 @@ def lid_screws(m: ProductMaster) -> Fastening:
     return Fastening(parts=screws, mates=held_by(screws, UNDER_HEAD, Connector(top, LIPS)))
 
 
-@cached
+@derived
 def arm_on_pan_motor(m: ProductMaster) -> Fastening:
     turning = arm(m)
     mate = Mate(
@@ -271,29 +271,29 @@ def arm_on_pan_motor(m: ProductMaster) -> Fastening:
     return Fastening(parts=[turning], mates=[mate])
 
 
-@cached
+@derived
 def pan_clamp_insert(m: ProductMaster) -> Fastening:
     return clamp_insert(m, arm(m), m.pan_clamp, PAN_CLAMP)
 
 
-@cached
+@derived
 def pan_clamp_screw(m: ProductMaster) -> Fastening:
     return clamp_screw(m, arm(m), m.pan_clamp, PAN_CLAMP)
 
 
-@cached
+@derived
 def cap_inserts(m: ProductMaster) -> Fastening:
     into = insert_seats(m.cap_rim, m.cap_screws, m.screw, fits=m.fits, stock=m.stock)
     return set_in(into, Connector(cap(m), LIPS), Connector(arm(m), CAP_INSERTS), stock=m.stock)
 
 
-@cached
+@derived
 def tilt_motor(m: ProductMaster) -> Fastening:
     names = (TILT_MOTOR, TILT_ROTOR)
     return motor(m, names, m.tilt_motor_at, m.tilt_motor_screws, arm(m), (TILT, m.tilt_range))
 
 
-@cached
+@derived
 def cap_on_arm(m: ProductMaster) -> Fastening:
     end = cap(m)
     through = Hole(
@@ -306,7 +306,7 @@ def cap_on_arm(m: ProductMaster) -> Fastening:
     return together([held], [end])
 
 
-@cached
+@derived
 def cradle_on_tilt_motor(m: ProductMaster) -> Fastening:
     held = cradle(m)
     mate = Mate(
@@ -319,17 +319,17 @@ def cradle_on_tilt_motor(m: ProductMaster) -> Fastening:
     return Fastening(parts=[held], mates=[mate])
 
 
-@cached
+@derived
 def tilt_clamp_insert(m: ProductMaster) -> Fastening:
     return clamp_insert(m, cradle(m), m.tilt_clamp, TILT_CLAMP)
 
 
-@cached
+@derived
 def tilt_clamp_screw(m: ProductMaster) -> Fastening:
     return clamp_screw(m, cradle(m), m.tilt_clamp, TILT_CLAMP)
 
 
-@cached
+@derived
 def camera(m: ProductMaster) -> Fastening:
     pins = {CAMERA_PINS: plug(m, CAMERA_PINS)}
     board = Bought(name=CAMERA_NAME, pose=m.camera_at, item=CAMERA_BOARD, connectors=pins)
@@ -343,7 +343,7 @@ def camera(m: ProductMaster) -> Fastening:
     return Fastening(parts=[board], mates=[mate])
 
 
-@cached
+@derived
 def jaw_spring(m: ProductMaster) -> Fastening:
     spring = ExtensionSpring.hooked(
         name="jaw spring", spring=m.spring, low=m.spring_post_at, high=m.spring_lug_at
@@ -365,7 +365,7 @@ def jaw_spring(m: ProductMaster) -> Fastening:
     return Fastening(parts=[spring], mates=[hooked, pulling])
 
 
-@cached
+@derived
 def jaw_on_cradle(m: ProductMaster) -> Fastening:
     sliding = jaw(m)
     mate = Mate(
