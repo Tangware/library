@@ -294,7 +294,9 @@ def vendor_shape(item: Catalogue) -> Brep:
 @derived
 def vendor_reach(item: Catalogue, toward: Axis) -> float:
     facing = Plane(origin=toward.position, z_dir=toward.direction)
-    return (facing.location.inverse() * vendor_shape(item)).bounding_box().max.Z
+    along_an_axis = sorted(abs(value) for value in toward.direction) == [0.0, 0.0, 1.0]
+    shape = vendor_box(item) if along_an_axis else vendor_shape(item)
+    return (facing.location.inverse() * shape).bounding_box().max.Z
 
 
 def vendor_extent(item: Catalogue) -> BoundBox:
