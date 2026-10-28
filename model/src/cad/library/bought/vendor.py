@@ -7,6 +7,7 @@ import zipfile
 from collections import Counter
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, replace
+from functools import reduce
 from http.client import BAD_GATEWAY, GATEWAY_TIMEOUT, OK, SERVICE_UNAVAILABLE, HTTPSConnection
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -58,6 +59,7 @@ DOWNLOAD_TIMEOUT_SECONDS = 600
 USER_AGENT = "tangware"
 DOWNLOAD_ATTEMPTS = 3
 GATEWAY_ERRORS = {BAD_GATEWAY, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT}
+SMALL_SOLID = 0.02
 
 
 def maker_step(source: Download, body: bytes) -> bytes:
@@ -95,18 +97,43 @@ def downloaded(source: Download) -> Path:
     return path
 
 
+def boxed(found: BoundBox) -> Solid:
+    size = found.size
+    return Solid.make_box(size.X, size.Y, size.Z, plane=Plane(origin=found.min))
+
+
+def simplified_step(path: Path) -> list[Named]:
+    found = coloured_step(path)
+    boxes = [solid.bounding_box() for solid, _, _ in found]
+    smallest = SMALL_SOLID * reduce(BoundBox.add, boxes).diagonal
+    return [
+        _in_its_box(named, box)
+        if box.diagonal < smallest and min(box.size) > LENGTH_TOLERANCE
+        else named
+        for named, box in zip(found, boxes, strict=True)
+    ]
+
+
+def _in_its_box(found: Named, box: BoundBox) -> Named:
+    _, look, name = found
+    solid = boxed(box)
+    return solid, evenly(solid, look), name
+
+
 @derived
 def placed_solids(
     shape: Path | Download | Callable[[], Brep],
     correct: Callable[[list[Solid]], list[Solid]] | None,
+    detailed: bool,
 ) -> tuple[Named, ...]:
+    read = coloured_step if detailed else simplified_step
     if isinstance(shape, Download):
-        found = coloured_step(downloaded(shape))
+        found = read(downloaded(shape))
     elif isinstance(shape, Path):
         with tempfile.NamedTemporaryFile(suffix=".step") as step:
             step.write(gzip.decompress(shape.read_bytes()))
             step.flush()
-            found = coloured_step(Path(step.name))
+            found = read(Path(step.name))
     else:
         found = [
             (solid, (_model_colour(leaf),) * len(solid.faces()), leaf.label)
@@ -192,8 +219,8 @@ def _one_solid_each(pieces: list[tuple[Brep, Look]]) -> list[tuple[Solid, Look]]
 
 
 @derived
-def vendor_solids(item: Catalogue) -> tuple[tuple[Solid, Look], ...]:
-    raw = placed_solids(item.shape, item.cleanup.correct)
+def vendor_solids(item: Catalogue, detailed: bool) -> tuple[tuple[Solid, Look], ...]:
+    raw = placed_solids(item.shape, item.cleanup.correct, detailed)
     chosen = raw if item.cleanup.piece is None else _of_the_piece(raw, item.cleanup.piece)
     solids = [solid for solid, _, _ in raw]
     match item.frame:
@@ -259,13 +286,15 @@ def named_solids(item: Catalogue) -> list[tuple[Solid, str]]:
     return [
         (solid, name)
         for (solid, _), (_, _, name) in zip(
-            vendor_solids(item), placed_solids(item.shape, item.cleanup.correct), strict=True
+            vendor_solids(item, detailed=False),
+            placed_solids(item.shape, item.cleanup.correct, detailed=False),
+            strict=True,
         )
     ]
 
 
 def solids_of(item: Catalogue) -> list[Solid]:
-    return [solid for solid, _ in vendor_solids(item)]
+    return [solid for solid, _ in vendor_solids(item, detailed=False)]
 
 
 @derived
@@ -288,7 +317,7 @@ def _horn(item: Catalogue, in_front: bool) -> int:
 
 
 def vendor_shape(item: Catalogue) -> Brep:
-    return Compound(solids_of(item))
+    return Compound([solid for solid, _ in vendor_solids(item, detailed=True)])
 
 
 @derived
@@ -305,9 +334,7 @@ def vendor_extent(item: Catalogue) -> BoundBox:
 
 @derived
 def vendor_box(item: Catalogue) -> Solid:
-    found = vendor_shape(item).bounding_box()
-    size = found.size
-    return Solid.make_box(size.X, size.Y, size.Z, plane=Plane(origin=found.min))
+    return boxed(Compound(solids_of(item)).bounding_box())
 
 
 def vendor_block(item: Catalogue, at: Location) -> Block:
@@ -349,7 +376,7 @@ class Bought(Part):
     def coloured_solids(self) -> list[tuple[Brep, Rgb | None]]:
         return [
             (self.pose * shape, colour)
-            for solid, look in vendor_solids(self.item)
+            for solid, look in vendor_solids(self.item, detailed=True)
             for shape, colour in painted(solid, look)
         ]
 

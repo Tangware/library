@@ -107,7 +107,7 @@ def flatted_shaft(solids: list[Solid]) -> list[Solid]:
 
 def stepper() -> Compound:
     pieces = []
-    for solid, look, _ in placed_solids(STEPPER_STEP, flatted_shaft):
+    for solid, look, _ in placed_solids(STEPPER_STEP, flatted_shaft, detailed=True):
         ((colour, _),) = Counter(look).most_common(1)
         if colour is not None:
             solid.color = Color(*colour)
