@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 // tangware login: signs this machine in through the browser. tangware link: makes this folder of
-// its repo a project, the repo's root or a design folder inside it.
+// its repo a project, the repo's root or a design folder inside it. tangware build: prints the
+// result of the build the person ran in the studio; it never starts one.
 const { execFileSync } = require("node:child_process");
 const { mkdirSync, writeFileSync } = require("node:fs");
 const { dirname } = require("node:path");
-const { studio, tokenFile, requireToken, path } = require("../scripts/studio.js");
+const { studio, tokenFile, requireToken, path, repo } = require("../scripts/studio.js");
 
 const POLL_MS = 3000;
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
@@ -74,7 +75,31 @@ async function link() {
   }
 }
 
-const commands = { login, link };
+const BUILD_USAGE = `usage: tangware build [<commit>] [--json]
+Prints the result of the last studio build of this project, or of <commit>, and exits non-zero if it failed.
+Builds start only when you press Build in the studio.`;
+
+async function build() {
+  const args = process.argv.slice(3);
+  if (args.includes("--help") || args.includes("-h")) return console.log(BUILD_USAGE);
+  const json = args.includes("--json");
+  const [commit, extra] = args.filter((a) => a !== "--json");
+  if (extra || commit?.startsWith("-")) fail(BUILD_USAGE);
+  const token = requireToken();
+  const name = repo();
+  const url = `${studio}/api/repos/${encodeURIComponent(name)}/build-summary${commit ? `/${encodeURIComponent(commit)}` : ""}`;
+  const response = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
+  const body = await response.json().catch(() => ({}));
+  if (response.status === 401) fail("Your Tangware login was refused. Run tangware login again.");
+  if (response.status !== 200) fail(body.error ?? `The studio answered ${response.status}.`);
+  if (json) console.log(JSON.stringify(body, null, 2));
+  else if (body.status === "none")
+    console.log(`${name} at ${body.commit.sha.slice(0, 7)} has not been built. Press Build in the studio, then run tangware build again.`);
+  else console.log(body.text);
+  if (body.status === "failed") process.exit(1);
+}
+
+const commands = { login, link, build };
 const command = commands[process.argv[2]];
-if (!command) fail("usage: tangware login | tangware link");
+if (!command) fail("usage: tangware login | tangware link | tangware build [<commit>] [--json]");
 command().catch((error) => fail(String(error)));

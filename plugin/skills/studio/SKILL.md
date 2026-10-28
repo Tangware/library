@@ -9,6 +9,8 @@ The studio is a read-only view of this repo at one commit. You drive it: open a 
 
 For https://tangware.com/studio, run `tangware login` once on this machine: it opens the browser to confirm a code. Once the repo is on GitHub (`gh repo create --private --source . --push`), `tangware link`, run in the design's folder (the repo's root, or a folder such as `hardware/`), makes it a project, asking GitHub for access to this one repo if needed, and opens it in the studio.
 
+After the person presses Build in the studio, run `tangware build`, then fix what it reports. If it says the build is still running, wait a little and run it again. Only the person starts builds.
+
 ## show.sh
 
 ```sh
