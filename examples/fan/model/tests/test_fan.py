@@ -1,13 +1,8 @@
-from pathlib import Path
-
 import pytest
 from build123d import Align, Axis, Cylinder, GeomType, Location, Pos, Rot
 from cad.assembly.tree import assembled
-from cad.design.bom import bom
-from cad.design.build import built
+from cad.design.built import manifest
 from cad.design.catalogue import Kind
-from cad.design.package import load
-from cad.design.world import World
 from cad.library.bought.query import axis_of
 from cad.library.bought.vendor import Bought
 from cad.library.features.hardware import Fastening
@@ -31,7 +26,6 @@ TEST_FINGER = 12.0  # IEC 61032 test probe B, Ø12 mm
 PER_FAN_CONSUMABLE_USD = 1.0  # consumables priced per fan sit under this; spools and rolls above
 TURNING = ("head", "cover", FAN_NAME)
 BOTTOM = (Align.CENTER, Align.CENTER, Align.MIN)
-DESIGN = Path(__file__).parents[2]
 
 
 @pytest.fixture(scope="session")
@@ -130,7 +124,7 @@ def test_r7_a_test_finger_cannot_pass_the_front_grille(turn: float) -> None:
     subjects=("bill",),
 )
 def test_r8_the_landed_cost_is_under_the_target(fan: Fastening) -> None:
-    lines = bom(World(built=built(load(DESIGN))))
+    lines = manifest()["bom"]
     parts = sum(
         line["qty"] * line["unit_price"] for line in lines if line["kind"] in ("made", "bought")
     )

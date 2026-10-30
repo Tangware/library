@@ -2,13 +2,9 @@ from pathlib import Path
 
 import pytest
 from build123d import Align, Box, Cylinder, Location, Pos, Rot, extrude
-from cad.assembly.mass import weight
 from cad.assembly.tree import assembled
-from cad.design.bom import bom
-from cad.design.build import built
+from cad.design.built import manifest
 from cad.design.catalogue import Kind
-from cad.design.package import load
-from cad.design.world import World
 from cad.library.bought.vendor import Bought
 from cad.library.features.hardware import Fastening
 from cad.library.standard.fasteners import SCREWS
@@ -179,7 +175,7 @@ def test_r7_a_large_hand_fits_the_pull_and_no_button_shows(dispenser: Fastening)
     subjects=("bill",),
 )
 def test_r8_the_landed_cost_is_under_the_target(dispenser: Fastening) -> None:
-    lines = bom(World(built=built(load(DESIGN))))
+    lines = manifest()["bom"]
     bought = sum(line["qty"] * line["unit_price"] for line in lines if line["kind"] == "bought")
     plastic = sum(line["unit_price"] for line in lines if line["kind"] == "made")
     consumed = sum(
@@ -200,7 +196,7 @@ def test_r9_the_stepper_turns_a_full_carousel() -> None:
     pills_n = MASTER.doses * DOSE_GRAMS / G_PER_KG * STANDARD_GRAVITY_M_S2
     middle_m = (MASTER.pocket_start + MASTER.pocket_reach) / 2 / MM_PER_M
     assert pills_n * PILL_ON_PETG_FRICTION * middle_m < models.STEPPER_PULL_IN_NM
-    assert weight(carousel(MASTER)) > 0
+    assert carousel(MASTER).solid().volume > 0
 
 
 @pytest.mark.check(
