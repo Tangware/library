@@ -60,10 +60,9 @@ target = bpy.data.objects.new("turntable", None)
 target.location = middle
 scene.collection.objects.link(target)
 camera = bpy.data.objects.new("camera", bpy.data.cameras.new("camera"))
-camera.location = middle + Vector((0, -REACH * size, HEIGHT * size))
+camera.location = Vector((0, -REACH * size, HEIGHT * size))
 camera.rotation_euler = Vector((0, REACH, -HEIGHT)).to_track_quat("-Z", "Y").to_euler()
 camera.parent = target
-camera.matrix_parent_inverse = target.matrix_world.inverted()
 scene.collection.objects.link(camera)
 scene.camera = camera
 sun = bpy.data.objects.new("key", bpy.data.lights.new("key", "SUN"))
