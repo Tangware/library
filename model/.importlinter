@@ -26,7 +26,7 @@ layers =
     cad.library.printing
     cad.library.fits
     cad.library.bought.catalogue
-    cad.library.points | cad.library.turns | cad.library.why | cad.library.provenance
+    cad.library.points | cad.library.turns | cad.library.why
 
 [importlinter:contract:features]
 name = Feature modules build on each other in one direction

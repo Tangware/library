@@ -45,7 +45,6 @@ from cad.library.bought.catalogue import Catalogue
 from cad.library.fits import FILAMENTS, METALS, Filament, Fits, Metal
 from cad.library.points import points
 from cad.library.printing import PrintSettings
-from cad.library.provenance import Provenance
 from cad.library.why import Why
 from cad.standards import Rated
 
@@ -472,7 +471,6 @@ class Part:
 @dataclass(kw_only=True)
 class Shaped(Part):
     body: Brep
-    provenance: Provenance | None = None
     source: str = ""
 
     def __post_init__(self) -> None:
