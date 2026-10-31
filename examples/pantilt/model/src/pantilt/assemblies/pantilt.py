@@ -152,6 +152,7 @@ def motor(
         child=Connector(shaft, SHAFT),
         parent=Connector(body, FACE),
         at=at,
+        servo=body,
         limits=limits,
         approach=-Axis(at),
     )
