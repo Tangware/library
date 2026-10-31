@@ -129,12 +129,13 @@ class DispenserMaster(Master):
             clearance_fit="Normal",
             plastic_pilot=0.8,
             plastic_thread=2.0,
-            insert_pull_out_n={3.0: 1167.0},
+            insert_pull_out_n={2.0: 253.0, 2.5: 730.0, 3.0: 1167.0},
             spring_force_share=0.6,
         ),
         FITS_UNITS,
         why="Print allowances for an FDM PETG printer",
-        source="estimate: the library's example fits, not calibrated on a printer",
+        source="estimate: the library's example fits, not calibrated on a printer;"
+        " insert pull-out from PEM IUTA in ABS below M3, CNC Kitchen M3 in PETG",
     )
     stock: Stock = given(
         Stock(
