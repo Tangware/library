@@ -19,7 +19,7 @@ Reads `prd.md`, `design/language.md`, the chosen `design/directions/<name>.md`. 
 
 3. **[both] Layout review.** Commit and look at the studio's build of the commit yourself first, then show the person the envelopes at the rest pose. Real trade-offs (a requirement, the outside form, the layout) are theirs: one question each, your recommendation first, unit cost per option where known. Internal layout is yours.
 
-4. **[agent] Parts**, one at a time: a few sketches and features in modelling order, edge breaks last, each feature a named step. Commit after each part and look at its build in the studio. *Why:* a part debugged feature by feature fails where the fault is.
+4. **[agent] Parts**, one at a time: a few sketches and features in modelling order, edge breaks last. Commit after each part and look at its build in the studio. *Why:* a part debugged feature by feature fails where the fault is.
 
 5. **[agent] Assemblies:** place the parts, add all hardware, declare every mate and its limits, order the holds as the person will build it. Look at the exploded render in the commit's build.
 
