@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 const { readFileSync } = require("node:fs");
-const { studio, requireToken, repo: repoName } = require("../scripts/studio.js");
+const { studio, requireToken, repo: repoName, projectApi } = require("../scripts/studio.js");
 const usage = `usage: show.sh go <page> [--select <id>] [--highlight <id or selector>] [--title <text>] [--caption <text>] [--commit <sha>]
        show.sh tour <steps.json, or - for stdin>
        show.sh step <next | back | number>
@@ -21,7 +21,7 @@ else if (kind === "step" && rest[0]) action = { step: /^\d+$/.test(rest[0]) ? Nu
 else if (kind !== "state" && kind !== "map") fail();
 const auth = { authorization: `Bearer ${requireToken()}` };
 const repo = repoName();
-const base = `${studio}/api/repos/${encodeURIComponent(repo)}`;
+const base = projectApi();
 const json = (r) => {
   if (r.status === 401) { console.error("Your Tanġware login was refused. Run tangware login again."); process.exit(1); }
   return r.json();

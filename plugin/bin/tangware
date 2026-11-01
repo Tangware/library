@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 // tangware login: signs this machine in through the browser. tangware link: makes this folder of
-// its repo a project, the repo's root or a design folder inside it. tangware build: prints the
-// result of the build the person ran in the studio; it never starts one.
+// its repo a project, the repo's root or a design folder inside it. tangware build: starts a build
+// and waits for its result, at the customer's cost. tangware status: prints the last result, free.
 const { execFileSync } = require("node:child_process");
 const { mkdirSync, writeFileSync } = require("node:fs");
 const { dirname } = require("node:path");
-const { studio, tokenFile, requireToken, path, repo } = require("../scripts/studio.js");
+const { studio, tokenFile, requireToken, path, repo, remote, projectApi } = require("../scripts/studio.js");
 
 const POLL_MS = 3000;
+const OUTPUTS = ["checks", "shots", "stress", "stills", "explode", "step", "prints"];
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 const run = (cmd, args) => {
   try {
@@ -23,7 +24,7 @@ const open = (url) => {
 const post = async (path, value, token) => {
   const response = await fetch(`${studio}${path}`, {
     method: "POST",
-    headers: token ? { authorization: `Bearer ${token}` } : {},
+    headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) },
     body: JSON.stringify(value),
   });
   return { status: response.status, body: await response.json() };
@@ -51,9 +52,9 @@ async function login() {
 
 async function link() {
   const token = requireToken();
-  const remote = /github\.com[:/]([^/]+)\/(.+?)(\.git)?$/.exec(run("git", ["remote", "get-url", "origin"]));
-  if (!remote) fail("This repo has no GitHub remote. Push it to GitHub first.");
-  const [, owner, repo] = remote;
+  const found = remote();
+  if (!found) fail("This repo has no GitHub remote. Push it to GitHub first.");
+  const { owner, repo } = found;
   const ids = run("gh", ["api", `repos/${owner}/${repo}`, "--jq", "[.id, .owner.id] | @tsv"]).split("\t");
   const ask = { repo, path: path(), owner, id: Number(ids[0]) || undefined, ownerId: Number(ids[1]) || undefined };
   let opened = false;
@@ -65,9 +66,9 @@ async function link() {
     }
     if (status === 200) return open(new URL(body.url, studio).href);
     if (status === 401) fail("Your Tanġware login was refused. Run tangware login again.");
-    if (status !== 409) fail(body.error);
+    if (status !== 409) fail(body.detail);
     if (!opened) {
-      console.log(`${body.error} Waiting for you to allow it on GitHub…`);
+      console.log(`${body.detail} Waiting for you to allow it on GitHub…`);
       open(new URL(body.install, studio).href);
       opened = true;
     }
@@ -75,31 +76,63 @@ async function link() {
   }
 }
 
-const BUILD_USAGE = `usage: tangware build [<commit>] [--json]
-Prints the result of the last studio build of this project, or of <commit>, and exits non-zero if it failed.
-Builds start only when you press Build in the studio.`;
+const BUILD_USAGE = `usage: tangware build [<commit>] [--output <name>] [--json]
+Starts a build of this project at <commit>, or at HEAD, waits for it, prints the result and exits non-zero if it failed. It costs what the studio's Build key costs.
+--output runs one of ${OUTPUTS.join(", ")} on a built commit instead, as its key in the studio does.`;
+const STATUS_USAGE = `usage: tangware status [<commit>] [--json]
+Prints the result of the last build of this project, or of <commit>, and exits non-zero if it failed. It is free and never starts a build.`;
 
-async function build() {
+const options = (usage, withOutput) => {
   const args = process.argv.slice(3);
-  if (args.includes("--help") || args.includes("-h")) return console.log(BUILD_USAGE);
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log(usage);
+    process.exit(0);
+  }
+  const at = withOutput ? args.indexOf("--output") : -1;
+  const output = at < 0 ? undefined : args.splice(at, 2)[1];
   const json = args.includes("--json");
   const [commit, extra] = args.filter((a) => a !== "--json");
-  if (extra || commit?.startsWith("-")) fail(BUILD_USAGE);
-  const token = requireToken();
-  const name = repo();
-  const url = `${studio}/api/repos/${encodeURIComponent(name)}/build-summary${commit ? `/${encodeURIComponent(commit)}` : ""}`;
-  const response = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
+  if (extra || commit?.startsWith("-") || (at >= 0 && !OUTPUTS.includes(output))) fail(usage);
+  return { commit, output, json };
+};
+
+const ask = async (method, path) => {
+  const response = await fetch(`${projectApi()}${path}`, { method, headers: { authorization: `Bearer ${requireToken()}` } });
   const body = await response.json().catch(() => ({}));
-  if (response.status === 401) fail("Your Tangware login was refused. Run tangware login again.");
-  if (response.status !== 200) fail(body.error ?? `The studio answered ${response.status}.`);
+  if (response.status === 401) fail("Your Tanġware login was refused. Run tangware login again.");
+  if (response.status !== 200) fail(body.detail ?? `The studio answered ${response.status}.`);
+  return body;
+};
+
+const report = (body, json) => {
   if (json) console.log(JSON.stringify(body, null, 2));
-  else if (body.status === "none")
-    console.log(`${name} at ${body.commit.sha.slice(0, 7)} has not been built. Press Build in the studio, then run tangware build again.`);
+  else if (body.status === "none") console.log(`${repo()} at ${body.commit.sha.slice(0, 7)} has not been built.`);
   else console.log(body.text);
   if (body.status === "failed") process.exit(1);
+};
+
+async function build() {
+  const { commit, output, json } = options(BUILD_USAGE, true);
+  const ref = commit ?? run("git", ["rev-parse", "HEAD"]);
+  let now = await ask("POST", `/build/${ref}${output ? `/${output}` : ""}`);
+  if (now.state === "refused") fail(now.reason);
+  const running = () => (output ? now.outputs?.[output]?.state : now.state) === "building";
+  while (running()) {
+    await sleep(POLL_MS);
+    now = await ask("GET", `/build/${now.sha}`);
+  }
+  if (!output) return report(await ask("GET", `/build-summary/${now.sha}`), json);
+  const result = now.outputs[output];
+  console.log(json ? JSON.stringify(result, null, 2) : result.log);
+  if (result.state === "failed") process.exit(1);
 }
 
-const commands = { login, link, build };
+async function status() {
+  const { commit, json } = options(STATUS_USAGE, false);
+  report(await ask("GET", `/build-summary${commit ? `/${commit}` : ""}`), json);
+}
+
+const commands = { login, link, build, status };
 const command = commands[process.argv[2]];
-if (!command) fail("usage: tangware login | tangware link | tangware build [<commit>] [--json]");
+if (!command) fail("usage: tangware login | tangware link | tangware build [<commit>] [--output <name>] [--json] | tangware status [<commit>] [--json]");
 command().catch((error) => fail(String(error)));
