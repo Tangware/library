@@ -34,9 +34,9 @@ Reads `prd.md`, `design/language.md`, the chosen `design/directions/<name>.md`. 
 Commit after each step. A builder never shrinks or drops a specified feature to make a check pass; that is a design change.
 
 ## Screenshot marks
-The person draws on a screenshot and pastes it with a text block: commit, camera, and the parts and faces under the strokes, each face with its `made_by` (file, line, feature step).
+The person draws on a screenshot and pastes it with a text block: commit, camera, and the parts and faces under the strokes.
 1. **[agent] Confirm the commit** is the one checked out; if not, check it out or ask.
-2. **[agent] Treat the mark as a fact.** What the person sees is real; find why the model or the checks missed it. Go to the feature through `made_by`; if it is `null`, find it in the part's feature list and say so, never guess.
+2. **[agent] Treat the mark as a fact.** What the person sees is real; find why the model or the checks missed it, never guess.
 3. **[agent] Write the failing check first** (a test named after its R, S or M), see it fail, then fix the feature, see it pass. Commit with the trailer `Fixes-check: <test name>`.
 4. **[agent] Build in the studio and show the same camera.**
 
