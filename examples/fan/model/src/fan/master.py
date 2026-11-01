@@ -112,6 +112,8 @@ class FanMaster(Master):
             min_wall=1.0,
             structural_wall=2.0,
             overhang_deg=45.0,
+            bridge=10.0,
+            print_volume=(250.0, 210.0, 220.0),
             printed_hole=0.25,
             press=0.25,
             clearance_fit="Normal",
@@ -123,6 +125,7 @@ class FanMaster(Master):
         FITS_UNITS,
         why="Print allowances for an FDM PETG printer",
         source="estimate: the library's example fits, not calibrated on a printer;"
+        " print volume from Prusa's MK4S specifications;"
         " insert pull-out from PEM IUTA in ABS below M3, CNC Kitchen M3 in PETG",
     )
     stock: Stock = given(

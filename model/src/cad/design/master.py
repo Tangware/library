@@ -1,7 +1,9 @@
+from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 
 from cad.library.derived import Skeleton
+from cad.library.fits import Fits
 from cad.library.mates import JointRelation
 from cad.library.shapes import Block
 
@@ -39,7 +41,11 @@ class Pose:
 REST = Pose(name="rest", joints={})
 
 
-class Master(Skeleton):
+class Master(Skeleton, ABC):
+    @property
+    @abstractmethod
+    def fits(self) -> Fits: ...
+
     @property
     def poses(self) -> tuple[Pose, ...]:
         return (REST,)

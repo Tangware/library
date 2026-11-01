@@ -2,11 +2,38 @@ from dataclasses import dataclass
 
 from build123d import Plane
 from cad.design.master import Master, given
+from cad.library.fits import FITS_UNITS, Fits
 from cad.library.printing import PRINT_SETTINGS_UNITS, PrintSettings
 
 
 @dataclass(frozen=True)
 class ProductMaster(Master):
+    fits: Fits = given(
+        Fits(
+            sliding=0.2,
+            bearing_seat=0.05,
+            bearing_proud=0.1,
+            snap=0.6,
+            membrane=0.5,
+            min_wall=1.0,
+            structural_wall=2.0,
+            overhang_deg=45.0,
+            bridge=10.0,
+            print_volume=(250.0, 210.0, 220.0),
+            printed_hole=0.25,
+            press=0.25,
+            clearance_fit="Normal",
+            plastic_pilot=0.8,
+            plastic_thread=2.0,
+            insert_pull_out_n={3.0: 1167.0},
+            spring_force_share=0.6,
+        ),
+        FITS_UNITS,
+        why="Print allowances for an FDM PETG printer",
+        source="estimate: the library's test fits, not calibrated on a printer;"
+        " print volume from Prusa's MK4S specifications;"
+        " insert pull-out from CNC Kitchen M3 in PETG",
+    )
     width: float = given(60.0, "mm", why="Fits the palm of a hand", source="design input")
     depth: float = given(40.0, "mm", why="Fits the palm of a hand", source="design input")
     thickness: float = given(

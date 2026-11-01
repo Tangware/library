@@ -140,6 +140,8 @@ class Fits:
     min_wall: float
     structural_wall: float
     overhang_deg: float
+    bridge: float
+    print_volume: tuple[float, float, float]
     printed_hole: float
     press: float
     clearance_fit: Literal["Close", "Normal", "Loose"]
@@ -164,6 +166,8 @@ FITS_UNITS = {
     "min_wall": "mm",
     "structural_wall": "mm",
     "overhang_deg": "deg",
+    "bridge": "mm",
+    "print_volume": "mm",
     "printed_hole": "mm",
     "press": "mm",
     "clearance_fit": "-",
