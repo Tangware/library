@@ -133,9 +133,7 @@ class OctopusMaster(Master):
     cap_thickness: float = given(5.0, "mm", why="Motor cap", source=ESTIMATE)
     shelf_z: float = given(56.0, "mm", why="Over the high motors", source=ESTIMATE)
     shelf_thickness: float = given(6.0, "mm", why="Battery shelf", source=ESTIMATE)
-    shelf_radius: float = given(80.0, "mm", why="Carries the mantle's flange", source=ESTIMATE)
     flange_spot: float = given(75.5, "mm", why="Mantle screws, outside the dome", source=ESTIMATE)
-    flange_radius: float = given(79.0, "mm", why="Past the dome", source=ESTIMATE)
     mantle_radius: float = given(72.0, "mm", why="Domes over the holder", source=LOOK)
     mantle_wall: float = given(3.0, "mm", why="Hollow printed shell", source=ESTIMATE)
     flange: float = given(5.0, "mm", why="Mantle's seat", source=ESTIMATE)
@@ -416,6 +414,14 @@ class OctopusMaster(Master):
     def saddle_spots(self, arm: int) -> tuple[Location, ...]:
         off = self.motor_height / 2 + self.fits.sliding + self.insert_land
         return tuple(self.saddle_at(arm) * Pos(X=side * off) for side in (-1.0, 1.0))
+
+    @property
+    def flange_radius(self) -> float:
+        return self.flange_spot + self.clearance_land
+
+    @property
+    def shelf_radius(self) -> float:
+        return self.flange_radius
 
     @property
     def seat_height(self) -> float:
