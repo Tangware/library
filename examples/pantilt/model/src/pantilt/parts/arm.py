@@ -4,7 +4,6 @@ from build123d import (
     Box,
     BuildPart,
     BuildSketch,
-    Circle,
     Convexity,
     Cylinder,
     Location,
@@ -51,13 +50,11 @@ def arm(m: ProductMaster) -> Printed:
             Cylinder(m.radius, height, align=BOTTOM)
         with Locations(Location(m.arm_bottom)):
             Box(m.tilt_flange, stepper.FRAME, height, align=FROM_THE_AXIS)
-        with BuildSketch(column) as side:
-            Circle(m.radius)
-            with Locations(Pos(Y=rise / 2)):
-                Rectangle(stepper.FRAME, rise)
+        with BuildSketch(column) as side, Locations(Pos(Y=rise / 2)):
+            Rectangle(stepper.FRAME, rise)
         extrude_to(column, Plane(m.tilt_motor_at), sketch=side)
-        with Locations(m.tilt_motor_at):
-            Cylinder(m.radius, m.drum_rim - m.tilt_flange, align=BEHIND)
+        with Locations(Location(column)):
+            Cylinder(m.radius, m.drum_rim - m.tilt_flange + m.screw_plate, align=BEHIND)
         chamfer(made.edges().filter_by(Convexity.CONVEX), m.fits.min_wall)
         with Locations(Location(m.arm_bottom)):
             chamber = between(m.arm_bottom, m.chamber_top)
