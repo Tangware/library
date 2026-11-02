@@ -52,10 +52,10 @@ def puck(m: FanMaster) -> Printed:
             Cylinder(m.fits.printed(BUTTON_CUTOUT) / 2, m.wall, align=BOTTOM, mode=Mode.SUBTRACT)
             register(BUTTON_HOLE, m.top, [FacesOn(plane=m.top)])
         keepout = m.usb_keepout.block
-        with Locations(keepout.at * Pos(Z=-m.fits.sliding)):
+        with Locations(keepout.at * Pos(Y=-m.wall / 2, Z=-m.fits.sliding)):
             Box(
                 keepout.width + 2 * m.fits.sliding,
-                keepout.depth,
+                keepout.depth + m.wall,
                 keepout.height + 2 * m.fits.sliding,
                 align=BOTTOM,
                 mode=Mode.SUBTRACT,
