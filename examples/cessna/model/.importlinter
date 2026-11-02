@@ -1,0 +1,35 @@
+[importlinter]
+root_packages =
+    cessna
+    cad
+
+[importlinter:contract:steps]
+name = Assemblies read parts and the master; parts read only the master
+type = layers
+layers =
+    cessna.assemblies
+    cessna.parts
+    cessna.master
+    cessna.models
+
+[importlinter:contract:parts]
+name = A part never reads another part
+type = independence
+modules =
+    cessna.parts.structure
+    cessna.parts.moving
+
+[importlinter:contract:hardware]
+name = Only assemblies add hardware, bought parts and mates
+type = forbidden
+source_modules =
+    cessna.parts
+forbidden_modules =
+    cessna.catalogue
+    cad.assembly
+    cad.library.mates
+    cad.library.bought.vendor
+    cad.library.standard.fasteners
+    cad.library.standard.magnets
+    cad.library.standard.bearings
+allow_indirect_imports = True

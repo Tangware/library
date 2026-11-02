@@ -19,9 +19,13 @@ claude plugin install tangware@tangware
 
 ## Examples
 
-Each design in `examples/` is a full repo, from `discover/` to its model in `model/`; build it in the studio.
+Each design in `examples/` is a full repo with its model in `model/`; build it in the studio.
 
 - `box`: a printed box that holds a Raspberry Pi Pico 2 and sticks to steel by magnets.
 - `fan`: a quiet desk fan whose head sweeps side to side on a stepper.
 - `pantilt`: a phone stand that pans and tilts to keep a face in frame.
 - `dispenser`: a pill dispenser whose carousel gives each dose at its time.
+- `strandbeest`: Theo Jansen's walking linkage, twelve printed legs on one crank.
+- `v8`: a one-third scale Chevrolet small-block 350 with a working valvetrain.
+- `cessna`: the retracting main landing gear of a Cessna 337 at one-sixth scale.
+- `octopus`: a desk robot with eight arms, each on its own gearmotor.

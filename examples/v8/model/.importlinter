@@ -1,0 +1,37 @@
+[importlinter]
+root_packages =
+    v8
+    cad
+
+[importlinter:contract:steps]
+name = Assemblies read parts and the master; parts read only the master
+type = layers
+layers =
+    v8.assemblies
+    v8.parts
+    v8.master
+    v8.models
+
+[importlinter:contract:parts]
+name = A part never reads another part
+type = independence
+modules =
+    v8.parts.block
+    v8.parts.crank
+    v8.parts.moving
+    v8.parts.valvetrain
+
+[importlinter:contract:hardware]
+name = Only assemblies add hardware, bought parts and mates
+type = forbidden
+source_modules =
+    v8.parts
+forbidden_modules =
+    v8.catalogue
+    cad.assembly
+    cad.library.mates
+    cad.library.bought.vendor
+    cad.library.standard.fasteners
+    cad.library.standard.magnets
+    cad.library.standard.bearings
+allow_indirect_imports = True
