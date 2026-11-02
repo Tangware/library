@@ -9,7 +9,7 @@ from cad.library.bought.query import Hole, axis_of, bores, by_axis, cylinders, e
 from cad.library.bought.vendor import named_solids, piece, solids_of, vendor_extent
 from cad.library.features.hardware import insert_land
 from cad.library.features.planes import between, halfway
-from cad.library.fits import FITS_UNITS, Fits, STAINLESS_A2_70
+from cad.library.fits import FITS_UNITS, STAINLESS_A2_70, Fits
 from cad.library.mates import JointRange
 from cad.library.printing import PRINT_SETTINGS_UNITS, PrintSettings
 from cad.library.shapes import Block, radius_of
@@ -181,6 +181,12 @@ class FanMaster(Master):
     plug_reach: float = given(
         20.0, "mm", why="Room behind the puck for a USB-C plug body", source="design input"
     )
+    material: str = given(
+        "PETG Signal White",
+        "-",
+        why="S3: one warm matte off-white for every printed part",
+        source="design/language.md, colour; the spool is in the catalogue",
+    )
     print_settings: PrintSettings = given(
         PrintSettings(
             preset="structural",
@@ -211,6 +217,10 @@ class FanMaster(Master):
     @property
     def wall(self) -> float:
         return self.fits.structural_wall
+
+    @property
+    def wall_edge_break(self) -> float:
+        return (self.wall - self.fits.min_wall) / 2
 
     @property
     def insert_depth(self) -> float:

@@ -1,4 +1,4 @@
-from build123d import Align, BuildPart, Cylinder, Location, Locations, fillet
+from build123d import Align, BuildPart, Cylinder, Location, Locations, chamfer, fillet
 from cad.design.parts import part
 from cad.library.shapes import FacesOn, Printed, built, edges_on, register
 
@@ -14,6 +14,7 @@ def lid(m: DispenserMaster) -> Printed:
         with Locations(Location(m.rim)):
             Cylinder(m.radius, m.wall, align=BOTTOM)
         fillet(edges_on(built(made), m.rim.offset(m.wall)), m.fits.min_wall)
+        chamfer(edges_on(built(made), m.rim), m.wall_edge_break)
         with Locations(Location(m.plug_bottom)):
             Cylinder(m.plate_radius, m.wall, align=BOTTOM)
         fillet(edges_on(built(made), m.plug_bottom), m.fits.min_wall)

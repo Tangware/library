@@ -4,6 +4,7 @@ from build123d import (
     BuildPart,
     BuildSketch,
     Circle,
+    Convexity,
     Cylinder,
     Location,
     Locations,
@@ -11,6 +12,8 @@ from build123d import (
     Plane,
     Pos,
     Rectangle,
+    Select,
+    chamfer,
     extrude,
     fillet,
 )
@@ -22,7 +25,7 @@ from cad.library.shapes import FacesOn, Printed, built, edges_on, register
 from cad.library.turns import FACING_FRONT, UPSIDE_DOWN
 
 from dispenser import models
-from dispenser.features import front_sector
+from dispenser.features import front_sector, rims
 from dispenser.master import DispenserMaster
 
 STEPPER_INSERTS = "stepper inserts"
@@ -86,6 +89,7 @@ def base(m: DispenserMaster) -> Printed:
             Cylinder(hole, sleeve, align=OUTWARD, mode=Mode.SUBTRACT)
             seat = Plane(light * Pos(Y=sleeve) * FACING_FRONT)
             register(LIGHT_HOLE, seat, [FacesOn(plane=-seat)])
+        chamfer(rims(made, Plane(light * FACING_FRONT)), m.wall_edge_break)
         with Locations(*[spot * Pos(Z=m.wall) for spot in m.reed_spots]):
             Cylinder(m.screw_land, m.insert_depth - m.wall, align=BOTTOM)
         under = [spot * UPSIDE_DOWN for spot in m.reed_spots]
@@ -110,6 +114,7 @@ def base(m: DispenserMaster) -> Printed:
                 align=BOTTOM,
                 mode=Mode.SUBTRACT,
             )
+        chamfer(made.edges(Select.NEW).filter_by(Convexity.CONVEX), m.wall_edge_break)
         register(RIM, m.rim, [FacesOn(plane=m.rim)])
     return Printed(
         name="base",

@@ -11,6 +11,16 @@ PAN_DRIVER = SIGNALS
 TILT_DRIVER = SIGNALS
 POWER = ("VBUS", "GND")
 COILS = ("A+", "A-", "B+", "B-")
+COLOURS = {
+    "5V": "wire red",
+    "VBUS": "wire red",
+    "GND": "wire black",
+    "UART": "wire yellow",
+    "A+": "wire black",  # StepperOnline 17HS08-1004S datasheet, type of connection
+    "A-": "wire green",
+    "B+": "wire red",
+    "B-": "wire blue",
+}
 SIGNAL_HARNESS = "Dupont jumper harness, 3 wires, 500 mm"
 POWER_HARNESS = "Dupont jumper harness, 2 wires, 150 mm"
 PAN_MOTOR = "pan motor, StepperOnline 17HS08-1004S"
@@ -27,7 +37,7 @@ CAMERA_PINS = "camera pins"
 
 
 def wires(names: tuple[str, ...], diameter: float) -> tuple[Wire, ...]:
-    return tuple(Wire(name=name, diameter=diameter, colour=name) for name in names)
+    return tuple(Wire(name=name, diameter=diameter, colour=COLOURS[name]) for name in names)
 
 
 def cable(name: str, plugs: tuple[tuple[str, tuple[str, ...]], ...], length: float) -> Cable:

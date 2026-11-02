@@ -1,4 +1,18 @@
-from build123d import Align, Box, BuildPart, Cylinder, Location, Locations, Mode, Plane, Pos, fillet
+from build123d import (
+    Align,
+    Box,
+    BuildPart,
+    Convexity,
+    Cylinder,
+    Location,
+    Locations,
+    Mode,
+    Plane,
+    Pos,
+    Select,
+    chamfer,
+    fillet,
+)
 from cad.design.parts import part
 from cad.library.features.hardware import INSERTS, insert_holes
 from cad.library.features.planes import between, foot_on
@@ -46,11 +60,13 @@ def puck(m: FanMaster) -> Printed:
                 align=BOTTOM,
                 mode=Mode.SUBTRACT,
             )
+        chamfer(made.edges(Select.NEW).filter_by(Convexity.CONVEX), m.wall_edge_break)
     return Printed(
         name="puck",
         pose=Location(),
         body=built(made),
         bed="+z",
         exterior=True,
+        material=m.material,
         print_settings=m.print_settings,
     )

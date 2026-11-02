@@ -1,4 +1,5 @@
 from cad.design.catalogue import Item, Kind
+from cad.library.bought.catalogue import BLACK_PLASTIC
 
 IN_HOUSE = "in-house: the founder's own FDM printers"
 IN_HOUSE_PRINTING_PER_KG = 21.5
@@ -6,7 +7,13 @@ IN_HOUSE_PRINTING = (
     "estimate: a Prusa Core One (~1,199 USD, not opened) over 5,000 h is 0.24 USD/h, plus 0.1 kW"
     " at 0.17 USD/kWh; at about 12 g/h of structural PETG that is 21.5 USD/kg; labour not counted"
 )
-WARM_OFF_WHITE = (0.94, 0.92, 0.86)  # design/language.md: warm off-white, matte; an on-screen guess
+SIGNAL_WHITE = (0xE5 / 255, 0xE0 / 255, 0xE1 / 255)  # filamentcolors.xyz swatch 1338, #E5E0E1
+# median soldermask pixel in Adafruit's product photo,
+# https://cdn-shop.adafruit.com/970x728/3297-05.jpg
+DRV8833_BLUE = (0x05 / 255, 0x64 / 255, 0xBD / 255)
+DRV8833_SOLDERMASK = "Adafruit 3297, blue soldermask"
+FAN_BLACK = "Delta AFB0805L, black"  # Delta AFB0805L specification
+TAPE_BLACK = "3M VHB 5952, black"  # 3M VHB 5952 technical data sheet
 PRUSAMENT = "https://www.prusa3d.com/category/prusament-petg/"
 ADAFRUIT = "Adafruit"
 ACCU = "Accu"
@@ -38,6 +45,8 @@ CATALOGUE = (
     Item(
         name="Delta AFB0805L fan",
         kind=Kind.BOUGHT,
+        material=FAN_BLACK,
+        colour=BLACK_PLASTIC,
         supplier=DIGIKEY,
         part_number="603-1305-ND",
         url="https://www.digikey.com/en/products/detail/delta-electronics/AFB0805L/2560429",
@@ -77,6 +86,8 @@ CATALOGUE = (
     Item(
         name="Adafruit DRV8833 breakout",
         kind=Kind.BOUGHT,
+        material=DRV8833_SOLDERMASK,
+        colour=DRV8833_BLUE,
         supplier=ADAFRUIT,
         part_number="3297",
         url="https://www.adafruit.com/product/3297",
@@ -176,15 +187,15 @@ CATALOGUE = (
         lead_weeks=None,
     ),
     Item(
-        name="PETG, white, 1.75 mm",
+        name="Prusament PETG Signal White, 1.75 mm",
         kind=Kind.CONSUMABLE,
         supplier="Prusa Research",
         part_number="Prusament PETG Signal White 1 kg",
         url=PRUSAMENT,
         unit_price=28.0,
         kg=1.0,
-        material="PETG white",
-        colour=WARM_OFF_WHITE,
+        material="PETG Signal White",
+        colour=SIGNAL_WHITE,
         price_source="estimate: prusa3d.com list (opened), converted to USD",
         stocked=True,
         moq=1,
@@ -193,6 +204,8 @@ CATALOGUE = (
     Item(
         name="3M VHB 5952 pad",
         kind=Kind.BOUGHT,
+        material=TAPE_BLACK,
+        colour=BLACK_PLASTIC,
         supplier=DIGIKEY,
         part_number="3M 5952 1/2in x 36yd, cut to a pad",
         url="https://www.digikey.com/en/products/result?keywords=3M%205952",

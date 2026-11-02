@@ -5,12 +5,14 @@ from build123d import (
     BuildPart,
     BuildSketch,
     Circle,
+    Convexity,
     Cylinder,
     Location,
     Locations,
     Mode,
     Plane,
     Pos,
+    Select,
     chamfer,
     extrude,
 )
@@ -23,6 +25,7 @@ from cad.library.features.planes import axis_along, between, crossing
 from cad.library.shapes import Printed, built, edges_on
 from cad.library.turns import UPSIDE_DOWN
 
+from pantilt.features import rims
 from pantilt.master import ProductMaster
 
 LID_INSERTS = "lid inserts"
@@ -46,7 +49,8 @@ def base(m: ProductMaster) -> Printed:
     with BuildPart() as made:
         with Locations(Location(m.ground)):
             Cylinder(m.radius, between(m.ground, m.base_top), align=BOTTOM)
-        chamfer(edges_on(built(made), m.ground), m.fits.min_wall)
+        ends = [*edges_on(built(made), m.ground), *edges_on(built(made), m.base_top)]
+        chamfer(ends, m.fits.min_wall)
         with Locations(Location(m.base_top)):
             Cylinder(
                 m.inside_radius,
@@ -54,6 +58,7 @@ def base(m: ProductMaster) -> Printed:
                 align=TOP,
                 mode=Mode.SUBTRACT,
             )
+        chamfer(rims(made, m.base_top), m.wall_edge_break)
         with BuildSketch(*m.lid_screws) as bosses:
             Circle(insert_land(m.screw, fits=m.fits, stock=m.stock))
         extrude(bosses.sketch, amount=-m.screw_plate - m.standoff)
@@ -71,6 +76,7 @@ def base(m: ProductMaster) -> Printed:
                 align=BOTTOM,
                 mode=Mode.SUBTRACT,
             )
+        chamfer(made.edges(Select.NEW).filter_by(Convexity.CONVEX), m.wall_edge_break)
     return Printed(
         name="base",
         pose=Location(),

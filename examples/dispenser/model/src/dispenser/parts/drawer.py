@@ -5,6 +5,7 @@ from build123d import (
     BuildPart,
     BuildSketch,
     Circle,
+    Convexity,
     Cylinder,
     Location,
     Locations,
@@ -13,13 +14,16 @@ from build123d import (
     Pos,
     Rectangle,
     Select,
+    ShapeList,
+    chamfer,
     extrude,
     fillet,
 )
 from cad.design.parts import part
-from cad.library.shapes import FacesOn, Printed, built, register
+from cad.library.shapes import FacesOn, Printed, built, edges_on, register
 
 from dispenser import models
+from dispenser.features import rims
 from dispenser.master import DispenserMaster
 
 RUNNER = "runner"
@@ -38,13 +42,18 @@ def drawer(m: DispenserMaster) -> Printed:
         with Locations(Location(m.drawer_bottom)):
             Cylinder(m.radius, m.drawer_height, align=BOTTOM, mode=Mode.INTERSECT)
         fillet(made.edges(Select.LAST).filter_by(Axis.Z), m.wall)
+        chamfer(edges_on(built(made), m.drawer_bottom), m.fits.min_wall)
+        fillet(edges_on(built(made), m.drawer_top), m.fits.min_wall)
         with BuildSketch(Location(tray) * Pos(Y=m.tray_back)) as inside:
             Rectangle(m.pull_width, m.radius, align=(Align.CENTER, Align.MAX))
             with Locations(Pos(Y=-m.tray_back)):
                 Circle(m.radius - m.wall, mode=Mode.INTERSECT)
         extrude(inside.sketch, amount=m.tray_depth, mode=Mode.SUBTRACT)
+        chamfer(rims(made, m.drawer_top), m.wall_edge_break)
         with Locations(Location(m.drawer_bottom) * Pos(Y=m.drawer_front + m.pull_reach)):
             Box(m.pull_width, m.pull_reach, m.pull_height, align=BACK, mode=Mode.SUBTRACT)
+        pull_edge = ShapeList(rims(made, floor)).filter_by(Convexity.CONVEX)
+        fillet(pull_edge, m.fits.min_wall)
         with Locations(m.actuator_at):
             pocket = m.fits.sliding
             Box(
@@ -54,6 +63,7 @@ def drawer(m: DispenserMaster) -> Printed:
                 align=BOTTOM,
                 mode=Mode.SUBTRACT,
             )
+            chamfer(rims(made, m.drawer_top), m.wall_edge_break)
             register(ACTUATOR_POCKET, m.actuator_at, [FacesOn(plane=Plane(m.actuator_at))])
         register(RUNNER, m.drawer_bottom, [FacesOn(plane=m.drawer_bottom)])
     return Printed(

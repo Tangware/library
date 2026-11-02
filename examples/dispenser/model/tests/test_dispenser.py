@@ -4,9 +4,11 @@ import pytest
 from build123d import Align, Box, Cylinder, Location, Pos, Rot, extrude
 from cad.assembly.tree import assembled
 from cad.design.built import manifest
-from cad.design.catalogue import Kind
+from cad.design.catalogue import Item, Kind
 from cad.library.bought.vendor import Bought
 from cad.library.features.hardware import Fastening
+from cad.library.mates import named
+from cad.library.shapes import Brep
 from cad.library.standard.fasteners import SCREWS
 
 from dispenser import models
@@ -51,7 +53,18 @@ def dispenser() -> Fastening:
     return assembled(PRODUCT)
 
 
-def gate_slice(height: float) -> object:
+def overlap(first: Brep, second: Brep) -> float:
+    common = first & second
+    return 0.0 if common is None else common.volume
+
+
+def price(item: Item) -> float:
+    if item.unit_price is None:
+        raise ValueError(f"{item.name} has no price")
+    return item.unit_price
+
+
+def gate_slice(height: float) -> Brep:
     on = Location(MASTER.carousel_bottom) * Pos(Z=height)
     return extrude(front_sector(MASTER, on), amount=SLICE_MM)
 
@@ -63,7 +76,7 @@ def gate_slice(height: float) -> object:
 )
 def test_r1_at_rest_the_home_sector_closes_the_gate() -> None:
     covering = gate_slice(MASTER.wall / 2)
-    assert abs((covering & carousel(MASTER).solid()).volume - covering.volume) < 1e-3
+    assert abs(overlap(covering, carousel(MASTER).solid()) - covering.volume) < 1e-3
 
 
 @pytest.mark.check(
@@ -145,7 +158,7 @@ def test_r6_a_wifi_board_is_powered_from_the_wall(dispenser: Fastening) -> None:
     assert [part.name for part in dispenser.parts].count(PICO_NAME) == 1
     powered = [route for route in harness(MASTER) if route.cable.name == POWER_NAME]
     (route,) = powered
-    assert route.plugged[0].part.name == PICO_NAME
+    assert named(route.plugged[0].part) == PICO_NAME
 
 
 @pytest.mark.check(
@@ -179,9 +192,9 @@ def test_r8_the_landed_cost_is_under_the_target(dispenser: Fastening) -> None:
     bought = sum(line["qty"] * line["unit_price"] for line in lines if line["kind"] == "bought")
     plastic = sum(line["unit_price"] for line in lines if line["kind"] == "made")
     consumed = sum(
-        item.unit_price
+        price(item)
         for item in CATALOGUE
-        if item.kind is Kind.CONSUMABLE and item.unit_price < PER_UNIT_CONSUMABLE_USD
+        if item.kind is Kind.CONSUMABLE and price(item) < PER_UNIT_CONSUMABLE_USD
     )
     landed = (bought + plastic + consumed) * (1 + FREIGHT_AND_DUTY_SHARE)
     assert landed < TARGET_LANDED_USD, f"landed ${landed:.2f}"
@@ -232,7 +245,7 @@ def test_s3_only_the_drawer_and_the_light_break_the_drum(dispenser: Fastening) -
     reaching = {
         part.name
         for part in dispenser.parts
-        if part.name not in ("base", "lid") and (part.solid() & ring).volume > 1e-6
+        if part.name not in ("base", "lid") and overlap(part.solid(), ring) > 1e-6
     }
     assert reaching == {"drawer", LED_NAME}
 

@@ -29,10 +29,11 @@ from cad.library.features.hardware import (
 )
 from cad.library.features.planes import axis_along, crossing, foot_on, parallel
 from cad.library.mates import Connector, Kind, Mate
-from cad.library.shapes import OUTSIDE, Seat, round_faces, seat_of
+from cad.library.shapes import OUTSIDE, Part, Seat, round_faces, seat_of
 from cad.library.turns import UPSIDE_DOWN
 
 from fan import models
+from fan.catalogue import DRV8833_SOLDERMASK, FAN_BLACK, TAPE_BLACK
 from fan.master import (
     BUMPER,
     BUTTON,
@@ -91,7 +92,13 @@ def shaft(m: FanMaster) -> Bought:
 def driver(m: FanMaster) -> Bought:
     pads = Pos(Y=models.DRIVER_WIDTH / 2, Z=models.DRIVER_BOARD_TOP)
     connectors = {**board_connectors(DRIVER, m.driver_mount.holes), **wired(DRIVER, pads)}
-    return Bought(name=DRIVER_NAME, pose=m.driver_at, item=DRIVER, connectors=connectors)
+    return Bought(
+        name=DRIVER_NAME,
+        pose=m.driver_at,
+        item=DRIVER,
+        connectors=connectors,
+        material=DRV8833_SOLDERMASK,
+    )
 
 
 def tab_spots(m: FanMaster) -> list[Location]:
@@ -203,7 +210,7 @@ def turning_head(m: FanMaster) -> Fastening:
 @derived
 def fan(m: FanMaster) -> Fastening:
     lead = wired(FAN, m.fan_origin * Pos(X=m.fan_side / 2, Y=-(m.fan_depth + m.lead_reach / 2)))
-    held = Bought(name=FAN_NAME, pose=m.fan_at, item=FAN, connectors=lead)
+    held = Bought(name=FAN_NAME, pose=m.fan_at, item=FAN, connectors=lead, material=FAN_BLACK)
     mate = Mate(
         f"{FAN_NAME} in head",
         Kind.RIGID,
@@ -247,7 +254,7 @@ def driver_mounted(m: FanMaster) -> Fastening:
 
 
 def tape(m: FanMaster) -> Bought:
-    return Bought(name=TAPE_NAME, pose=m.tape_at, item=TAPE)
+    return Bought(name=TAPE_NAME, pose=m.tape_at, item=TAPE, material=TAPE_BLACK)
 
 
 @derived
@@ -267,7 +274,7 @@ def taped_board(m: FanMaster) -> Fastening:
 
 @derived
 def feet(m: FanMaster) -> Fastening:
-    pads = [Bought(name=BUMPER_NAME, pose=at, item=BUMPER) for at in m.feet_at]
+    pads: list[Part] = [Bought(name=BUMPER_NAME, pose=at, item=BUMPER) for at in m.feet_at]
     mates = held_by(pads, OUTSIDE, Connector(floor(m), FEET))
     return Fastening(parts=pads, mates=[replace(mate, approach=Axis.Z) for mate in mates])
 
@@ -287,12 +294,30 @@ def closed(m: FanMaster) -> Fastening:
 WIRED = "wired end"
 BUTTON_WIRES = ("switch", "ground")
 DRIVER_WIRES = ("AIN1", "AIN2", "BIN1", "BIN2", "VM", "GND")
+COLOURS = {
+    "switch": "wire white",
+    "ground": "wire black",
+    "AIN1": "wire yellow",
+    "AIN2": "wire green",
+    "BIN1": "wire blue",
+    "BIN2": "wire white",
+    "VM": "wire red",
+    "GND": "wire black",
+    "+5V": "wire red",
+    "A+": "wire pink",  # Kiatronics 28BYJ-48 datasheet: coils pink-orange and blue-yellow,
+    "A-": "wire orange",  # red the centre taps
+    "B+": "wire blue",
+    "B-": "wire yellow",
+    "common": "wire red",
+}
 
 
 def hook_up(name: str, wires: tuple[str, ...], ends: tuple[str, str]) -> Cable:
     return Cable(
         name=name,
-        wires=tuple(Wire(name=wire, diameter=models.WIRE_26_AWG, colour=wire) for wire in wires),
+        wires=tuple(
+            Wire(name=wire, diameter=models.WIRE_26_AWG, colour=COLOURS[wire]) for wire in wires
+        ),
         plugs=tuple(Plug(name=end, model=None, pinout=wires) for end in ends),
         construction=Discrete(),
         twist_rating=0.0,
@@ -310,7 +335,7 @@ DRIVER_LEADS = hook_up(
 
 
 FAN_WIRES = ("+5V", "GND")
-STEPPER_WIRES = ("A", "B", "C", "D", "common")
+STEPPER_WIRES = ("A+", "A-", "B+", "B-", "common")
 
 
 def shipped_lead(
@@ -318,7 +343,7 @@ def shipped_lead(
 ) -> Cable:
     return Cable(
         name=name,
-        wires=tuple(Wire(name=wire, diameter=diameter, colour=wire) for wire in wires),
+        wires=tuple(Wire(name=wire, diameter=diameter, colour=COLOURS[wire]) for wire in wires),
         plugs=(
             Plug(name=ships_with, model=None, pinout=wires),
             Plug(name="soldered end", model=None, pinout=wires),

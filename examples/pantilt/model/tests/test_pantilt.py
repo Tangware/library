@@ -1,4 +1,5 @@
 from collections.abc import Callable, Iterator
+
 import pytest
 from build123d import Axis, Box, CenterOf, Location, Plane, Pos, Rotation
 from cad.assembly.tree import assembled, instance_keys
@@ -8,7 +9,7 @@ from cad.library.bought.vendor import Bought
 from cad.library.extension_spring import ExtensionSpring
 from cad.library.features.hardware import Fastening
 from cad.library.mates import Kind, Mate
-from cad.library.shapes import Part, Printed
+from cad.library.shapes import Brep, Part, Printed
 
 from pantilt.assemblies.pantilt import PRODUCT
 from pantilt.master import (
@@ -47,7 +48,7 @@ def world() -> Fastening:
 def kilograms(world: Fastening) -> dict[int, float]:
     built = manifest()
     grams = {part["id"]: part["mass_g"] for part in built["parts"]}
-    named = {}
+    named: dict[str, float] = {}
     for assembly in built["assemblies"]:
         named |= {each["name"]: grams[each["part"]] for each in assembly["instances"]}
         named |= {each["name"]: each["mass_g"] for each in assembly["hardware"]}
@@ -63,6 +64,11 @@ def about(axis: Axis, angle: float) -> Location:
 def mate(world: Fastening, name: str) -> Mate:
     (found,) = [each for each in world.mates if each.name == name]
     return found
+
+
+def overlap(first: Brep, second: Brep) -> float:
+    common = first & second
+    return 0.0 if common is None else common.volume
 
 
 def holder(world: Fastening, part: Part) -> Mate | None:
@@ -91,7 +97,9 @@ def shift(world: Fastening, part: Part, joints: dict[str, float]) -> Location:
 def seated_bought(world: Fastening, first: Part, second: Part) -> bool:
     bought = isinstance(first, Bought) and isinstance(second, Bought)
     pair = {id(first), id(second)}
-    return bought and any({id(each.child_part), id(each.parent_part)} == pair for each in world.mates)
+    return bought and any(
+        {id(each.child_part), id(each.parent_part)} == pair for each in world.mates
+    )
 
 
 def clashes(world: Fastening, joints: dict[str, float]) -> Iterator[str]:
@@ -105,7 +113,7 @@ def clashes(world: Fastening, joints: dict[str, float]) -> Iterator[str]:
                 continue
             if boxes[id(first)].disjoint(boxes[id(second)]):
                 continue
-            if (solids[id(first)] & solids[id(second)]).volume > TOUCHING_MM3:
+            if overlap(solids[id(first)], solids[id(second)]) > TOUCHING_MM3:
                 yield f"{first.name} hits {second.name}"
 
 
@@ -131,7 +139,7 @@ def centre_and_kilograms(
 
 
 @pytest.mark.check(
-    does_not_catch="Strength, fit and finish.", subjects=tuple(b.__name__ for b in MADE)
+    does_not_catch="Strength, fit and finish.", subjects=tuple(b.build.__name__ for b in MADE)
 )
 @pytest.mark.parametrize("builder", MADE)
 def test_m3_each_part_builds_from_the_master_alone(
@@ -162,7 +170,9 @@ def test_r1_the_jaw_slides_from_the_widest_phone_to_the_narrowest_without_a_clas
     does_not_catch="Fatigue of the spring and the hooks' own strength.",
     subjects=("jaw", "cradle"),
 )
-def test_r1_the_spring_stays_taut_and_within_its_rating_over_the_jaw_travel(world: Fastening) -> None:
+def test_r1_the_spring_stays_taut_and_within_its_rating_over_the_jaw_travel(
+    world: Fastening,
+) -> None:
     spring = MASTER.spring
     for travel in (MASTER.jaw_range.low, MASTER.jaw_range.high):
         lug = Pos(Z=travel) * MASTER.spring_lug_at
@@ -251,11 +261,11 @@ def test_r6_the_camera_rides_the_cradle_and_sees_past_it(world: Fastening) -> No
     reach = MASTER.plug_reach
     ahead = Pos(lens.X, lens.Y - reach / 2 - MASTER.fits.sliding, lens.Z)
     sight = Box(module.width, reach, module.height).moved(ahead)
-    blocked = sum(
-        (part.solid() & sight).volume for part in world.parts if part is not board
-    )
+    blocked = sum(overlap(part.solid(), sight) for part in world.parts if part is not board)
 
-    assert holder(world, board).parent_part.name == "cradle"
+    held = holder(world, board)
+    assert held is not None
+    assert held.parent_part.name == "cradle"
     assert blocked < TOUCHING_MM3
 
 
@@ -316,7 +326,7 @@ def test_s2_both_axes_show_as_cylinders_of_one_diameter_at_right_angles(world: F
 
 @pytest.mark.check(
     does_not_catch="Colour matching between print batches and the finish itself.",
-    subjects=tuple(b.__name__ for b in MADE),
+    subjects=tuple(b.build.__name__ for b in MADE),
 )
 def test_s3_every_made_part_is_one_material(world: Fastening) -> None:
     assert len({part.material for part in world.parts if isinstance(part, Printed)}) == 1

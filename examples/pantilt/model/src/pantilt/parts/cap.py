@@ -4,6 +4,7 @@ from cad.library.features.hardware import counterbored_screws
 from cad.library.shapes import Printed, built, edges_on
 from cad.library.turns import ALONG_X
 
+from pantilt.features import rims
 from pantilt.master import ProductMaster
 
 BOTTOM = (Align.CENTER, Align.CENTER, Align.MIN)
@@ -15,7 +16,9 @@ def cap(m: ProductMaster) -> Printed:
     with BuildPart() as made:
         with Locations(rim):
             Cylinder(m.radius, m.screw_plate, align=BOTTOM)
-        chamfer(edges_on(built(made), Plane(rim).offset(m.screw_plate)), m.fits.min_wall)
+        outside = Plane(rim).offset(m.screw_plate)
+        chamfer(edges_on(built(made), outside), m.fits.min_wall)
+        chamfer(edges_on(built(made), Plane(rim)), m.wall_edge_break)
         counterbored_screws(
             Plane(rim),
             m.cap_screws,
@@ -24,6 +27,7 @@ def cap(m: ProductMaster) -> Printed:
             m.screw_plate,
             fits=m.fits,
         )
+        chamfer(rims(made, outside), m.wall_edge_break)
     return Printed(
         name="cap",
         pose=Location(),

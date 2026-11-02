@@ -1,14 +1,10 @@
 from dataclasses import replace
 
 from build123d import Axis, Location
-
-from box.master import MASTER, PICO_2, PICO_2_USB, BoxMaster
-from box.parts.body import BOARD_INSERTS, MAGNETS, body
-from box.parts.lid import lid
 from cad.assembly.tree import Assembly, job
 from cad.cables.models import Cable, Jacketed, Plug, Route, RoutePoint, Wire
-from cad.library.bought.catalogue import NO_BILL
 from cad.library.bought.boards import MOUNTING_HOLES, board_connectors
+from cad.library.bought.catalogue import NO_BILL
 from cad.library.bought.vendor import Bought
 from cad.library.derived import derived
 from cad.library.features.boards import BOARD_ROLE, board_inserts, board_screws
@@ -27,13 +23,25 @@ from cad.library.features.hardware import (
 )
 from cad.library.mates import Connector
 
+from box.master import MASTER, PICO_2, PICO_2_USB, BoxMaster
+from box.parts.body import BOARD_INSERTS, MAGNETS, body
+from box.parts.lid import lid
+
 PICO_2_NAME = "Raspberry Pi Pico 2"
 AWG_28_MM = 0.321  # ASTM B258, 28 AWG conductor
 AK67501_JACKET_MM = 3.5  # Assmann drawing AK67501-1-R, read in a search summary, not opened
 USB_WIRES = ("VBUS", "D-", "D+", "GND")
+USB_COLOURS = {  # USB 2.0 specification, table 6-2: the cable's conductor colours
+    "VBUS": "wire red",
+    "D-": "wire white",
+    "D+": "wire green",
+    "GND": "wire black",
+}
 USB_CABLE = Cable(
     name="Assmann AK67501-1-R USB A to micro-B cable, 1 m",
-    wires=tuple(Wire(name=name, diameter=AWG_28_MM, colour=name) for name in USB_WIRES),
+    wires=tuple(
+        Wire(name=name, diameter=AWG_28_MM, colour=USB_COLOURS[name]) for name in USB_WIRES
+    ),
     plugs=(
         Plug(name="micro-B", model=None, pinout=USB_WIRES),
         Plug(name="A", model=None, pinout=USB_WIRES),

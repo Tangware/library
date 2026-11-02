@@ -1,4 +1,5 @@
 from cad.design.catalogue import Item, Kind
+from cad.library.bought.catalogue import BLACK_PLASTIC
 
 DIGIKEY = "Digi-Key"
 ADAFRUIT = "Adafruit"
@@ -19,7 +20,17 @@ GBP_USD = 1.33  # estimate: exchange rate, not checked on the day
 INSERT_M3_EUR = 84.60 / 1000  # cnckitchen.store, M3 x 5.7, EUR per 1,000 pack
 INSERT_SMALL_EUR = 89.90 / 1000  # cnckitchen.store, M2 x 3 and M2.5 x 4, EUR per 1,000 pack
 SCREW_GBP = 0.04  # accu.co.uk, A2 ISO 4762 M3 and M2, at 1,000
+# median soldermask pixel in Adafruit's product photo,
+# https://cdn-shop.adafruit.com/970x728/3297-05.jpg
+DRV8833_BLUE = (0x05 / 255, 0x64 / 255, 0xBD / 255)
+DRV8833_SOLDERMASK = "Adafruit 3297, blue soldermask"
+# median pixel of the spool's winding in Prusa's product photo,
+# https://www.prusa3d.com/content/images/product/a0404f7b-887a-46a5-b57c-e5abffd0f215.jpg
+NOCTUA_BROWN = (0x3F / 255, 0x27 / 255, 0x1E / 255)
+REED_BLACK = "Littelfuse 59140, black glass-filled PBT"  # Littelfuse 59140 datasheet, materials
+ACTUATOR_BLACK = "Littelfuse 57140, black glass-filled PBT"  # same table
 SCREW_M2_5_GBP = 0.03  # accu.co.uk, A2 ISO 4762 M2.5 x 5 (3803), at 2,000
+WASHER_GBP = 1.40 / 100  # pts-uk.com A708903, A2 ISO 7089 M3, GBP per 100 at 1,000
 
 
 def made(name: str) -> Item:
@@ -111,9 +122,9 @@ CATALOGUE = (
         unit_price=SPOOL_CHF * CHF_USD,
         kg=1.0,
         material="PETG brown",
-        colour=(0.45, 0.33, 0.25),
+        colour=NOCTUA_BROWN,
         price_source="3djake.ch 33.50 CHF per kg (search summary, page not opened), converted"
-        " at an estimated rate; the colour is an estimate of the spool's brown",
+        " at an estimated rate",
         stocked=True,
         moq=1,
         lead_weeks=None,
@@ -133,6 +144,8 @@ CATALOGUE = (
     Item(
         name="Adafruit 3297 DRV8833 breakout",
         kind=Kind.BOUGHT,
+        material=DRV8833_SOLDERMASK,
+        colour=DRV8833_BLUE,
         supplier=ADAFRUIT,
         part_number="3297 (Digi-Key 1528-3297-ND)",
         url="https://www.adafruit.com/product/3297",
@@ -169,6 +182,8 @@ CATALOGUE = (
     Item(
         name="Littelfuse 59140-1-S-02-A reed sensor",
         kind=Kind.BOUGHT,
+        material=REED_BLACK,
+        colour=BLACK_PLASTIC,
         supplier=DIGIKEY,
         part_number="HE573-ND",
         url="https://www.digikey.com/en/products/result?keywords=HE573-ND",
@@ -181,6 +196,8 @@ CATALOGUE = (
     Item(
         name="Littelfuse 57140-000 actuator",
         kind=Kind.BOUGHT,
+        material=ACTUATOR_BLACK,
+        colour=BLACK_PLASTIC,
         supplier=DIGIKEY,
         part_number="57140-000-ND",
         url="https://www.digikey.com/en/products/result?keywords=57140-000-ND",
@@ -246,6 +263,20 @@ CATALOGUE = (
     ),
     screw("M3 x 6 socket head cap screw", "Accu SSCF-M3-6-A2", SCREW_GBP),
     screw("M3 x 10 socket head cap screw", "Accu 3819-SSCF-M3-10-A2", SCREW_GBP),
+    screw("M3 x 12 socket head cap screw", "Accu SSCF-M3-12-A2", SCREW_GBP),
+    Item(
+        name="M3 ISO 7089 washer",
+        kind=Kind.BOUGHT,
+        supplier="PTS",
+        part_number="A708903",
+        url="https://pts-uk.com/products/washers/flat-washers-200hv-iso7089/metric-a2/A708903",
+        unit_price=WASHER_GBP * GBP_USD,
+        price_source="pts-uk.com A708903: 1.40 GBP per 100 at 1,000 (page opened), converted at"
+        " an estimated rate",
+        stocked=True,
+        moq=1000,
+        lead_weeks=None,
+    ),
     screw("M2 x 3 socket head cap screw", "Accu SSCF-M2-3-A2", SCREW_GBP),
     screw("M2.5 x 5 socket head cap screw", "Accu 3803-SSCF-M2.5-5-A2", SCREW_M2_5_GBP),
     lead("driver leads, 26 AWG", 0.15),

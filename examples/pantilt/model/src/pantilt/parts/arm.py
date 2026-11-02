@@ -5,6 +5,7 @@ from build123d import (
     BuildPart,
     BuildSketch,
     Circle,
+    Convexity,
     Cylinder,
     Location,
     Locations,
@@ -23,10 +24,7 @@ from cad.library.shapes import (
     Printed,
     RoundFaces,
     built,
-    faces_on,
-    meeting,
     register,
-    round_faces,
 )
 from cad.library.turns import ALONG_X, FACING_BACK
 
@@ -58,6 +56,9 @@ def arm(m: ProductMaster) -> Printed:
             with Locations(Pos(Y=rise / 2)):
                 Rectangle(stepper.FRAME, rise)
         extrude_to(column, Plane(m.tilt_motor_at), sketch=side)
+        with Locations(m.tilt_motor_at):
+            Cylinder(m.radius, m.drum_rim - m.tilt_flange, align=BEHIND)
+        chamfer(made.edges().filter_by(Convexity.CONVEX), m.fits.min_wall)
         with Locations(Location(m.arm_bottom)):
             chamber = between(m.arm_bottom, m.chamber_top)
             Cylinder(m.inside_radius, chamber, align=BOTTOM, mode=Mode.SUBTRACT)
@@ -91,10 +92,8 @@ def arm(m: ProductMaster) -> Printed:
                 mode=Mode.SUBTRACT,
             )
         with Locations(m.tilt_motor_at):
-            Cylinder(m.radius, m.drum_rim - m.tilt_flange, align=BEHIND)
-        with Locations(m.tilt_motor_at):
-            side = m.fits.printed(stepper.FRAME)
-            Box(side, side, m.drum_rim - m.tilt_flange, align=BEHIND, mode=Mode.SUBTRACT)
+            frame = m.fits.printed(stepper.FRAME)
+            Box(frame, frame, m.drum_rim - m.tilt_flange, align=BEHIND, mode=Mode.SUBTRACT)
         rim = Plane(Location((m.drum_rim, 0, m.tilt_height)) * ALONG_X)
         insert_holes(rim, m.cap_screws, m.screw, CAP_INSERTS, fits=m.fits, stock=m.stock)
         counterbored_screws(
@@ -109,8 +108,6 @@ def arm(m: ProductMaster) -> Printed:
         with Locations(m.drum_lead_hole * FACING_BACK):
             reach = m.radius - stepper.FRAME / 2
             Cylinder(m.cable_way / 2, reach, align=BOTTOM, mode=Mode.SUBTRACT)
-        outside = round_faces(built(made), m.radius)
-        chamfer(meeting(faces_on(built(made), m.arm_bottom), outside), m.fits.min_wall)
     return Printed(
         name="arm",
         pose=Location(),

@@ -1,4 +1,14 @@
-from build123d import Align, Box, BuildPart, Location, Locations, Plane, Pos
+from build123d import (
+    Align,
+    Box,
+    BuildPart,
+    Convexity,
+    Location,
+    Locations,
+    Plane,
+    Pos,
+    chamfer,
+)
 from cad.design.parts import part
 from cad.library.features.planes import between, reach
 from cad.library.shapes import FacesOn, Printed, built, register
@@ -23,6 +33,7 @@ def jaw(m: ProductMaster) -> Printed:
             register(SPRING_LUG, underside, [FacesOn(plane=underside)])
         with Locations(Pos(left, m.cradle_front, m.phone_top - m.lip)):
             Box(m.jaw_length, m.wall, m.lip, align=CORNER)
+        chamfer(made.edges().filter_by(Convexity.CONVEX), m.wall_edge_break)
         with Locations(m.stem_at):
             Box(m.stem_side, m.stem_side, m.stem_length, align=HANGING)
             front = Plane.XZ.offset(-(m.guide_middle - m.stem_side / 2))

@@ -2,11 +2,11 @@ import pytest
 from build123d import Align, Axis, Cylinder, GeomType, Location, Pos, Rot
 from cad.assembly.tree import assembled
 from cad.design.built import manifest
-from cad.design.catalogue import Kind
+from cad.design.catalogue import Item, Kind
 from cad.library.bought.query import axis_of
 from cad.library.bought.vendor import Bought
 from cad.library.features.hardware import Fastening
-from cad.library.shapes import Part, radius_of
+from cad.library.shapes import Brep, Part, radius_of
 from cad.library.standard.fasteners import SCREWS
 
 from fan import models
@@ -33,6 +33,17 @@ def fan() -> Fastening:
     return assembled(PRODUCT)
 
 
+def overlap(first: Brep, second: Brep) -> float:
+    common = first & second
+    return 0.0 if common is None else common.volume
+
+
+def price(item: Item) -> float:
+    if item.unit_price is None:
+        raise ValueError(f"{item.name} has no price")
+    return item.unit_price
+
+
 def turns(part: Part) -> bool:
     return part.name in TURNING or part.group.startswith("fan/head")
 
@@ -55,7 +66,7 @@ def test_r1_the_only_fan_is_rated_no_louder_than_a_quiet_room(fan: Fastening) ->
 @pytest.mark.parametrize("angle", [-MASTER.sweep, MASTER.sweep])
 def test_r2_the_head_sweeps_45_degrees_each_way_clear_of_the_puck(angle: float) -> None:
     swung = Rot(Z=angle) * head(MASTER).solid()
-    assert (swung & puck(MASTER).solid()).volume < 1e-6
+    assert overlap(swung, puck(MASTER).solid()) < 1e-6
     assert MASTER.sweep_range.high - MASTER.sweep_range.low == 2 * abs(angle)
 
 
@@ -86,7 +97,7 @@ def test_r4_one_button_is_the_only_control_outside(fan: Fastening) -> None:
     outside = [
         part.name
         for part in fan.parts
-        if isinstance(part, Bought) and not turns(part) and (part.solid() & reach).volume > 0
+        if isinstance(part, Bought) and not turns(part) and overlap(part.solid(), reach) > 0
     ]
     assert outside == [BUTTON_NAME]
 
@@ -129,9 +140,9 @@ def test_r8_the_landed_cost_is_under_the_target(fan: Fastening) -> None:
         line["qty"] * line["unit_price"] for line in lines if line["kind"] in ("made", "bought")
     )
     consumed = sum(
-        item.unit_price
+        price(item)
         for item in CATALOGUE
-        if item.kind is Kind.CONSUMABLE and item.unit_price < PER_FAN_CONSUMABLE_USD
+        if item.kind is Kind.CONSUMABLE and price(item) < PER_FAN_CONSUMABLE_USD
     )
     landed = (parts + consumed) * (1 + FREIGHT_AND_DUTY_SHARE)
     assert landed < TARGET_LANDED_USD, f"landed ${landed:.2f}"

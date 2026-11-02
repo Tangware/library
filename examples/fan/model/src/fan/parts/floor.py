@@ -19,6 +19,7 @@ def floor(m: FanMaster) -> Printed:
         with Locations(Location(m.floor_bottom)):
             Cylinder(m.puck_radius, m.floor_thickness, align=BOTTOM)
         chamfer(edges_on(built(made), m.floor_bottom), m.fits.min_wall)
+        chamfer(edges_on(built(made), m.floor_top), m.wall_edge_break)
         heads = [spot * UPSIDE_DOWN for spot in m.floor_spots]
         counterbored_screws(
             Plane(heads[0]),
@@ -39,5 +40,6 @@ def floor(m: FanMaster) -> Printed:
         body=built(made),
         bed="-z",
         exterior=True,
+        material=m.material,
         print_settings=m.print_settings,
     )
