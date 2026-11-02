@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from functools import cache, cached_property
 
-from build123d import Axis, BoundBox, Compound, Edge, Location, Plane, PolarLocations, Pos
+from build123d import Axis, BoundBox, Compound, Location, Plane, PolarLocations, Pos
 from cad.design.master import Envelope, KeepOut, Master, Pose, given
 from cad.library.bought.boards import BoardMount, board_mount
 from cad.library.bought.catalogue import BoardKind, Catalogue, Download, Piece
@@ -11,7 +11,7 @@ from cad.library.features.hardware import insert_land
 from cad.library.features.planes import (
     between,
     chord_end,
-    crossings,
+    circle_crossing,
     halfway,
     line_between,
     normal_to,
@@ -427,7 +427,7 @@ class FanMaster(Master):
         long, short = models.DRIVER_LENGTH / 2, models.DRIVER_WIDTH / 2
         far_corner = Location(self.floor_top) * Pos(X=-long, Y=-short)
         outward = line_between(far_corner, far_corner * Pos(X=-wall, Y=-wall))
-        (on_wall,) = crossings(Edge.make_circle(wall, self.floor_top), outward)
+        on_wall = circle_crossing(Location(self.floor_top), wall, outward)
         lift = self.standoff - self.driver_mount.board_bottom
         return Location(parallel(self.floor_top, through=on_wall)) * Pos(X=long, Y=short, Z=lift)
 

@@ -103,6 +103,11 @@ def crossings(shape: Edge | Compound, by: Edge | Shell | Plane | Axis) -> list[L
     return [Pos(point.center()) for point in found.vertices()]
 
 
+def circle_crossing(frame: Location, radius: float, line: Edge) -> Location:
+    (found,) = crossings(Edge.make_circle(radius, Plane(frame)), line)
+    return found
+
+
 def chord_end(frame: Location, radius: float, beside: float) -> Location:
     round_about = Edge.make_circle(radius, Plane(frame))
     chord = parallel(Plane(frame * Plane.XZ.location), through=frame * Pos(Y=beside))

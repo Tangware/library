@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 
-from build123d import Axis, BoundBox, Edge, Location, Plane, Pos, Rot
+from build123d import Axis, BoundBox, Location, Plane, Pos, Rot
 from cad.design.master import Master, Pose, given
 from cad.library.bought.catalogue import Catalogue, Cleanup, Download
 from cad.library.bought.query import planes
 from cad.library.bought.vendor import solids_of, vendor_extent, vendor_reach
 from cad.library.features.hardware import insert_land
-from cad.library.features.planes import line_between, line_through, normal_to
+from cad.library.features.planes import circle_crossing, line_between, line_through, normal_to
 from cad.library.fits import FITS_UNITS, STAINLESS_A2_70, Fits
 from cad.library.gears import mesh_phase, pitch_radius
 from cad.library.printing import PRINT_SETTINGS_UNITS, PrintSettings
@@ -558,11 +558,11 @@ class CessnaMaster(Master):
     @property
     def pinion_centre(self) -> Location:
         centre = self.rack_radius + self.motor_radius
-        circle = Edge.make_circle(centre, Plane(origin=self.pivot.position, x_dir=AFT, z_dir=ALONG))
-        far = 2 * centre
-        line = Edge.make_line((0.0, -far, self.motor_level), (0.0, 0.0, self.motor_level))
-        (found,) = circle.find_intersection_points(line)
-        return Location(found)
+        level = Pos(Z=self.motor_level)
+        line = line_between(level * Pos(Y=-2 * centre), level)
+        return circle_crossing(
+            Location(normal_to(ALONG, through=self.pivot, x_dir=AFT)), centre, line
+        )
 
     @property
     def pinion_frame(self) -> Location:

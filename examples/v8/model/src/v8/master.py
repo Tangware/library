@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from enum import StrEnum
 
-from build123d import Axis, BoundBox, Edge, Location, Plane, Pos, Rot, Triangle
+from build123d import Axis, BoundBox, Location, Plane, Pos, Rot, Triangle
 from cad.design.master import Master, Pose, given
 from cad.library.bought.catalogue import Catalogue, Cleanup, Download
 from cad.library.bought.query import planes
 from cad.library.bought.vendor import solids_of, vendor_extent, vendor_reach
-from cad.library.features.planes import line_between, line_through
+from cad.library.features.planes import circle_crossing, line_between, line_through, parallel
 from cad.library.fits import FITS_UNITS, STAINLESS_A2_70, Fits
 from cad.library.gears import mesh_phase, pitch_radius
 from cad.library.printing import PRINT_SETTINGS_UNITS, PrintSettings
@@ -409,12 +409,11 @@ class V8Master(Master):
 
     def wrist(self, cylinder: Cylinder, turned: float) -> Location:
         pin = self.crank_pin(cylinder.journal, turned, self.cylinder_y(cylinder))
-        circle = Edge.make_circle(self.rod, Plane(origin=pin.position, x_dir=ALONG, z_dir=ACROSS))
         axis = self.bank_axis(cylinder)
-        line = Edge.make_line(axis.position, (axis * Pos(Z=self.deck)).position)
-        (found,) = circle.find_intersection_points(line)
-        at = Location(Plane(axis))
-        return Location(Plane(origin=found, x_dir=at.x_axis.direction, z_dir=at.z_axis.direction))
+        found = circle_crossing(
+            self.hinge_at(pin), self.rod, line_between(axis, axis * Pos(Z=self.deck))
+        )
+        return Location(parallel(Plane(axis), through=found))
 
     def rod_frame(self, cylinder: Cylinder) -> Location:
         wrist = self.wrist(cylinder, REST_TURN_DEG)
@@ -671,11 +670,7 @@ class V8Master(Master):
         y = self.plane_a(valve)
         low = self.in_plane(valve, y, self.lifter_x, self.cam_z)
         high = low * Pos(Z=2 * self.strap_length)
-        circle = Edge.make_circle(
-            self.strap_length, Plane(origin=centre.position, x_dir=ALONG, z_dir=ACROSS)
-        )
-        (found,) = circle.find_intersection_points(Edge.make_line(low.position, high.position))
-        return Location(found)
+        return circle_crossing(self.hinge_at(centre), self.strap_length, line_between(low, high))
 
     def lifter_top(self, valve: Valve, turned: float) -> Location:
         along = self.bank_of(valve, 0.0)
@@ -722,10 +717,10 @@ class V8Master(Master):
         pivot = self.rocker_pivot(valve)
         reach = self.rocker_nose + self.link_length
         level = self.in_plane(valve, self.valve_y_at(valve), self.valve_x, z)
-        circle = Edge.make_circle(reach, Plane(origin=pivot.position, x_dir=ALONG, z_dir=ACROSS))
-        line = Edge.make_line(level.position, (level * Pos(Z=reach)).position)
-        (found,) = circle.find_intersection_points(line)
-        return level * Pos(Z=line_between(level, Location(found)).length)
+        found = circle_crossing(
+            self.hinge_at(pivot), reach, line_between(level, level * Pos(Z=reach))
+        )
+        return level * Pos(Z=line_between(level, found).length)
 
     def nose_bend(self, valve: Valve) -> float:
         pivot = self.rocker_pivot(valve)
@@ -749,11 +744,7 @@ class V8Master(Master):
         along = self.bank_of(valve, 0.0).z_axis.direction
         high = Location(top.position + along * self.fits.sliding)
         low = Location(top.position - along * self.link_length)
-        circle = Edge.make_circle(
-            self.link_length, Plane(origin=nose.position, x_dir=ALONG, z_dir=ACROSS)
-        )
-        (found,) = circle.find_intersection_points(Edge.make_line(high.position, low.position))
-        return Location(found)
+        return circle_crossing(self.hinge_at(nose), self.link_length, line_between(high, low))
 
     def valve_frame(self, valve: Valve) -> Location:
         tip = self.valve_tip(valve, REST_TURN_DEG)
