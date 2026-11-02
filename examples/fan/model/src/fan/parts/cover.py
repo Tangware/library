@@ -3,6 +3,7 @@ from build123d import (
     Axis,
     Box,
     BuildPart,
+    Convexity,
     Location,
     Locations,
     Plane,
@@ -29,9 +30,11 @@ def cover(m: FanMaster) -> Printed:
             Box(m.head_width, m.head_height, m.wall, align=BOTTOM)
         fillet(made.edges(Select.LAST).filter_by(Axis.Y), m.wall)
         chamfer(edges_on(built(made), Plane(plate).offset(m.wall)), m.fits.min_wall)
-        grille(m, plate, m.wall, FAN_HUB, m.fan_side / 2 - m.wall)
+        chamfer(edges_on(built(made), Plane(plate)), m.wall_edge_break)
+        grille(m, made, plate, m.wall, FAN_HUB, m.fan_side / 2 - m.wall)
         spots = [m.facing_back(at, m.fan_back) for at in m.fan_screws]
         screw_holes(Plane(spots[0]), spots, m.screw, m.wall, LIPS, fits=m.fits)
+        chamfer(made.edges(Select.NEW).filter_by(Convexity.CONVEX), m.wall_edge_break)
     return Printed(
         name="cover",
         pose=Location(),

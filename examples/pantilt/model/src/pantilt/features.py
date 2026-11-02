@@ -1,17 +1,21 @@
 from build123d import (
     Align,
+    BuildPart,
     BuildSketch,
     Circle,
     Cylinder,
+    Edge,
     Location,
     Locations,
     Mode,
     Plane,
     Pos,
     Rectangle,
+    Select,
 )
 from cad.library.features.cuts import extrude_to
 from cad.library.features.hardware import insert_holes
+from cad.library.shapes import built, edges_on
 from cad.library.standard.fasteners import clearance_hole, head_diameter
 
 from pantilt.master import ProductMaster
@@ -43,3 +47,8 @@ def shaft_clamp(m: ProductMaster, spot: Location, out_to: float, name: str) -> N
         Cylinder(
             m.fits.printed(head_diameter(m.screw)) / 2, out_to, align=ABOVE, mode=Mode.SUBTRACT
         )
+
+
+def rims(made: BuildPart, face: Plane) -> list[Edge]:
+    on = edges_on(built(made), face)
+    return [edge for edge in made.edges(Select.NEW) if edge in on]

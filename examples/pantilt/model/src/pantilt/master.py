@@ -10,7 +10,7 @@ from cad.library.bought.query import LENGTH_TOLERANCE, exactly
 from cad.library.bought.vendor import piece, solids_of, vendor_extent
 from cad.library.extension_spring import Spring
 from cad.library.features.planes import halfway
-from cad.library.fits import FITS_UNITS, Fits, STAINLESS_A2_70
+from cad.library.fits import FITS_UNITS, STAINLESS_A2_70, Fits
 from cad.library.mates import JointRange
 from cad.library.printing import PRINT_SETTINGS_UNITS, PrintSettings
 from cad.library.shapes import Block
@@ -276,6 +276,10 @@ class ProductMaster(Master):
     @property
     def wall(self) -> float:
         return self.fits.structural_wall
+
+    @property
+    def wall_edge_break(self) -> float:
+        return (self.wall - self.fits.min_wall) / 2
 
     @property
     def radius(self) -> float:

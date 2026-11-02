@@ -19,9 +19,8 @@ GBP_USD = 1.33  # estimate: exchange rate, not checked on the day
 INSERT_M3_EUR = 84.60 / 1000  # cnckitchen.store, M3 x 5.7, EUR per 1,000 pack
 INSERT_SMALL_EUR = 89.90 / 1000  # cnckitchen.store, M2 x 3 and M2.5 x 4, EUR per 1,000 pack
 SCREW_GBP = 0.04  # accu.co.uk, A2 ISO 4762 M3 and M2, at 1,000
-BLACK = (0.14, 0.14, 0.15)  # estimate: the builder's PETG black, for a part the maker makes black
-REED_BLACK = "Littelfuse 59140, black glass-filled PBT"  # Littelfuse 59140 datasheet, materials
-ACTUATOR_BLACK = "Littelfuse 57140, black glass-filled PBT"  # same table
+DRV8833_BLUE = (0x05 / 255, 0x64 / 255, 0xBD / 255)  # median soldermask pixel, Adafruit 3297-05.jpg
+DRV8833_SOLDERMASK = "Adafruit 3297, blue soldermask"
 SCREW_M2_5_GBP = 0.03  # accu.co.uk, A2 ISO 4762 M2.5 x 5 (3803), at 2,000
 
 
@@ -114,9 +113,8 @@ CATALOGUE = (
         unit_price=SPOOL_CHF * CHF_USD,
         kg=1.0,
         material="PETG brown",
-        colour=(0.45, 0.33, 0.25),
         price_source="3djake.ch 33.50 CHF per kg (search summary, page not opened), converted"
-        " at an estimated rate; the colour is an estimate of the spool's brown",
+        " at an estimated rate",
         stocked=True,
         moq=1,
         lead_weeks=None,
@@ -136,6 +134,8 @@ CATALOGUE = (
     Item(
         name="Adafruit 3297 DRV8833 breakout",
         kind=Kind.BOUGHT,
+        material=DRV8833_SOLDERMASK,
+        colour=DRV8833_BLUE,
         supplier=ADAFRUIT,
         part_number="3297 (Digi-Key 1528-3297-ND)",
         url="https://www.adafruit.com/product/3297",
@@ -172,8 +172,6 @@ CATALOGUE = (
     Item(
         name="Littelfuse 59140-1-S-02-A reed sensor",
         kind=Kind.BOUGHT,
-        material=REED_BLACK,
-        colour=BLACK,
         supplier=DIGIKEY,
         part_number="HE573-ND",
         url="https://www.digikey.com/en/products/result?keywords=HE573-ND",
@@ -186,8 +184,6 @@ CATALOGUE = (
     Item(
         name="Littelfuse 57140-000 actuator",
         kind=Kind.BOUGHT,
-        material=ACTUATOR_BLACK,
-        colour=BLACK,
         supplier=DIGIKEY,
         part_number="57140-000-ND",
         url="https://www.digikey.com/en/products/result?keywords=57140-000-ND",

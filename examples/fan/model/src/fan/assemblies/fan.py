@@ -33,7 +33,7 @@ from cad.library.shapes import OUTSIDE, Seat, round_faces, seat_of
 from cad.library.turns import UPSIDE_DOWN
 
 from fan import models
-from fan.catalogue import FAN_BLACK, TAPE_BLACK
+from fan.catalogue import DRV8833_SOLDERMASK
 from fan.master import (
     BUMPER,
     BUTTON,
@@ -92,7 +92,13 @@ def shaft(m: FanMaster) -> Bought:
 def driver(m: FanMaster) -> Bought:
     pads = Pos(Y=models.DRIVER_WIDTH / 2, Z=models.DRIVER_BOARD_TOP)
     connectors = {**board_connectors(DRIVER, m.driver_mount.holes), **wired(DRIVER, pads)}
-    return Bought(name=DRIVER_NAME, pose=m.driver_at, item=DRIVER, connectors=connectors)
+    return Bought(
+        name=DRIVER_NAME,
+        pose=m.driver_at,
+        item=DRIVER,
+        connectors=connectors,
+        material=DRV8833_SOLDERMASK,
+    )
 
 
 def tab_spots(m: FanMaster) -> list[Location]:
@@ -204,7 +210,7 @@ def turning_head(m: FanMaster) -> Fastening:
 @derived
 def fan(m: FanMaster) -> Fastening:
     lead = wired(FAN, m.fan_origin * Pos(X=m.fan_side / 2, Y=-(m.fan_depth + m.lead_reach / 2)))
-    held = Bought(name=FAN_NAME, pose=m.fan_at, item=FAN, connectors=lead, material=FAN_BLACK)
+    held = Bought(name=FAN_NAME, pose=m.fan_at, item=FAN, connectors=lead)
     mate = Mate(
         f"{FAN_NAME} in head",
         Kind.RIGID,
@@ -248,7 +254,7 @@ def driver_mounted(m: FanMaster) -> Fastening:
 
 
 def tape(m: FanMaster) -> Bought:
-    return Bought(name=TAPE_NAME, pose=m.tape_at, item=TAPE, material=TAPE_BLACK)
+    return Bought(name=TAPE_NAME, pose=m.tape_at, item=TAPE)
 
 
 @derived
@@ -298,10 +304,10 @@ COLOURS = {
     "VM": "wire red",
     "GND": "wire black",
     "+5V": "wire red",
-    "A": "wire blue",
-    "B": "wire pink",
-    "C": "wire yellow",
-    "D": "wire orange",
+    "A+": "wire pink",  # Kiatronics 28BYJ-48 datasheet: coils pink-orange and blue-yellow,
+    "A-": "wire orange",  # red the centre taps
+    "B+": "wire blue",
+    "B-": "wire yellow",
     "common": "wire red",
 }
 
@@ -329,7 +335,7 @@ DRIVER_LEADS = hook_up(
 
 
 FAN_WIRES = ("+5V", "GND")
-STEPPER_WIRES = ("A", "B", "C", "D", "common")
+STEPPER_WIRES = ("A+", "A-", "B+", "B-", "common")
 
 
 def shipped_lead(

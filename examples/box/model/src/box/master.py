@@ -160,6 +160,10 @@ class BoxMaster(Master):
         return self.fits.structural_wall
 
     @property
+    def wall_edge_break(self) -> float:
+        return (self.wall - self.fits.min_wall) / 2
+
+    @property
     def floor(self) -> Plane:
         return Plane.XY.offset(self.wall)
 

@@ -1,4 +1,19 @@
-from build123d import Align, BuildSketch, Circle, Location, Locations, Mode, Rectangle, Rot, Sketch
+from build123d import (
+    Align,
+    BuildPart,
+    BuildSketch,
+    Circle,
+    Edge,
+    Location,
+    Locations,
+    Mode,
+    Plane,
+    Rectangle,
+    Rot,
+    Select,
+    Sketch,
+)
+from cad.library.shapes import built, edges_on
 
 from dispenser.master import DispenserMaster
 
@@ -15,3 +30,8 @@ def front_sector(m: DispenserMaster, on: Location) -> Sketch:
             with Locations(Rot(Z=turn)):
                 Rectangle(reach, reach, align=CORNER, mode=Mode.INTERSECT)
     return sector.sketch
+
+
+def rims(made: BuildPart, face: Plane) -> list[Edge]:
+    on = edges_on(built(made), face)
+    return [edge for edge in made.edges(Select.NEW) if edge in on]

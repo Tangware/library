@@ -16,7 +16,7 @@ COLOURS = {
     "VBUS": "wire red",
     "GND": "wire black",
     "UART": "wire yellow",
-    "A+": "wire black",
+    "A+": "wire black",  # StepperOnline 17HS08-1004S datasheet, type of connection
     "A-": "wire green",
     "B+": "wire red",
     "B-": "wire blue",

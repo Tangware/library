@@ -5,6 +5,7 @@ from build123d import (
     BuildPart,
     BuildSketch,
     Circle,
+    Convexity,
     Cylinder,
     Location,
     Locations,
@@ -50,6 +51,8 @@ def head(m: FanMaster) -> Printed:
             )
         fillet(made.edges(Select.LAST).filter_by(Axis.Y), m.wall)
         chamfer(edges_on(built(made), Plane(front)), m.fits.min_wall)
+        back = Plane(m.facing_back(middle, m.fan_back))
+        chamfer(edges_on(built(made), back), m.wall_edge_break)
         with Locations(pocket):
             Box(
                 m.fan_side + 2 * m.fits.sliding,
@@ -65,7 +68,7 @@ def head(m: FanMaster) -> Printed:
         pads = [m.facing_back(at, m.fan_front) for at in m.fan_screws]
         with Locations(*pads):
             Cylinder(m.screw_land, m.lead_reach, align=(Align.CENTER, Align.CENTER, Align.MAX))
-        grille(m, front, m.insert_depth - m.lead_reach, FAN_HUB, m.fan_side / 2 - m.wall)
+        grille(m, made, front, m.insert_depth - m.lead_reach, FAN_HUB, m.fan_side / 2 - m.wall)
         spots = [m.facing_back(at, m.fan_front) for at in m.fan_screws]
         insert_holes(Plane(spots[0]), spots, m.screw, INSERTS, fits=m.fits, stock=m.stock)
         with Locations(Location(m.neck_bottom)):
@@ -74,6 +77,7 @@ def head(m: FanMaster) -> Printed:
                 neck + m.wall,
                 align=BOTTOM,
             )
+        chamfer(made.edges(Select.LAST).filter_by(Convexity.CONVEX), m.wall_edge_break)
         with Locations(Location(hub_bottom)):
             Cylinder(hub_radius, between(hub_bottom, m.neck_bottom), align=BOTTOM)
         with BuildSketch(Location(hub_bottom)) as d_bore:

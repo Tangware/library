@@ -5,6 +5,7 @@ from build123d import (
     BuildPart,
     BuildSketch,
     Circle,
+    Convexity,
     Cylinder,
     Location,
     Locations,
@@ -12,6 +13,7 @@ from build123d import (
     Plane,
     Pos,
     Rectangle,
+    Select,
     chamfer,
 )
 from cad.design.parts import part
@@ -92,6 +94,7 @@ def arm(m: ProductMaster) -> Printed:
             )
         with Locations(m.tilt_motor_at):
             Cylinder(m.radius, m.drum_rim - m.tilt_flange, align=BEHIND)
+        chamfer(made.edges(Select.LAST).filter_by(Convexity.CONVEX), m.wall_edge_break)
         with Locations(m.tilt_motor_at):
             side = m.fits.printed(stepper.FRAME)
             Box(side, side, m.drum_rim - m.tilt_flange, align=BEHIND, mode=Mode.SUBTRACT)

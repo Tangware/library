@@ -8,7 +8,7 @@ from cad.library.bought.catalogue import BoardKind, Catalogue, Download, Piece, 
 from cad.library.bought.query import axis_of, bores, by_axis, cylinders, exactly
 from cad.library.bought.vendor import piece, solids_of, vendor_extent
 from cad.library.features.hardware import insert_land
-from cad.library.fits import FITS_UNITS, Fits, STAINLESS_A2_70
+from cad.library.fits import FITS_UNITS, STAINLESS_A2_70, Fits
 from cad.library.printing import PRINT_SETTINGS_UNITS, PrintSettings
 from cad.library.shapes import Block, radius_of
 from cad.library.standard.fasteners import STOCK_UNITS, Metric, Stock, head_height, insert_size
@@ -269,6 +269,10 @@ class DispenserMaster(Master):
     @property
     def wall(self) -> float:
         return self.fits.structural_wall
+
+    @property
+    def wall_edge_break(self) -> float:
+        return (self.wall - self.fits.min_wall) / 2
 
     @property
     def insert_depth(self) -> float:

@@ -52,6 +52,7 @@ def body(m: BoxMaster) -> Printed:
             Box(outside.width, outside.depth, outside.height, align=BOTTOM)
         fillet(made.edges(Select.LAST).filter_by(Axis.Z), m.wall)
         chamfer(edges_on(built(made), Plane.XY), m.fits.min_wall)
+        chamfer(edges_on(built(made), m.rim), m.wall_edge_break)
         with Locations(inside.at):
             Box(
                 inside.width,
@@ -75,6 +76,8 @@ def body(m: BoxMaster) -> Printed:
                 align=BOTTOM,
                 mode=Mode.SUBTRACT,
             )
+        front = edges_on(built(made), Plane.XZ.offset(-(m.inside_front + m.wall)))
+        chamfer([edge for edge in made.edges(Select.NEW) if edge in front], m.wall_edge_break)
         disc_seat(m.magnet, m.magnet_seats, fits=m.fits)
         pockets = [
             SeatQuery(

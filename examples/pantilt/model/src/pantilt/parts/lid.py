@@ -1,8 +1,9 @@
-from build123d import Align, Box, BuildPart, Cylinder, Location, Locations, Mode
+from build123d import Align, Box, BuildPart, Cylinder, Location, Locations, Mode, chamfer
 from cad.design.parts import part
 from cad.library.features.hardware import counterbored_screws
-from cad.library.shapes import FacesOn, Printed, built, register
+from cad.library.shapes import FacesOn, Printed, built, edges_on, register
 
+from pantilt.features import rims
 from pantilt.master import ProductMaster
 from pantilt.models import stepper
 
@@ -16,6 +17,8 @@ def lid(m: ProductMaster) -> Printed:
         with Locations(Location(m.pan_flange)):
             Cylinder(m.inside_radius - m.fits.sliding, m.screw_plate, align=BOTTOM)
             register(MOTOR_SEAT, m.pan_flange, [FacesOn(plane=m.pan_flange)])
+        top = m.pan_flange.offset(m.screw_plate)
+        chamfer(edges_on(built(made), top), m.wall_edge_break)
         with Locations(Location(m.pan_flange)):
             Cylinder(
                 m.fits.printed(stepper.PILOT_DIAMETER) / 2,
@@ -23,6 +26,7 @@ def lid(m: ProductMaster) -> Printed:
                 align=BOTTOM,
                 mode=Mode.SUBTRACT,
             )
+        chamfer(rims(made, top), m.wall_edge_break)
         counterbored_screws(
             m.pan_flange,
             [*m.pan_motor_screws, *m.lid_screws],

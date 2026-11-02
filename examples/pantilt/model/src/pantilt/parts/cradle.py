@@ -5,18 +5,21 @@ from build123d import (
     BuildPart,
     BuildSketch,
     Circle,
+    Convexity,
     Location,
     Locations,
     Mode,
     Plane,
     Pos,
+    Select,
+    chamfer,
     extrude,
 )
 from cad.design.parts import part
 from cad.library.features.planes import axis_along, between, corner, crossing, parallel, station
 from cad.library.shapes import FacesOn, Printed, RoundFaces, built, register
 
-from pantilt.features import d_bore, shaft_clamp
+from pantilt.features import d_bore, rims, shaft_clamp
 from pantilt.master import ProductMaster
 from pantilt.models import stepper
 
@@ -65,12 +68,14 @@ def cradle(m: ProductMaster) -> Printed:
         with Locations(m.guide.at * Pos(Y=-m.wall / 2, Z=m.wall)):
             channel = (guide.width - 2 * m.wall, guide.depth - m.wall, guide.height - m.wall)
             Box(*channel, align=ALONG, mode=Mode.SUBTRACT)
+            chamfer(made.edges(Select.NEW).filter_by(Convexity.CONVEX), m.wall_edge_break)
             post = station(Plane.XY, through=m.spring_post_at)
             register(SPRING_POST, post, [FacesOn(plane=post)])
             front = Plane.XZ.offset(-m.cradle_back)
             register(JAW_GUIDE, Location(front), [FacesOn(plane=front)])
         block(bottom, (left, m.cradle_front), (right, m.cradle_back), inside)
         block(m.ledge, (left, m.cradle_front), (right, m.phone_front), m.lip)
+        chamfer(made.edges(Select.LAST).filter_by(Convexity.CONVEX), m.wall_edge_break)
         window_wall = Plane.XZ.offset(-(m.cradle_front + m.wall))
         middle = parallel(Plane.YZ, through=m.camera_at * m.camera_board_middle)
         with Locations(corner(bottom.offset(m.wall), middle, window_wall)):
@@ -83,7 +88,8 @@ def cradle(m: ProductMaster) -> Printed:
             )
         register(CAMERA_POCKET, Location(window_wall), [FacesOn(plane=window_wall)])
         lens = axis_along(Axis.Y.direction, through=m.camera_at * m.lens)
-        with Locations(crossing(Plane.XZ.offset(-m.cradle_front), lens)):
+        front_face = Plane.XZ.offset(-m.cradle_front)
+        with Locations(crossing(front_face, lens)):
             Box(
                 m.camera_module.width + 2 * m.fits.sliding,
                 m.wall,
@@ -91,6 +97,7 @@ def cradle(m: ProductMaster) -> Printed:
                 align=THROUGH_THE_FRONT,
                 mode=Mode.SUBTRACT,
             )
+        chamfer(rims(made, front_face), m.wall_edge_break)
         d_bore(m, m.tilt_motor_at, m.screw_plate + m.fits.sliding, m.hub_thickness - m.wall)
         bore = m.fits.printed(stepper.SHAFT_DIAMETER) / 2
         register(TILT_BORE, m.tilt_motor_at, [RoundFaces(axis=Axis(m.tilt_motor_at), radius=bore)])

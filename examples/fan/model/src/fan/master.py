@@ -219,6 +219,10 @@ class FanMaster(Master):
         return self.fits.structural_wall
 
     @property
+    def wall_edge_break(self) -> float:
+        return (self.wall - self.fits.min_wall) / 2
+
+    @property
     def insert_depth(self) -> float:
         return insert_size(self.screw, fits=self.fits, stock=self.stock).length + self.fits.min_wall
 

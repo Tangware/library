@@ -1,4 +1,5 @@
 from collections.abc import Callable, Iterator
+
 import pytest
 from build123d import Axis, Box, CenterOf, Location, Plane, Pos, Rotation
 from cad.assembly.tree import assembled, instance_keys
@@ -91,7 +92,9 @@ def shift(world: Fastening, part: Part, joints: dict[str, float]) -> Location:
 def seated_bought(world: Fastening, first: Part, second: Part) -> bool:
     bought = isinstance(first, Bought) and isinstance(second, Bought)
     pair = {id(first), id(second)}
-    return bought and any({id(each.child_part), id(each.parent_part)} == pair for each in world.mates)
+    return bought and any(
+        {id(each.child_part), id(each.parent_part)} == pair for each in world.mates
+    )
 
 
 def clashes(world: Fastening, joints: dict[str, float]) -> Iterator[str]:
@@ -162,7 +165,9 @@ def test_r1_the_jaw_slides_from_the_widest_phone_to_the_narrowest_without_a_clas
     does_not_catch="Fatigue of the spring and the hooks' own strength.",
     subjects=("jaw", "cradle"),
 )
-def test_r1_the_spring_stays_taut_and_within_its_rating_over_the_jaw_travel(world: Fastening) -> None:
+def test_r1_the_spring_stays_taut_and_within_its_rating_over_the_jaw_travel(
+    world: Fastening,
+) -> None:
     spring = MASTER.spring
     for travel in (MASTER.jaw_range.low, MASTER.jaw_range.high):
         lug = Pos(Z=travel) * MASTER.spring_lug_at
@@ -251,9 +256,7 @@ def test_r6_the_camera_rides_the_cradle_and_sees_past_it(world: Fastening) -> No
     reach = MASTER.plug_reach
     ahead = Pos(lens.X, lens.Y - reach / 2 - MASTER.fits.sliding, lens.Z)
     sight = Box(module.width, reach, module.height).moved(ahead)
-    blocked = sum(
-        (part.solid() & sight).volume for part in world.parts if part is not board
-    )
+    blocked = sum((part.solid() & sight).volume for part in world.parts if part is not board)
 
     assert holder(world, board).parent_part.name == "cradle"
     assert blocked < TOUCHING_MM3

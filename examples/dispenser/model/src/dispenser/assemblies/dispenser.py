@@ -52,7 +52,7 @@ from cad.library.turns import UPSIDE_DOWN
 from cad.library.why import Why
 
 from dispenser import models
-from dispenser.catalogue import ACTUATOR_BLACK, REED_BLACK
+from dispenser.catalogue import DRV8833_SOLDERMASK
 from dispenser.master import (
     ACTUATOR,
     BUZZER,
@@ -179,7 +179,7 @@ def reed_holes() -> MountingHoles:
 
 def reed(m: DispenserMaster) -> Bought:
     seats = mounting_hole_seats(reed_holes())
-    return Bought(name=REED_NAME, pose=m.reed_at, item=REED, connectors=seats, material=REED_BLACK)
+    return Bought(name=REED_NAME, pose=m.reed_at, item=REED, connectors=seats)
 
 
 def reed_inserts(m: DispenserMaster) -> Hole:
@@ -193,7 +193,13 @@ def pico(m: DispenserMaster) -> Bought:
 
 def driver(m: DispenserMaster) -> Bought:
     connectors = board_connectors(DRIVER, m.driver_mount.holes)
-    return Bought(name=DRIVER_NAME, pose=m.driver_at, item=DRIVER, connectors=connectors)
+    return Bought(
+        name=DRIVER_NAME,
+        pose=m.driver_at,
+        item=DRIVER,
+        connectors=connectors,
+        material=DRV8833_SOLDERMASK,
+    )
 
 
 def mounted_boards(m: DispenserMaster) -> list[tuple[Bought, BoardMount, Location, str]]:
@@ -261,7 +267,7 @@ def buzzer(m: DispenserMaster) -> Fastening:
 
 @derived
 def actuator(m: DispenserMaster) -> Fastening:
-    held = Bought(name=ACTUATOR_NAME, pose=m.actuator_at, item=ACTUATOR, material=ACTUATOR_BLACK)
+    held = Bought(name=ACTUATOR_NAME, pose=m.actuator_at, item=ACTUATOR)
     mates = held_by([held], OUTSIDE, Connector(drawer(m), ACTUATOR_POCKET))
     return Fastening(parts=[held], mates=[replace(mate, approach=-Axis.Z) for mate in mates])
 
@@ -398,7 +404,11 @@ COLOURS = {  # the 59140's two leads are both black (Littelfuse 59140 datasheet,
     "VBUS": "wire red",
     "LIGHT": "wire yellow",
     "SENSE": "wire black",
-    **{colour: f"wire {colour}" for colour in ("blue", "pink", "yellow", "orange", "red")},
+    "A+": "wire pink",  # Kiatronics 28BYJ-48 datasheet: coils pink-orange and blue-yellow,
+    "A-": "wire orange",  # red the centre taps
+    "B+": "wire blue",
+    "B-": "wire yellow",
+    "common": "wire red",
 }
 
 
@@ -445,7 +455,7 @@ LEADS = {
 SHIPPED = {
     STEPPER_NAME: lead(
         "28BYJ-48 lead",
-        ("blue", "pink", "yellow", "orange", "red"),
+        ("A+", "A-", "B+", "B-", "common"),
         length=STEPPER_LEAD_MM,
         bill=Bill(ships_with=STEPPER_NAME),
     ),
