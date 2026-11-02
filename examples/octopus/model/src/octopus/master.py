@@ -5,6 +5,7 @@ from cad.design.master import Master, Pose, given
 from cad.library.bought.catalogue import Catalogue, Cleanup, Download
 from cad.library.bought.query import planes
 from cad.library.bought.vendor import solids_of, vendor_extent, vendor_reach
+from cad.library.features.hardware import insert_land
 from cad.library.features.planes import line_between
 from cad.library.fits import FITS_UNITS, STAINLESS_A2_70, Fits
 from cad.library.printing import PRINT_SETTINGS_UNITS, PrintSettings
@@ -129,7 +130,6 @@ class OctopusMaster(Master):
     stem_radius: float = given(16.0, "mm", why="Body's stem", source=ESTIMATE)
     foot_radius: float = given(60.0, "mm", why="Stands the body up", source=ESTIMATE)
     foot_thickness: float = given(5.0, "mm", why="Foot", source=ESTIMATE)
-    saddle_wall: float = given(2.5, "mm", why="Round a motor", source=ESTIMATE)
     cap_thickness: float = given(5.0, "mm", why="Motor cap", source=ESTIMATE)
     shelf_z: float = given(56.0, "mm", why="Over the high motors", source=ESTIMATE)
     shelf_thickness: float = given(6.0, "mm", why="Battery shelf", source=ESTIMATE)
@@ -216,6 +216,15 @@ class OctopusMaster(Master):
     @property
     def insert_length(self) -> float:
         return insert_size(self.screw, fits=self.fits, stock=self.stock).length
+
+    @property
+    def insert_land(self) -> float:
+        return insert_land(self.screw, fits=self.fits, stock=self.stock)
+
+    @property
+    def clearance_land(self) -> float:
+        edge_break = self.fits.min_wall
+        return self.pivot_bore / 2 + edge_break + self.fits.min_wall + edge_break
 
     shell_material: str = given(
         "PETG Carmine Red",
@@ -364,7 +373,7 @@ class OctopusMaster(Master):
 
     @property
     def saddle_width(self) -> float:
-        return self.motor_height + 2 * self.fits.sliding + 4 * self.saddle_wall
+        return self.motor_height + 2 * (self.fits.sliding + self.insert_land + self.clearance_land)
 
     @property
     def saddle_floor(self) -> float:
@@ -379,7 +388,7 @@ class OctopusMaster(Master):
 
     @property
     def window_width(self) -> float:
-        return self.saddle_width + 2 * self.saddle_wall
+        return self.saddle_width + 2 * self.fits.sliding
 
     @property
     def window_length(self) -> float:
@@ -405,7 +414,7 @@ class OctopusMaster(Master):
         )
 
     def saddle_spots(self, arm: int) -> tuple[Location, ...]:
-        off = self.motor_height / 2 + self.saddle_wall + self.fits.sliding
+        off = self.motor_height / 2 + self.fits.sliding + self.insert_land
         return tuple(self.saddle_at(arm) * Pos(X=side * off) for side in (-1.0, 1.0))
 
     @property
