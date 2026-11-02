@@ -129,7 +129,7 @@ def mantle(m: OctopusMaster) -> Printed:
         for side in EYES:
             with Locations(Rot(Z=side * m.eye_tilt_deg) * Pos(X=r) * Rot(Y=90.0)):
                 Cylinder(m.eye_radius, 2 * m.eye_depth)
-        with Locations(Rot(Z=180.0) * Pos(X=r, Z=m.siphon_radius) * Rot(Y=90.0)):
+        with Locations(Rot(Z=180.0) * Pos(X=r) * Rot(Y=90.0)):
             Cylinder(m.siphon_radius, m.siphon_length)
         Sphere(r - m.mantle_wall, mode=Mode.SUBTRACT)
         with Locations(Pos()):
