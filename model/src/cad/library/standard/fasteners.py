@@ -604,7 +604,7 @@ def insert_size(screw: Metric, *, fits: Fits, stock: Stock) -> InsertSize:
 class ThreadedInsert(Part):
     designation: str
     maker: str
-    material: str = "steel"
+    material: str = "brass"
 
     @property
     def size(self) -> Metric:
