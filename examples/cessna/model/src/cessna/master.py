@@ -322,6 +322,11 @@ class CessnaMaster(Master):
         return clearance(self.screw, fits=self.fits)
 
     @property
+    def clearance_land(self) -> float:
+        edge_break = self.fits.min_wall
+        return self.pivot_bore / 2 + edge_break + self.fits.min_wall + edge_break
+
+    @property
     def insert_length(self) -> float:
         return insert_size(self.screw, fits=self.fits, stock=self.stock).length
 
@@ -458,6 +463,14 @@ class CessnaMaster(Master):
     def bracket_height(self) -> float:
         top = self.pivot.position.Z - self.plate_top
         return top + 2 * self.fork_wall + self.fits.structural_wall + self.plate_thickness
+
+    @property
+    def hanger_radius(self) -> float:
+        return self.bored / 2 + self.fits.structural_wall
+
+    @property
+    def hanger_tab(self) -> float:
+        return self.spot_spacing + 2 * self.clearance_land
 
     def hanger_spots(self, side: float) -> tuple[Location, ...]:
         at = self.hanger(side).position

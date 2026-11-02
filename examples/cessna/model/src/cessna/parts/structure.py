@@ -99,6 +99,8 @@ def main_plate(m: CessnaMaster) -> Printed:
     )
     with BuildPart() as made:
         extrude(outline(m.plate_outline), amount=t)
+        with Locations(*(frame.inverse() * m.hanger_top(side) for side in SIDES)):
+            Box(2 * m.hanger_radius, m.hanger_tab, t, align=FLOOR_UP)
         with Locations(Pos(X=-m.rail_x, Z=t), Pos(X=m.rail_x, Z=t)):
             Box(m.rail_thickness, m.rail_length, m.rail_height, align=FLOOR_UP)
         pitch = m.rail_length / (m.rail_holes + 1)
@@ -131,7 +133,7 @@ def pillow_block(m: CessnaMaster, side: float) -> Printed:
 def tube_hanger(m: CessnaMaster, side: float) -> Printed:
     at = m.hanger(side)
     frame = m.hanger_top(side)
-    radius = m.bored / 2 + m.fits.structural_wall
+    radius = m.hanger_radius
     drop = m.hanger_drop(side)
     with BuildPart() as made:
         Box(2 * radius, m.pillow_depth, drop, align=HANGING)
