@@ -74,13 +74,21 @@ class Metric(StrEnum):
         return float(self.value.partition("-")[2])
 
 
+class WasherStandard(StrEnum):
+    ISO_7089 = "iso7089"
+    ISO_7091 = "iso7091"
+
+    @property
+    def label(self) -> str:
+        return self.name.replace("_", " ")
+
+
 SOCKET_HEAD: Final = "iso4762"
 PAN_HEAD: Final = "iso1580"
 HEX_NUT: Final = "iso4032"
 THIN_NUT: Final = "iso4035"
 HEX_BOLT: Final = "din931"
 SHOULDER_SCREW: Final = "iso7379"
-PLAIN_WASHER: Final = "iso7091"
 TAP_MATERIAL = "Soft"
 UNDER_HEAD = "under head"
 THREAD = "thread"
@@ -196,12 +204,12 @@ def shoulder_thread(screw: Metric) -> float:
     return float(_data(FastenerShoulderScrew, SHOULDER_SCREW, screw)["b"])
 
 
-def washer_thickness(screw: Metric) -> float:
-    return float(_data(PlainWasher, PLAIN_WASHER, screw.size)["h"])
+def washer_thickness(screw: Metric, standard: WasherStandard) -> float:
+    return float(_data(PlainWasher, standard, screw.size)["h"])
 
 
-def washer_bore(screw: Metric) -> float:
-    return float(_data(PlainWasher, PLAIN_WASHER, screw.size)["d1"])
+def washer_bore(screw: Metric, standard: WasherStandard) -> float:
+    return float(_data(PlainWasher, standard, screw.size)["d1"])
 
 
 def past_the_nut(screw: Metric) -> float:
@@ -518,8 +526,12 @@ class ShoulderScrew(Part):
 
 
 @derived
-def _washer(size: Metric) -> Brep:
-    return PlainWasher(size.size, PLAIN_WASHER)
+def _washer(size: Metric, standard: WasherStandard) -> Brep:
+    match standard:
+        case WasherStandard.ISO_7089:
+            return PlainWasher(size.size, "iso7089")
+        case WasherStandard.ISO_7091:
+            return PlainWasher(size.size, "iso7091")
 
 
 SCREWS = (Screw, PanScrew, HexBolt)
@@ -528,23 +540,24 @@ SCREWS = (Screw, PanScrew, HexBolt)
 @dataclass(kw_only=True)
 class Washer(Part):
     size: Metric
+    standard: WasherStandard
     grade: Metal
-    material: str = "steel"
+    material: str = STAINLESS
 
     @property
     def label(self) -> str:
-        return f"{self.size.size} ISO 7091 washer"
+        return f"{self.size.size} {self.standard.label} washer"
 
     @property
     def metal(self) -> Metal:
         return self.grade
 
     def shape(self) -> Brep:
-        return _washer(self.size)
+        return _washer(self.size, self.standard)
 
     def published(self) -> dict[str, Seat]:
         shape = self.unposed()
-        bore = round_faces(shape, washer_bore(self.size) / 2)
+        bore = round_faces(shape, washer_bore(self.size, self.standard) / 2)
         return {
             BORE: seat_of(bore, Location()),
             FACES: seat_of(shape.faces().filter_by(Plane.XY), Location()),

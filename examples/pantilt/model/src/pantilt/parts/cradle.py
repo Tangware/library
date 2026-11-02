@@ -65,6 +65,9 @@ def cradle(m: ProductMaster) -> Printed:
         with Locations(m.guide.at):
             guide = m.guide
             Box(guide.width, guide.depth, guide.height, align=ALONG)
+        block(bottom, (left, m.cradle_front), (right, m.cradle_back), inside)
+        block(m.ledge, (left, m.cradle_front), (right, m.phone_front), m.lip)
+        chamfer(made.edges().filter_by(Convexity.CONVEX), m.wall_edge_break)
         with Locations(m.guide.at * Pos(Y=-m.wall / 2, Z=m.wall)):
             channel = (guide.width - 2 * m.wall, guide.depth - m.wall, guide.height - m.wall)
             Box(*channel, align=ALONG, mode=Mode.SUBTRACT)
@@ -73,9 +76,6 @@ def cradle(m: ProductMaster) -> Printed:
             register(SPRING_POST, post, [FacesOn(plane=post)])
             front = Plane.XZ.offset(-m.cradle_back)
             register(JAW_GUIDE, Location(front), [FacesOn(plane=front)])
-        block(bottom, (left, m.cradle_front), (right, m.cradle_back), inside)
-        block(m.ledge, (left, m.cradle_front), (right, m.phone_front), m.lip)
-        chamfer(made.edges(Select.LAST).filter_by(Convexity.CONVEX), m.wall_edge_break)
         window_wall = Plane.XZ.offset(-(m.cradle_front + m.wall))
         middle = parallel(Plane.YZ, through=m.camera_at * m.camera_board_middle)
         with Locations(corner(bottom.offset(m.wall), middle, window_wall)):
@@ -86,6 +86,7 @@ def cradle(m: ProductMaster) -> Printed:
                 align=FROM_THE_FRONT,
                 mode=Mode.SUBTRACT,
             )
+        chamfer(rims(made, Plane.XZ.offset(-m.cradle_back)), m.wall_edge_break)
         register(CAMERA_POCKET, Location(window_wall), [FacesOn(plane=window_wall)])
         lens = axis_along(Axis.Y.direction, through=m.camera_at * m.lens)
         front_face = Plane.XZ.offset(-m.cradle_front)

@@ -101,7 +101,7 @@ def flatted_shaft(solids: list[Solid]) -> list[Solid]:
                 align=(Align.CENTER, Align.CENTER, Align.MAX),
                 mode=Mode.SUBTRACT,
             )
-    (cut,) = flatted.part.solids()
+    (cut,) = built(flatted).solids()
     return [cut if solid is shaft else solid for solid in solids]
 
 

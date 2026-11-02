@@ -29,11 +29,11 @@ from cad.library.features.hardware import (
 )
 from cad.library.features.planes import axis_along, crossing, foot_on, parallel
 from cad.library.mates import Connector, Kind, Mate
-from cad.library.shapes import OUTSIDE, Seat, round_faces, seat_of
+from cad.library.shapes import OUTSIDE, Part, Seat, round_faces, seat_of
 from cad.library.turns import UPSIDE_DOWN
 
 from fan import models
-from fan.catalogue import DRV8833_SOLDERMASK
+from fan.catalogue import DRV8833_SOLDERMASK, FAN_BLACK, TAPE_BLACK
 from fan.master import (
     BUMPER,
     BUTTON,
@@ -210,7 +210,7 @@ def turning_head(m: FanMaster) -> Fastening:
 @derived
 def fan(m: FanMaster) -> Fastening:
     lead = wired(FAN, m.fan_origin * Pos(X=m.fan_side / 2, Y=-(m.fan_depth + m.lead_reach / 2)))
-    held = Bought(name=FAN_NAME, pose=m.fan_at, item=FAN, connectors=lead)
+    held = Bought(name=FAN_NAME, pose=m.fan_at, item=FAN, connectors=lead, material=FAN_BLACK)
     mate = Mate(
         f"{FAN_NAME} in head",
         Kind.RIGID,
@@ -254,7 +254,7 @@ def driver_mounted(m: FanMaster) -> Fastening:
 
 
 def tape(m: FanMaster) -> Bought:
-    return Bought(name=TAPE_NAME, pose=m.tape_at, item=TAPE)
+    return Bought(name=TAPE_NAME, pose=m.tape_at, item=TAPE, material=TAPE_BLACK)
 
 
 @derived
@@ -274,7 +274,7 @@ def taped_board(m: FanMaster) -> Fastening:
 
 @derived
 def feet(m: FanMaster) -> Fastening:
-    pads = [Bought(name=BUMPER_NAME, pose=at, item=BUMPER) for at in m.feet_at]
+    pads: list[Part] = [Bought(name=BUMPER_NAME, pose=at, item=BUMPER) for at in m.feet_at]
     mates = held_by(pads, OUTSIDE, Connector(floor(m), FEET))
     return Fastening(parts=pads, mates=[replace(mate, approach=Axis.Z) for mate in mates])
 

@@ -30,6 +30,7 @@ from cad.library.features.hardware import (
     Anchor,
     Fastening,
     Hole,
+    hardware_name,
     held_by,
     insert_seats,
     screwed,
@@ -47,12 +48,13 @@ from cad.library.features.planes import (
     through_the_middle,
 )
 from cad.library.mates import Connector, JointRange, Kind, Mate
-from cad.library.shapes import OUTSIDE, Part, round_faces, seat_of
+from cad.library.shapes import BORE, OUTSIDE, Part, round_faces, seat_of
+from cad.library.standard.fasteners import Washer, WasherStandard, washer_thickness
 from cad.library.turns import UPSIDE_DOWN
 from cad.library.why import Why
 
 from dispenser import models
-from dispenser.catalogue import DRV8833_SOLDERMASK
+from dispenser.catalogue import ACTUATOR_BLACK, DRV8833_SOLDERMASK, REED_BLACK
 from dispenser.master import (
     ACTUATOR,
     BUZZER,
@@ -93,6 +95,7 @@ SHAFT = "shaft"
 PICO_NAME = "Raspberry Pi Pico 2 W"
 DRIVER_NAME = "Adafruit 3297 DRV8833 breakout"
 REED_NAME = "Littelfuse 59140-1-S-02-A reed sensor"
+REED_WASHER = WasherStandard.ISO_7089  # Littelfuse 59140 datasheet: M3 screws with a washer
 ACTUATOR_NAME = "Littelfuse 57140-000 actuator"
 BUZZER_NAME = "Soberton WST-1205S buzzer"
 LED_NAME = "Kingbright WP7113ID5V LED"
@@ -179,7 +182,7 @@ def reed_holes() -> MountingHoles:
 
 def reed(m: DispenserMaster) -> Bought:
     seats = mounting_hole_seats(reed_holes())
-    return Bought(name=REED_NAME, pose=m.reed_at, item=REED, connectors=seats)
+    return Bought(name=REED_NAME, pose=m.reed_at, item=REED, connectors=seats, material=REED_BLACK)
 
 
 def reed_inserts(m: DispenserMaster) -> Hole:
@@ -235,9 +238,20 @@ def sensor_mounted(m: DispenserMaster) -> Fastening:
     held = reed(m)
     holes = reed_holes()
     local = [foot_on(Plane.XY, of=spot) for spot in holes.spots]
+    on_top = seated(local, holes.board_top - holes.board_bottom)
+    washers = [
+        Washer(
+            name=hardware_name(REED_NAME, len(on_top), f"{m.screw.size} washer"),
+            pose=held.pose * seat,
+            size=m.screw,
+            standard=REED_WASHER,
+            grade=m.stock.fastener_grade,
+        )
+        for seat in on_top
+    ]
     through = Hole(
         face=Plane(local[0]),
-        seats=seated(local, holes.board_top - holes.board_bottom),
+        seats=seated(on_top, washer_thickness(m.screw, REED_WASHER)),
         screw=m.screw,
         anchor=Anchor.CLEARANCE,
     )
@@ -248,7 +262,10 @@ def sensor_mounted(m: DispenserMaster) -> Fastening:
         Connector(base(m), SENSOR_INSERTS),
         stock=m.stock,
     )
-    return together([screws], [held])
+    washered = Fastening(
+        parts=list(washers), mates=held_by(washers, BORE, Connector(held, MOUNTING_HOLES))
+    )
+    return together([screws, washered], [held])
 
 
 @derived
@@ -267,7 +284,7 @@ def buzzer(m: DispenserMaster) -> Fastening:
 
 @derived
 def actuator(m: DispenserMaster) -> Fastening:
-    held = Bought(name=ACTUATOR_NAME, pose=m.actuator_at, item=ACTUATOR)
+    held = Bought(name=ACTUATOR_NAME, pose=m.actuator_at, item=ACTUATOR, material=ACTUATOR_BLACK)
     mates = held_by([held], OUTSIDE, Connector(drawer(m), ACTUATOR_POCKET))
     return Fastening(parts=[held], mates=[replace(mate, approach=-Axis.Z) for mate in mates])
 
@@ -353,7 +370,7 @@ def closed_lid(m: DispenserMaster) -> Fastening:
 
 @derived
 def feet(m: DispenserMaster) -> Fastening:
-    pads = [Bought(name=BUMPER_NAME, pose=at, item=BUMPER) for at in m.feet_at]
+    pads: list[Part] = [Bought(name=BUMPER_NAME, pose=at, item=BUMPER) for at in m.feet_at]
     mates = held_by(pads, OUTSIDE, Connector(plate(m), FEET))
     return Fastening(parts=pads, mates=[replace(mate, approach=Axis.Z) for mate in mates])
 

@@ -1,4 +1,5 @@
 from cad.design.catalogue import Item, Kind
+from cad.library.bought.catalogue import BLACK_PLASTIC
 
 IN_HOUSE = "in-house: the founder's own FDM printers"
 IN_HOUSE_PRINTING_PER_KG = 21.5
@@ -7,8 +8,12 @@ IN_HOUSE_PRINTING = (
     " at 0.17 USD/kWh; at about 12 g/h of structural PETG that is 21.5 USD/kg; labour not counted"
 )
 SIGNAL_WHITE = (0xE5 / 255, 0xE0 / 255, 0xE1 / 255)  # filamentcolors.xyz swatch 1338, #E5E0E1
-DRV8833_BLUE = (0x05 / 255, 0x64 / 255, 0xBD / 255)  # median soldermask pixel, Adafruit 3297-05.jpg
+# median soldermask pixel in Adafruit's product photo,
+# https://cdn-shop.adafruit.com/970x728/3297-05.jpg
+DRV8833_BLUE = (0x05 / 255, 0x64 / 255, 0xBD / 255)
 DRV8833_SOLDERMASK = "Adafruit 3297, blue soldermask"
+FAN_BLACK = "Delta AFB0805L, black"  # Delta AFB0805L specification
+TAPE_BLACK = "3M VHB 5952, black"  # 3M VHB 5952 technical data sheet
 PRUSAMENT = "https://www.prusa3d.com/category/prusament-petg/"
 ADAFRUIT = "Adafruit"
 ACCU = "Accu"
@@ -40,6 +45,8 @@ CATALOGUE = (
     Item(
         name="Delta AFB0805L fan",
         kind=Kind.BOUGHT,
+        material=FAN_BLACK,
+        colour=BLACK_PLASTIC,
         supplier=DIGIKEY,
         part_number="603-1305-ND",
         url="https://www.digikey.com/en/products/detail/delta-electronics/AFB0805L/2560429",
@@ -197,6 +204,8 @@ CATALOGUE = (
     Item(
         name="3M VHB 5952 pad",
         kind=Kind.BOUGHT,
+        material=TAPE_BLACK,
+        colour=BLACK_PLASTIC,
         supplier=DIGIKEY,
         part_number="3M 5952 1/2in x 36yd, cut to a pad",
         url="https://www.digikey.com/en/products/result?keywords=3M%205952",
