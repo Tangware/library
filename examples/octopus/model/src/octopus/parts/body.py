@@ -15,7 +15,7 @@ from build123d import (
 )
 from cad.design.parts import part
 from cad.library.features.hardware import insert_cut
-from cad.library.shapes import OUTSIDE, Outside, Printed, built
+from cad.library.shapes import OUTSIDE, Bed, Outside, Printed, built
 
 from octopus.features import bore, break_edges, web_at
 from octopus.master import ARMS, OctopusMaster
@@ -34,7 +34,7 @@ def printed(
     name: str,
     made: BuildPart,
     pose: Location,
-    bed: str,
+    bed: Bed,
     supports: str = "",
     exterior: bool = False,
 ) -> Printed:

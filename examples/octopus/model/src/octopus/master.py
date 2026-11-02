@@ -279,18 +279,20 @@ class OctopusMaster(Master):
         frame = self.arm_frame(arm)
         return Axis(frame.position, frame.y_axis.direction)
 
-    def rod_frame(self, arm: int, k: int) -> Location:
+    def rod_ends(self, arm: int, k: int) -> tuple[Location, Location]:
         y = self.rod_y(k)
-        low = self.hinge(arm, k, y, self.offset)
-        high = self.hinge(arm, k + 1, y, -self.low_offset)
+        return self.hinge(arm, k, y, self.offset), self.hinge(arm, k + 1, y, -self.low_offset)
+
+    def rod_frame(self, arm: int, k: int) -> Location:
+        low, high = self.rod_ends(arm, k)
         return Location(
             Plane(
                 origin=low.position, x_dir=high.position - low.position, z_dir=low.z_axis.direction
             )
         )
 
-    def rod_length(self, k: int) -> float:
-        return (self.lengths[k - 1] ** 2 + (self.offset + self.low_offset) ** 2) ** 0.5
+    def rod_length(self, arm: int, k: int) -> float:
+        return line_between(*self.rod_ends(arm, k)).length
 
     @property
     def crank_y(self) -> float:

@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 import pytest
 from build123d import Align, Axis, Cylinder, GeomType, Location, Pos, Rot
 from cad.assembly.tree import assembled
@@ -6,13 +8,13 @@ from cad.design.catalogue import Item, Kind
 from cad.library.bought.query import axis_of
 from cad.library.bought.vendor import Bought
 from cad.library.features.hardware import Fastening
-from cad.library.shapes import Brep, Part, radius_of
+from cad.library.shapes import Brep, Part, Printed, radius_of
 from cad.library.standard.fasteners import SCREWS
 
 from fan import models
 from fan.assemblies.fan import BUTTON_NAME, DRIVER_NAME, FAN_NAME, PRODUCT, STEPPER_NAME, XIAO_NAME
 from fan.catalogue import CATALOGUE
-from fan.master import MASTER
+from fan.master import MASTER, FanMaster
 from fan.parts.cover import cover
 from fan.parts.floor import floor
 from fan.parts.head import head
@@ -167,7 +169,9 @@ def test_s1_every_screw_seen_from_outside_faces_down_or_back(fan: Fastening) -> 
     subjects=("head", "cover"),
 )
 @pytest.mark.parametrize("build", [head, cover])
-def test_s2_every_corner_of_the_head_takes_one_radius(build) -> None:
+def test_s2_every_corner_of_the_head_takes_one_radius(
+    build: Callable[[FanMaster], Printed],
+) -> None:
     corners = {
         round(radius_of(face), 3)
         for face in build(MASTER).solid().faces()
@@ -201,5 +205,7 @@ def test_s4_nothing_stands_wider_than_the_head(fan: Fastening) -> None:
     does_not_catch="Strength, fit and finish.", subjects=("puck", "floor", "head", "cover")
 )
 @pytest.mark.parametrize("build", [puck, floor, head, cover])
-def test_m3_each_part_builds_from_the_master_alone(build) -> None:
+def test_m3_each_part_builds_from_the_master_alone(
+    build: Callable[[FanMaster], Printed],
+) -> None:
     assert build(MASTER).solid().is_valid

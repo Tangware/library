@@ -326,7 +326,7 @@ def crank_piece(m: StrandbeestMaster, piece: CrankPiece) -> Fastening:
     made = crank(m, piece)
     parts: list[Part] = [made]
     mates: list[Mate] = []
-    if piece.index == 0:
+    if piece.low is None:
         mates.append(
             Mate(
                 CRANK,
@@ -340,7 +340,7 @@ def crank_piece(m: StrandbeestMaster, piece: CrankPiece) -> Fastening:
         )
     else:
         below = m.crank_pieces[piece.index - 1]
-        spot = m.crank_frame(piece) * m.pin_spot(below.high)
+        spot = m.crank_frame(piece) * m.pin_spot(piece.low)
         screw = screw_at(f"{piece.name} pin screw", m, spot, m.pin_screw_length)
         parts.append(screw)
         mates += [

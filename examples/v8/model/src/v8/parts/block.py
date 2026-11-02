@@ -13,7 +13,7 @@ from build123d import (
 )
 from cad.design.parts import part
 from cad.library.features.hardware import insert_cut
-from cad.library.shapes import OUTSIDE, Outside, Printed, built
+from cad.library.shapes import OUTSIDE, Bed, Outside, Printed, built
 
 from v8.features import bore, break_edges
 from v8.master import CYLINDERS, JOURNALS, LEFT_BANK_DEG, RIGHT_BANK_DEG, V8Master
@@ -31,7 +31,7 @@ def printed(
     name: str,
     made: BuildPart,
     pose: Location,
-    bed: str,
+    bed: Bed,
     supports: str = "",
     exterior: bool = False,
 ) -> Printed:

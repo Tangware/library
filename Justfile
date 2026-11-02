@@ -21,6 +21,15 @@ lint:
     cd model && uv run lint-imports
     cd model && uv run ast-grep test --skip-snapshot-tests
     cd model && uv run ast-grep scan
+    for example in examples/*/model; do just lint-example "$example" || exit 1; done
+
+# Lint one example with the library's settings and tools
+lint-example model:
+    cd {{model}} && uv run --project ../../../model ruff check .
+    cd {{model}} && uv run --project ../../../model ruff format --check .
+    cd {{model}} && uv run --project ../../../model mypy --config-file ../../../model/mypy.ini src tests
+    cd {{model}} && uv run --project ../../../model ast-grep scan
+    cd {{model}} && PYTHONPATH=src uv run --project ../../../model lint-imports
 
 test *args:
     cd model && uv run --locked pytest -n 4 --dist=worksteal {{args}}

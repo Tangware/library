@@ -15,7 +15,7 @@ from build123d import (
 from cad.design.parts import part
 from cad.library.features.hardware import insert_cut
 from cad.library.gears import Gear, gear_solid, spur_teeth
-from cad.library.shapes import OUTSIDE, Outside, Printed, built
+from cad.library.shapes import OUTSIDE, Bed, Outside, Printed, built
 
 from v8.features import bore, break_edges, d_shape, web
 from v8.master import CYLINDERS, REST_TURN_DEG, VALVES, V8Master, Valve
@@ -54,7 +54,7 @@ def printed(
     name: str,
     made: BuildPart,
     pose: Location,
-    bed: str = "-z",
+    bed: Bed = "-z",
     supports: str = "",
     exterior: bool = False,
     material: str | None = None,

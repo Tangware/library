@@ -17,7 +17,7 @@ from build123d import (
 )
 from cad.design.parts import part
 from cad.library.features.hardware import insert_cut
-from cad.library.shapes import OUTSIDE, Outside, Printed, built
+from cad.library.shapes import OUTSIDE, Bed, Outside, Printed, built
 
 from strandbeest.features import break_edges
 from strandbeest.master import LEFT, RIGHT, Module, StrandbeestMaster
@@ -37,7 +37,7 @@ def printed(
     name: str,
     made: BuildPart,
     pose: Location,
-    bed: str,
+    bed: Bed,
     supports: str = "",
     exterior: bool = False,
     material: str | None = None,

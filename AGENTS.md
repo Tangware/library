@@ -16,7 +16,7 @@ The part cache, the export, the checks, analysis, the MJCF, the bill and the ren
 ---
 
 ## Running it
-Do feature work in a worktree (`git worktree add .worktrees/<name>`), never on `main`. `just install`, then `just hooks` once per clone and once per worktree. `just lint` — ruff, mypy, the import contracts and the CAD rules in `model/src/cad/lint/rules/`; the pre-commit hook runs it. `just test` — `model/tests`. `build/` is a local output, under the directory the design runs from.
+Do feature work in a worktree (`git worktree add .worktrees/<name>`), never on `main`. `just install`, then `just hooks` once per clone and once per worktree. `just lint` — ruff, mypy, the import contracts and the CAD rules in `model/src/cad/lint/rules/`, on `model/` and each example; the pre-commit hook runs it. `just test` — `model/tests`. `build/` is a local output, under the directory the design runs from.
 
 Every PR is born a draft; `just land` is the only path to `main` — runs the full local suite, and only on green flips the PR out of draft and merges. `gh pr create` without `--draft`, `gh pr ready`, and `gh pr merge` are denied by `.claude/hooks/require_draft_pr.py` — use `just pr`/`just land` instead. `just check` runs pre-commit checks without committing. `just release` publishes the package to PyPI.
 

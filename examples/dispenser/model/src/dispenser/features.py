@@ -29,7 +29,10 @@ def front_sector(m: DispenserMaster, on: Location) -> Sketch:
         for turn in (-90 - half, -180 + half):
             with Locations(Rot(Z=turn)):
                 Rectangle(reach, reach, align=CORNER, mode=Mode.INTERSECT)
-    return sector.sketch
+    placed = sector.sketch
+    if not isinstance(placed, Sketch):
+        raise ValueError("the front sector sketch is empty")
+    return placed
 
 
 def rims(made: BuildPart, face: Plane) -> list[Edge]:

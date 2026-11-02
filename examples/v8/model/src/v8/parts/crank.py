@@ -41,7 +41,7 @@ def crank(m: V8Master, piece: CrankPiece) -> Printed:
             with Locations(face):
                 Hole(m.pivot_bore / 2, m.pin_screw_length - arm - m.pin_length + m.fits.sliding)
             insert_cut(face, m.screw, fits=m.fits, stock=m.stock)
-        if piece.low is None:
+        if piece.low is None and piece.high is not None:
             with Locations(Pos(Z=-arm)):
                 Cylinder(core, m.wall + 2 * m.fits.sliding, align=DOWN_FROM)
             for spot in m.nose_spots:
@@ -49,7 +49,7 @@ def crank(m: V8Master, piece: CrankPiece) -> Printed:
                     m.crank_frame(piece).inverse() * spot, m.screw, fits=m.fits, stock=m.stock
                 )
             web([(axle, hub), (m.counter_spot(piece, piece.high), core)], arm, arm / 2)
-        if piece.high is None:
+        if piece.high is None and piece.low is not None:
             with Locations(Pos(Z=arm)):
                 Cylinder(m.swing_radius - m.fits.sliding, m.flywheel, align=UP_FROM)
             with Locations(m.pin_spot(piece, piece.low) * Pos(Z=arm + m.flywheel)):

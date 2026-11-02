@@ -719,13 +719,13 @@ class V8Master(Master):
 
     def tip_shut(self, valve: Valve) -> Location:
         z = self.deck + self.head_height + self.pivot_rise
-        return self.in_plane(valve, self.valve_y_at(valve), self.valve_x, z + self.tip_rise)
-
-    @property
-    def tip_rise(self) -> float:
+        pivot = self.rocker_pivot(valve)
         reach = self.rocker_nose + self.link_length
-        side = self.pivot_x - self.valve_x
-        return (reach**2 - side**2) ** 0.5
+        level = self.in_plane(valve, self.valve_y_at(valve), self.valve_x, z)
+        circle = Edge.make_circle(reach, Plane(origin=pivot.position, x_dir=ALONG, z_dir=ACROSS))
+        line = Edge.make_line(level.position, (level * Pos(Z=reach)).position)
+        (found,) = circle.find_intersection_points(line)
+        return level * Pos(Z=line_between(level, Location(found)).length)
 
     def nose_bend(self, valve: Valve) -> float:
         pivot = self.rocker_pivot(valve)

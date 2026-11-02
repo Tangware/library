@@ -271,7 +271,7 @@ def crank_piece(m: V8Master, piece: CrankPiece) -> Fastening:
     made = crank(m, piece)
     parts: list[Part] = [made]
     mates: list[Mate] = []
-    if piece.index == 0:
+    if piece.low is None:
         nose = inserts_on("nose insert", m, m.nose_spots, made)
         parts += nose.parts
         mates += nose.mates

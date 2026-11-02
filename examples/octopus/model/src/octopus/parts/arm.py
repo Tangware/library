@@ -106,7 +106,7 @@ def segment(m: OctopusMaster, arm: int, k: int) -> Printed:
 @part
 def rod(m: OctopusMaster, arm: int, k: int) -> Printed:
     frame = m.rod_frame(arm, k)
-    end = Pos(X=m.rod_length(k))
+    end = Pos(X=m.rod_length(arm, k))
     sign = DOWN if k in EVEN else UP
     with BuildPart() as made:
         web([(Location(), m.eye), (end, m.eye)], m.thin)

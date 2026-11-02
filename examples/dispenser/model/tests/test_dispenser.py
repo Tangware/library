@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -8,7 +9,7 @@ from cad.design.catalogue import Item, Kind
 from cad.library.bought.vendor import Bought
 from cad.library.features.hardware import Fastening
 from cad.library.mates import named
-from cad.library.shapes import Brep
+from cad.library.shapes import Brep, Printed
 from cad.library.standard.fasteners import SCREWS
 
 from dispenser import models
@@ -24,7 +25,7 @@ from dispenser.assemblies.dispenser import (
 )
 from dispenser.catalogue import CATALOGUE
 from dispenser.features import front_sector
-from dispenser.master import MASTER
+from dispenser.master import MASTER, DispenserMaster
 from dispenser.parts.base import base
 from dispenser.parts.carousel import carousel
 from dispenser.parts.drawer import drawer
@@ -263,5 +264,7 @@ def test_s4_every_printed_part_is_one_material(dispenser: Fastening) -> None:
     subjects=("base", "plate", "carousel", "lid", "drawer"),
 )
 @pytest.mark.parametrize("build", [base, plate, carousel, lid, drawer])
-def test_m3_each_part_builds_from_the_master_alone(build) -> None:
+def test_m3_each_part_builds_from_the_master_alone(
+    build: Callable[[DispenserMaster], Printed],
+) -> None:
     assert build(MASTER).solid().is_valid
