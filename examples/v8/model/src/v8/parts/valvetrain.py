@@ -307,6 +307,7 @@ def camshaft(m: V8Master) -> Gear:
         turned = m.flat_turn(frame)
         flat = Rot(Z=turned) * d_shape(m.cam_diameter / 2, FLAT)
         extrude(flat, amount=m.camshaft_length)
+        break_edges(made, [Plane.XY], m.print_settings.layer_height)
     return gear(m, CAMSHAFT, made, frame, m.cam_teeth)
 
 
@@ -319,6 +320,7 @@ def crank_gear(m: V8Master) -> Gear:
         Cylinder(m.pulley_radius, m.pulley_width, align=HANGING)
         for spot in m.nose_spots:
             bore(frame.inverse() * spot, m.pivot_bore)
+        break_edges(made, [Plane.XY.offset(m.timing_width)], m.print_settings.layer_height)
     return gear(m, CRANK_GEAR, made, frame, m.crank_teeth)
 
 

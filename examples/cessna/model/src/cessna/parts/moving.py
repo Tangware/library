@@ -146,6 +146,8 @@ def rack(m: CessnaMaster) -> Gear:
             with Locations(Rot(Z=angle) * Pos(X=middle)):
                 Box(radius - m.rack_rim / 2, 2 * m.fork_wall, width)
         bore(Location(), m.fits.printed(m.dowel_diameter))
+        faces = [Plane.XY.offset(width / 2), Plane.XY.offset(-width / 2)]
+        break_edges(made, faces, m.print_settings.layer_height)
     return gear(m, RACK, made, m.rack_pose, m.rack_teeth, width, "under the overhangs")
 
 
@@ -162,6 +164,8 @@ def motor_pinion(m: CessnaMaster) -> Gear:
             Rectangle, MOTOR_SHAFT_DIAMETER, MOTOR_SHAFT_DIAMETER
         )
         cut_outline(d_shape, Pos(Z=width / 2 - MOTOR_SHAFT) * Rot(Z=-m.pinion_turn), MOTOR_SHAFT)
+        faces = [Plane.XY.offset(width / 2), Plane.XY.offset(-width / 2)]
+        break_edges(made, faces, m.print_settings.layer_height)
     return gear(m, MOTOR_PINION, made, m.pinion_pose, m.motor_teeth, width)
 
 

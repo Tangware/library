@@ -21,6 +21,7 @@ from cessna.master import (
     MOTOR_OUTPUT,
     RETRACTED_DEG,
     RIGHT,
+    SLEEVE,
     SWITCH,
     CessnaMaster,
     side_name,
@@ -61,7 +62,8 @@ from cessna.parts.structure import (
 MOTOR_NAME = "Pololu 3069 298:1 Micro Metal Gearmotor HPCB 6V"
 HOLDER_NAME = "MPD BC4AAW 4-AA battery holder"
 SWITCH_NAME = "E-Switch RD11131121 rocker switch"
-CELL_NAME = "Energizer E91 AA cell"
+SLEEVE_NAME = "TE Raychem RNF-100-3/32-BK heat-shrink sleeve"
+CELL_NAME = "Energizer EN91 AA cell"
 FROM_ABOVE = -Axis.Z
 FROM_BELOW = Axis.Z
 FROM_THE_LEFT = Axis.X
@@ -186,14 +188,16 @@ def the_stand(m: CessnaMaster) -> Fastening:
         for k, spot in enumerate(m.cell_spots)
     ]
     rocker = Bought(name=SWITCH_NAME, pose=m.switch_at, item=SWITCH)
+    splice = Bought(name=SLEEVE_NAME, pose=m.sleeve_at, item=SLEEVE)
     spots = (*m.column_spots(m.fore_column_y), *m.column_spots(m.aft_column_y))
     inserts = inserts_on("column insert", m, spots, made)
     return Fastening(
-        parts=[made, holder, *cells, rocker, *inserts.parts],
+        parts=[made, holder, *cells, rocker, splice, *inserts.parts],
         mates=[
             fixed(on(holder), on(made), FROM_ABOVE),
             *(fixed(on(each), on(holder), FROM_ABOVE) for each in cells),
             fixed(on(rocker), on(made), inward(m.switch_at)),
+            fixed(on(splice), on(rocker), inward(m.switch_at)),
             *inserts.mates,
         ],
     )

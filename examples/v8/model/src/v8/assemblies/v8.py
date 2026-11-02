@@ -23,6 +23,7 @@ from v8.master import (
     MOTOR_OUTPUT,
     REST_TURN_DEG,
     RIGHT_BANK_DEG,
+    SLEEVE,
     SWITCH,
     VALVES,
     CrankPiece,
@@ -67,7 +68,8 @@ from v8.parts.valvetrain import (
 MOTOR_NAME = "Pololu 3069 298:1 Micro Metal Gearmotor HPCB 6V"
 HOLDER_NAME = "MPD BC4AAW 4-AA battery holder"
 SWITCH_NAME = "E-Switch RD11131121 rocker switch"
-CELL_NAME = "Energizer E91 AA cell"
+SLEEVE_NAME = "TE Raychem RNF-100-3/32-BK heat-shrink sleeve"
+CELL_NAME = "Energizer EN91 AA cell"
 FROM_THE_REAR = -Axis.Y
 FROM_THE_FRONT = Axis.Y
 FROM_ABOVE = -Axis.Z
@@ -622,12 +624,14 @@ def the_tray(m: V8Master) -> Fastening:
     tray = battery_tray(m)
     bolts = screws_at("tray screw", m, m.tray_spots, tray, m.tab_thickness, m.plate_screw_length)
     rocker = Bought(name=SWITCH_NAME, pose=m.switch_at, item=SWITCH)
+    splice = Bought(name=SLEEVE_NAME, pose=m.sleeve_at, item=SLEEVE)
     return Fastening(
-        parts=[tray, *bolts.parts, rocker],
+        parts=[tray, *bolts.parts, rocker, splice],
         mates=[
             fixed(on(tray), on(REAR_PLATE), FROM_THE_REAR),
             *bolts.mates,
             fixed(on(rocker), on(tray), inward(m.switch_at)),
+            fixed(on(splice), on(rocker), inward(m.switch_at)),
         ],
     )
 

@@ -20,6 +20,7 @@ from octopus.master import (
     MASTER,
     MOTOR,
     MOTOR_OUTPUT,
+    SLEEVE,
     SWITCH,
     OctopusMaster,
     crank_joint,
@@ -39,7 +40,8 @@ from octopus.parts.body import BODY, body, mantle, motor_cap
 MOTOR_NAME = "Pololu 3069 298:1 Micro Metal Gearmotor HPCB 6V"
 HOLDER_NAME = "MPD BC4AAW 4-AA battery holder"
 SWITCH_NAME = "E-Switch RD11131121 rocker switch"
-CELL_NAME = "Energizer E91 AA cell"
+SLEEVE_NAME = "TE Raychem RNF-100-3/32-BK heat-shrink sleeve"
+CELL_NAME = "Energizer EN91 AA cell"
 FROM_ABOVE = -Axis.Z
 RED, BLACK = wire.CONDUCTORS
 SPLICE = "black splice"
@@ -310,14 +312,16 @@ def the_mantle(m: OctopusMaster) -> Fastening:
     ]
     shell = mantle(m)
     rocker = Bought(name=SWITCH_NAME, pose=m.switch_at, item=SWITCH)
+    splice = Bought(name=SLEEVE_NAME, pose=m.sleeve_at, item=SLEEVE)
     screws = [screw_at("mantle screw", m, spot * Pos(Z=m.flange)) for spot in m.mantle_spots]
     return Fastening(
-        parts=[holder, *cells, shell, rocker, *screws],
+        parts=[holder, *cells, shell, rocker, splice, *screws],
         mates=[
             fixed(on(holder), on(BODY), FROM_ABOVE),
             *(fixed(on(each), on(holder), FROM_ABOVE) for each in cells),
             fixed(on(shell), on(BODY), FROM_ABOVE),
             fixed(on(rocker), on(shell), inward(m.switch_at)),
+            fixed(on(splice), on(rocker), inward(m.switch_at)),
             *(
                 fixed(Connector(each, UNDER_HEAD), on(shell), FROM_ABOVE, n)
                 for n, each in enumerate(screws)

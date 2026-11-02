@@ -14,6 +14,7 @@ class LockNutSize:
 
 
 SIZES = {
+    "M3": LockNutSize(across_flats=5.5, height=4.0),
     "M5": LockNutSize(across_flats=8.0, height=5.0),
     "M6": LockNutSize(across_flats=10.0, height=6.0),
 }

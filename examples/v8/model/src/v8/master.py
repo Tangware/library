@@ -14,7 +14,7 @@ from cad.library.standard.fasteners import STOCK_UNITS, Metric, Stock, clearance
 from cad.library.turns import turn_to
 from cad.standards import RatedTorque
 
-from v8.models import battery_holder, cell, motor, switch, wire
+from v8.models import battery_holder, cell, motor, sleeve, switch, wire
 
 CRANK = "crank"
 INCH = 25.4
@@ -65,7 +65,13 @@ SWITCH = Catalogue(
     ),
 )
 CELL = Catalogue(
-    file="energizer_e91", grams=cell.GRAMS, model=cell.solid, cleanup=Cleanup(colour=cell.LABEL)
+    file="energizer_en91", grams=cell.GRAMS, model=cell.solid, cleanup=Cleanup(colour=cell.LABEL)
+)
+SLEEVE = Catalogue(
+    file="te_rnf_100_3_32",
+    grams=sleeve.GRAMS_ESTIMATED,
+    model=sleeve.solid,
+    cleanup=Cleanup(colour=sleeve.COLOUR),
 )
 CELLS = 4
 ALONG = (1.0, 0.0, 0.0)
@@ -973,6 +979,10 @@ class V8Master(Master):
     @property
     def holder_leads(self) -> battery_holder.Leads:
         return battery_holder.leads(BATTERY_HOLDER)
+
+    @property
+    def sleeve_at(self) -> Location:
+        return Location(self.lead_over_the_switch.position) * Pos(Z=-sleeve.LENGTH / 2)
 
     @property
     def holder_leads_out(self) -> Location:

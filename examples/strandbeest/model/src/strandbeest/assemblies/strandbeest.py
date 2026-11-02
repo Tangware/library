@@ -14,6 +14,7 @@ from cad.library.standard.fasteners import (
     BEARING_FACE,
     THREAD,
     UNDER_HEAD,
+    LockNut,
     Nut,
     Screw,
     ThreadedInsert,
@@ -24,10 +25,10 @@ from strandbeest.master import (
     BATTERY_HOLDER,
     CELL,
     CRANK,
-    LOCK_NUT,
     MASTER,
     MOTOR,
     MOTOR_OUTPUT,
+    SLEEVE,
     SWITCH,
     CrankPiece,
     Joints,
@@ -51,8 +52,8 @@ from strandbeest.parts.links import coupler, foot, lower_link, rocker, triangle,
 MOTOR_NAME = "Pololu 3069 298:1 Micro Metal Gearmotor HPCB 6V"
 HOLDER_NAME = "MPD BC4AAW 4-AA battery holder"
 SWITCH_NAME = "E-Switch RD11131121 rocker switch"
-CELL_NAME = "Energizer E91 AA cell"
-LOCK_NUT_NAME = "M3 DIN 985 nylon-insert lock nut"
+SLEEVE_NAME = "TE Raychem RNF-100-3/32-BK heat-shrink sleeve"
+CELL_NAME = "Energizer EN91 AA cell"
 FROM_THE_RIGHT = -Axis.Y
 FROM_ABOVE = -Axis.Z
 FOOT_LAYER_MIDDLE = 2.0
@@ -177,8 +178,8 @@ def pivot_screw(m: StrandbeestMaster, at: Location) -> Screw:
     )
 
 
-def lock_nut(at: Location) -> Bought:
-    return Bought(name=LOCK_NUT_NAME, pose=at, item=LOCK_NUT)
+def lock_nut(m: StrandbeestMaster, at: Location) -> LockNut:
+    return LockNut(name="pivot nut", pose=at, size=m.screw, grade=m.stock.fastener_grade)
 
 
 def hinge(
@@ -236,10 +237,10 @@ def leg(m: StrandbeestMaster, module: Module, fore: bool) -> Fastening:
         "knee": pivot_screw(m, m.pivot_screw(placing, at.knee)),
     }
     nuts = {
-        "upper": lock_nut(m.pivot_nut(placing, at.upper, nuts_free)),
-        "outer": lock_nut(m.pivot_nut(placing, at.outer, nuts_free)),
-        "lower": lock_nut(m.foot_nut(placing, at, at.lower)),
-        "knee": lock_nut(m.foot_nut(placing, at, at.knee)),
+        "upper": lock_nut(m, m.pivot_nut(placing, at.upper, nuts_free)),
+        "outer": lock_nut(m, m.pivot_nut(placing, at.outer, nuts_free)),
+        "lower": lock_nut(m, m.foot_nut(placing, at, at.lower)),
+        "knee": lock_nut(m, m.foot_nut(placing, at, at.knee)),
     }
     toward_the_middle = -FROM_THE_RIGHT if fore else FROM_THE_RIGHT
     mates = [
@@ -296,7 +297,7 @@ def leg(m: StrandbeestMaster, module: Module, fore: bool) -> Fastening:
             Mate(
                 f"{name} {joint} nut",
                 Kind.RIGID,
-                child=on(nuts[joint]),
+                child=Connector(nuts[joint], BEARING_FACE),
                 parent=Connector(screw, THREAD),
                 approach=toward_the_middle,
             )
@@ -463,12 +464,13 @@ def top(m: StrandbeestMaster) -> Fastening:
         for k, spot in enumerate(m.cell_spots)
     ]
     rocker = Bought(name=SWITCH_NAME, pose=m.switch_at, item=SWITCH)
+    splice = Bought(name=SLEEVE_NAME, pose=m.sleeve_at, item=SLEEVE)
     screws = [
         screw_at("deck screw", m, spot * Pos(Z=m.deck_thickness), m.deck_screw_length)
         for spot in m.deck_spots
     ]
     return Fastening(
-        parts=[sheet, holder, *cells, rocker, *screws],
+        parts=[sheet, holder, *cells, rocker, splice, *screws],
         mates=[
             Mate(
                 f"{DECK} on {RIGHT_PLATE}",
@@ -517,6 +519,13 @@ def top(m: StrandbeestMaster) -> Fastening:
                 Kind.RIGID,
                 child=on(rocker),
                 parent=on(sheet),
+                approach=-Axis(m.switch_at),
+            ),
+            Mate(
+                f"{SLEEVE_NAME} on {SWITCH_NAME}",
+                Kind.RIGID,
+                child=on(splice),
+                parent=on(rocker),
                 approach=-Axis(m.switch_at),
             ),
         ],

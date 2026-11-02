@@ -11,6 +11,7 @@ from cad.library.shapes import radius_of
 LENGTH = 56.8
 GRAMS_ESTIMATED = 11.76
 LEADS = 2
+STRIP = 5.0  # MPD BC4AAW datasheet: the leads' strip length
 LAYERS = 2
 
 

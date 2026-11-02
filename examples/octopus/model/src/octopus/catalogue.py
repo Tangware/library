@@ -8,7 +8,7 @@ ACCU_SCREWS = "https://accu.co.uk/socket-cap-screws/"
 ESTIMATE = "estimate: common hobby retail, page not opened"
 DIGIKEY = "DigiKey"
 DIGIKEY_READ = "1 unit, page opened 2026-11-02"
-E91 = "https://www.digikey.com/en/products/detail/energizer-battery-company/E91/7400186"
+EN91 = "https://www.digikey.com/en/products/detail/energizer-battery-company/EN91/704822"
 HOOKUP_WIRE = "https://www.digikey.com/en/products/detail/alpha-wire/3049-RD005/266589"
 SPOOLS = f"{DIGIKEY} A3049R-100-ND red and 3049 BK005 black, 100 ft spools, {DIGIKEY_READ}"
 PRUSAMENT = "https://www.prusa3d.com/product/prusament-petg-{}-1kg-nfc/"
@@ -119,11 +119,11 @@ CATALOGUE = (
     ),
     *(
         bought(
-            f"Energizer E91 AA cell {k + 1}",
+            f"Energizer EN91 AA cell {k + 1}",
             DIGIKEY,
-            E91,
-            1.05,
-            f"{DIGIKEY} E91-ND, {DIGIKEY_READ}; discontinued at {DIGIKEY}",
+            EN91,
+            0.6025,
+            f"{DIGIKEY} N107-ND, the 4-unit price, page opened 2026-11-02",
         )
         for k in range(CELLS)
     ),
@@ -131,6 +131,13 @@ CATALOGUE = (
     *(
         bought(f"arm {arm + 1} lead", DIGIKEY, HOOKUP_WIRE, 0.0, "cut from the arm 1 lead's spools")
         for arm in ARMS[1:]
+    ),
+    bought(
+        "TE Raychem RNF-100-3/32-BK heat-shrink sleeve",
+        DIGIKEY,
+        "https://www.digikey.com/en/products/detail/te-connectivity-raychem-cable-protection/RNF-100-3-32-BK-STK/573411",
+        2.37,
+        f"{DIGIKEY} RNF332K-ND, a 4 ft stick, page opened 2026-11-02",
     ),
     bought(
         "CNCKitchen M3 x 5.7 heat-set insert 4270002316409",

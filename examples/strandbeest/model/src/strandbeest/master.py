@@ -15,12 +15,14 @@ from cad.library.standard.fasteners import (
     Stock,
     clearance,
     insert_size,
+    lock_nut_across_flats,
+    lock_nut_height,
     nut_height,
 )
 from cad.library.standard.profiles import TubeSize
 from cad.standards import RatedTorque
 
-from strandbeest.models import battery_holder, cell, lock_nut, motor, switch, wire
+from strandbeest.models import battery_holder, cell, motor, sleeve, switch, wire
 
 CRANK = "crank"
 HOLY = "Theo Jansen's link proportions, en.wikipedia.org/wiki/Jansen's_linkage, read 2026-11-01"
@@ -49,7 +51,6 @@ MOTOR_OUTPUT = Catalogue(
     download=MOTOR_STEP,
     cleanup=Cleanup(correct=motor.shaft),
 )
-LOCK_NUT = Catalogue(file="din985_m3", grams=lock_nut.GRAMS_ESTIMATED, model=lock_nut.solid)
 HOLDER_STEP = Download(
     url="https://www.memoryprotectiondevices.com/3D/download.php?pn=BC4AAW&id=1128",
     sha256="519a122d7cbe67743a60f53c39d0c0ae0a357e3c907473270d59d9688d3601b3",
@@ -70,7 +71,13 @@ SWITCH = Catalogue(
     ),
 )
 CELL = Catalogue(
-    file="energizer_e91", grams=cell.GRAMS, model=cell.solid, cleanup=Cleanup(colour=cell.LABEL)
+    file="energizer_en91", grams=cell.GRAMS, model=cell.solid, cleanup=Cleanup(colour=cell.LABEL)
+)
+SLEEVE = Catalogue(
+    file="te_rnf_100_3_32",
+    grams=sleeve.GRAMS_ESTIMATED,
+    model=sleeve.solid,
+    cleanup=Cleanup(colour=sleeve.COLOUR),
 )
 CELLS = 4
 LEFT = -1.0
@@ -301,11 +308,11 @@ class StrandbeestMaster(Master):
 
     @property
     def nut_height(self) -> float:
-        return lock_nut.HEIGHT
+        return lock_nut_height(self.screw)
 
     @property
     def nut_flats(self) -> float:
-        return lock_nut.ACROSS_FLATS + 2 * self.fits.sliding
+        return lock_nut_across_flats(self.screw) + 2 * self.fits.sliding
 
     @property
     def foot_boss(self) -> float:
@@ -649,6 +656,10 @@ class StrandbeestMaster(Master):
     @property
     def holder_leads(self) -> battery_holder.Leads:
         return battery_holder.leads(BATTERY_HOLDER)
+
+    @property
+    def sleeve_at(self) -> Location:
+        return Location(self.lead_over_the_switch.position) * Pos(Z=-sleeve.LENGTH / 2)
 
     @property
     def holder_leads_out(self) -> Location:

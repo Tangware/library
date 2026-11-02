@@ -3,8 +3,8 @@ from cad.library.bought.catalogue import STEEL, Rgb
 
 DIAMETER = 14.5
 LENGTH = 50.5
-GRAMS = 23.0
-LABEL: Rgb = STEEL  # Energizer's E91 product photos: a silver label
+GRAMS = 22.8
+LABEL: Rgb = STEEL  # DigiKey's EN91 photo: a silver label
 
 
 def solid() -> Solid:
