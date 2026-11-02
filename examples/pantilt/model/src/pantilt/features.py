@@ -51,4 +51,4 @@ def shaft_clamp(m: ProductMaster, spot: Location, out_to: float, name: str) -> N
 
 def rims(made: BuildPart, face: Plane) -> list[Edge]:
     on = edges_on(built(made), face)
-    return [edge for edge in made.edges(Select.NEW) if edge in on]
+    return [edge for edge in made.edges(Select.LAST) if edge in on]
