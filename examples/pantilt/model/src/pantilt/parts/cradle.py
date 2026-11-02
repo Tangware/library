@@ -71,7 +71,7 @@ def cradle(m: ProductMaster) -> Printed:
         with Locations(m.guide.at * Pos(Y=-m.wall / 2, Z=m.wall)):
             channel = (guide.width - 2 * m.wall, guide.depth - m.wall, guide.height - m.wall)
             Box(*channel, align=ALONG, mode=Mode.SUBTRACT)
-            chamfer(made.edges(Select.NEW).filter_by(Convexity.CONVEX), m.wall_edge_break)
+            chamfer(made.edges(Select.LAST).filter_by(Convexity.CONVEX), m.wall_edge_break)
             post = station(Plane.XY, through=m.spring_post_at)
             register(SPRING_POST, post, [FacesOn(plane=post)])
             front = Plane.XZ.offset(-m.cradle_back)

@@ -31,4 +31,4 @@ def grille(
             with PolarLocations(0, GRILLE_RIBS):
                 Rectangle(outer, m.wall, align=(Align.MIN, Align.CENTER), mode=Mode.SUBTRACT)
         extrude(slot.sketch, amount=depth, mode=Mode.SUBTRACT)
-        chamfer(made.edges(Select.NEW).filter_by(Convexity.CONVEX), m.wall_edge_break)
+        chamfer(made.edges(Select.LAST).filter_by(Convexity.CONVEX), m.wall_edge_break)
