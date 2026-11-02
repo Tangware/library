@@ -5,6 +5,7 @@ from cad.design.master import Master, Pose, given
 from cad.library.bought.catalogue import Catalogue, Cleanup, Download
 from cad.library.bought.query import planes
 from cad.library.bought.vendor import solids_of, vendor_extent, vendor_reach
+from cad.library.features.hardware import insert_land
 from cad.library.features.planes import line_between, line_through, normal_to
 from cad.library.fits import FITS_UNITS, STAINLESS_A2_70, Fits
 from cad.library.gears import mesh_phase, pitch_radius
@@ -172,7 +173,6 @@ class CessnaMaster(Master):
     rail_holes: int = given(6, "-", why="Lightening holes per rail", source=TEARDOWN)
     pillow_x: float = given(12.0, "mm", why="Close to the pinion", source=ESTIMATE)
     pillow_width: float = given(8.0, "mm", why="Holds an insert", source=ESTIMATE)
-    pillow_depth: float = given(16.0, "mm", why="Two screws along it", source=ESTIMATE)
     spot_spacing: float = given(10.0, "mm", why="A block's two screws", source=ESTIMATE)
     hanger_at: float = given(42.0, "mm", why="Along the tube, past the fork", source=ESTIMATE)
     hanger_length: float = given(8.0, "mm", why="Bearing length on the tube", source=ESTIMATE)
@@ -329,6 +329,14 @@ class CessnaMaster(Master):
     @property
     def insert_length(self) -> float:
         return insert_size(self.screw, fits=self.fits, stock=self.stock).length
+
+    @property
+    def insert_land(self) -> float:
+        return insert_land(self.screw, fits=self.fits, stock=self.stock)
+
+    @property
+    def pillow_depth(self) -> float:
+        return self.spot_spacing + 2 * self.insert_land
 
     @property
     def output_radius(self) -> float:
