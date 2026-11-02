@@ -13,13 +13,14 @@ from build123d import (
     Pos,
     Rectangle,
     Select,
+    chamfer,
     extrude,
     fillet,
 )
 from cad.design.parts import part
 from cad.library.features.hardware import INSERTS, insert_holes
 from cad.library.features.planes import between
-from cad.library.shapes import FacesOn, Printed, built, register
+from cad.library.shapes import FacesOn, Printed, built, edges_on, register
 from cad.library.turns import UPSIDE_DOWN
 
 from fan.features import grille
@@ -48,6 +49,7 @@ def head(m: FanMaster) -> Printed:
                 align=(Align.CENTER, Align.MIN, Align.MIN),
             )
         fillet(made.edges(Select.LAST).filter_by(Axis.Y), m.wall)
+        chamfer(edges_on(built(made), Plane(front)), m.fits.min_wall)
         with Locations(pocket):
             Box(
                 m.fan_side + 2 * m.fits.sliding,
@@ -96,5 +98,6 @@ def head(m: FanMaster) -> Printed:
         body=built(made),
         bed="-y",
         exterior=True,
+        material=m.material,
         print_settings=m.print_settings,
     )

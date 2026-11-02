@@ -46,7 +46,8 @@ def base(m: ProductMaster) -> Printed:
     with BuildPart() as made:
         with Locations(Location(m.ground)):
             Cylinder(m.radius, between(m.ground, m.base_top), align=BOTTOM)
-        chamfer(edges_on(built(made), m.ground), m.fits.min_wall)
+        ends = [*edges_on(built(made), m.ground), *edges_on(built(made), m.base_top)]
+        chamfer(ends, m.fits.min_wall)
         with Locations(Location(m.base_top)):
             Cylinder(
                 m.inside_radius,

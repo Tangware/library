@@ -4,6 +4,11 @@ CNC_KITCHEN = "CNC Kitchen"
 ACCU = "Accu"
 ACCU_SCREWS = "https://accu.co.uk/socket-cap-screws/"
 PICO_2_PAGE = "https://www.raspberrypi.com/products/raspberry-pi-pico-2/"
+ANTHRACITE_GREY = (
+    0x3F / 255,
+    0x46 / 255,
+    0x46 / 255,
+)  # filamentcolors.xyz swatch 1577, #3F4646
 
 
 CATALOGUE = (
@@ -115,13 +120,15 @@ CATALOGUE = (
         lead_weeks=None,
     ),
     Item(
-        name="PETG, white, 1.75 mm",
+        name="Prusament PETG Anthracite Grey, 1.75 mm",
         kind=Kind.CONSUMABLE,
         supplier="Prusa Research",
-        url="https://www.prusa3d.com/product/prusament-petg-signal-white-1kg/",
+        part_number="Prusament PETG Anthracite Grey 1 kg",
+        url="https://www.prusa3d.com/product/prusament-petg-anthracite-grey-1kg/",
         unit_price=29.99,
         kg=1.0,
-        material="PETG white",
+        material="PETG Anthracite Grey",
+        colour=ANTHRACITE_GREY,
         price_source="estimate: Prusament PETG 1 kg spool list price, not checked",
         stocked=True,
         moq=1,

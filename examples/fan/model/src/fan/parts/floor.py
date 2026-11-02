@@ -39,5 +39,6 @@ def floor(m: FanMaster) -> Printed:
         body=built(made),
         bed="-z",
         exterior=True,
+        material=m.material,
         print_settings=m.print_settings,
     )

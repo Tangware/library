@@ -13,11 +13,12 @@ from build123d import (
     Pos,
     Rectangle,
     Select,
+    chamfer,
     extrude,
     fillet,
 )
 from cad.design.parts import part
-from cad.library.shapes import FacesOn, Printed, built, register
+from cad.library.shapes import FacesOn, Printed, built, edges_on, register
 
 from dispenser import models
 from dispenser.master import DispenserMaster
@@ -38,6 +39,8 @@ def drawer(m: DispenserMaster) -> Printed:
         with Locations(Location(m.drawer_bottom)):
             Cylinder(m.radius, m.drawer_height, align=BOTTOM, mode=Mode.INTERSECT)
         fillet(made.edges(Select.LAST).filter_by(Axis.Z), m.wall)
+        chamfer(edges_on(built(made), m.drawer_bottom), m.fits.min_wall)
+        fillet(edges_on(built(made), m.drawer_top), m.fits.min_wall)
         with BuildSketch(Location(tray) * Pos(Y=m.tray_back)) as inside:
             Rectangle(m.pull_width, m.radius, align=(Align.CENTER, Align.MAX))
             with Locations(Pos(Y=-m.tray_back)):

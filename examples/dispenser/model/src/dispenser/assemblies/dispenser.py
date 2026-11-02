@@ -52,6 +52,7 @@ from cad.library.turns import UPSIDE_DOWN
 from cad.library.why import Why
 
 from dispenser import models
+from dispenser.catalogue import ACTUATOR_BLACK, REED_BLACK
 from dispenser.master import (
     ACTUATOR,
     BUZZER,
@@ -178,7 +179,7 @@ def reed_holes() -> MountingHoles:
 
 def reed(m: DispenserMaster) -> Bought:
     seats = mounting_hole_seats(reed_holes())
-    return Bought(name=REED_NAME, pose=m.reed_at, item=REED, connectors=seats)
+    return Bought(name=REED_NAME, pose=m.reed_at, item=REED, connectors=seats, material=REED_BLACK)
 
 
 def reed_inserts(m: DispenserMaster) -> Hole:
@@ -260,7 +261,7 @@ def buzzer(m: DispenserMaster) -> Fastening:
 
 @derived
 def actuator(m: DispenserMaster) -> Fastening:
-    held = Bought(name=ACTUATOR_NAME, pose=m.actuator_at, item=ACTUATOR)
+    held = Bought(name=ACTUATOR_NAME, pose=m.actuator_at, item=ACTUATOR, material=ACTUATOR_BLACK)
     mates = held_by([held], OUTSIDE, Connector(drawer(m), ACTUATOR_POCKET))
     return Fastening(parts=[held], mates=[replace(mate, approach=-Axis.Z) for mate in mates])
 
@@ -386,6 +387,19 @@ def sliding_drawer(m: DispenserMaster) -> Fastening:
 
 
 CUT_TO_FIT = CutToFit()
+COLOURS = {  # the 59140's two leads are both black (Littelfuse 59140 datasheet, schematics)
+    "VM": "wire red",
+    "GND": "wire black",
+    "AIN1": "wire yellow",
+    "AIN2": "wire green",
+    "BIN1": "wire blue",
+    "BIN2": "wire white",
+    "BUZZ": "wire white",
+    "VBUS": "wire red",
+    "LIGHT": "wire yellow",
+    "SENSE": "wire black",
+    **{colour: f"wire {colour}" for colour in ("blue", "pink", "yellow", "orange", "red")},
+}
 
 
 def lead(
@@ -397,7 +411,7 @@ def lead(
 ) -> Cable:
     return Cable(
         name=name,
-        wires=tuple(Wire(name=wire, diameter=diameter, colour=wire) for wire in wires),
+        wires=tuple(Wire(name=wire, diameter=diameter, colour=COLOURS[wire]) for wire in wires),
         plugs=(
             Plug(name="from", model=None, pinout=wires),
             Plug(name="to", model=None, pinout=wires),
@@ -411,7 +425,9 @@ def lead(
 
 POWER_CABLE = Cable(
     name=POWER_NAME,
-    wires=tuple(Wire(name=name, diameter=AWG_18_MM, colour=name) for name in ("VBUS", "GND")),
+    wires=tuple(
+        Wire(name=name, diameter=AWG_18_MM, colour=COLOURS[name]) for name in ("VBUS", "GND")
+    ),
     plugs=(
         Plug(name="micro-B", model=None, pinout=("VBUS", "GND")),
         Plug(name="mains", model=None, pinout=("VBUS", "GND")),

@@ -9,6 +9,8 @@ from build123d import (
     Locations,
     Mode,
     Rectangle,
+    Select,
+    chamfer,
     extrude,
 )
 from cad.design.parts import part
@@ -30,6 +32,8 @@ def carousel(m: DispenserMaster) -> Printed:
     with BuildPart() as made:
         with Locations(bottom):
             Cylinder(m.rim_radius, m.pocket_height, align=BOTTOM)
+        chamfer(made.edges(Select.LAST), m.fits.min_wall / 2)
+        with Locations(bottom):
             Cylinder(m.pocket_reach, m.pocket_height, align=BOTTOM, mode=Mode.SUBTRACT)
         with Locations(bottom):
             Cylinder(m.pocket_start, m.pocket_height, align=BOTTOM)

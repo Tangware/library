@@ -3,7 +3,6 @@ from functools import cached_property
 from pathlib import Path
 
 from build123d import Axis, Location, Plane, Pos
-
 from cad.design.master import Envelope, KeepOut, Master, given
 from cad.library.bought.boards import BoardMount, board_mount
 from cad.library.bought.catalogue import BoardKind, Catalogue, Port
@@ -18,7 +17,10 @@ from cad.library.standard.magnets import DISC_UNITS, DiscSize
 VENDOR = Path(__file__).parents[2] / "vendor"
 PICO_2_GRAMS_ESTIMATED = 3.0
 PICO_2_USB = Port(
-    name="USB", instance="edac_690-005-298-486:edac_690-005-298-486", mating=Axis.Y, across=Axis.X
+    name="USB",
+    instance="edac_690-005-298-486:edac_690-005-298-486",
+    mating=Axis.Y,
+    across=Axis.X,
 )
 PICO_2 = Catalogue(
     file="rpi_pico2",
@@ -81,7 +83,8 @@ class BoxMaster(Master):
     lid_screw: Metric = given(
         Metric.M3,
         "-",
-        why="One screw type closes the box; M3 is the smallest common insert size with a 2.5 mm key",
+        why="One screw type closes the box;"
+        " M3 is the smallest common insert size with a 2.5 mm key",
         source="ISO 4762",
     )
     board_screw: Metric = given(
@@ -103,10 +106,16 @@ class BoxMaster(Master):
         source="design input",
     )
     plug_width: float = given(
-        10.6, "mm", why="The widest micro-USB plug body the port must take", source=OVERMOLD_SOURCE
+        10.6,
+        "mm",
+        why="The widest micro-USB plug body the port must take",
+        source=OVERMOLD_SOURCE,
     )
     plug_height: float = given(
-        8.5, "mm", why="The tallest micro-USB plug body the port must take", source=OVERMOLD_SOURCE
+        8.5,
+        "mm",
+        why="The tallest micro-USB plug body the port must take",
+        source=OVERMOLD_SOURCE,
     )
     plug_reach: float = given(
         20.0,
@@ -121,6 +130,12 @@ class BoxMaster(Master):
         source="design input",
     )
 
+    material: str = given(
+        "PETG Anthracite Grey",
+        "-",
+        why="One dark neutral for the whole shell, so the box reads as one object",
+        source="design input; the spool is in the catalogue",
+    )
     print_settings: PrintSettings = given(
         PrintSettings(
             preset="structural",

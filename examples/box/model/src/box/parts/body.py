@@ -9,17 +9,25 @@ from build123d import (
     Plane,
     Pos,
     Select,
+    chamfer,
     fillet,
 )
-
-from box.master import BoxMaster
 from cad.design.parts import part
 from cad.library.features.boards import insert_posts
 from cad.library.features.cuts import disc_seat
 from cad.library.features.hardware import INSERTS, insert_holes
 from cad.library.features.planes import foot_on
-from cad.library.shapes import Printed, RoundFaces, SeatQuery, built, register_each
+from cad.library.shapes import (
+    Printed,
+    RoundFaces,
+    SeatQuery,
+    built,
+    edges_on,
+    register_each,
+)
 from cad.library.why import Why
+
+from box.master import BoxMaster
 
 BOARD_INSERTS = "board inserts"
 MAGNETS = "magnets"
@@ -43,8 +51,15 @@ def body(m: BoxMaster) -> Printed:
         with Locations(outside.at):
             Box(outside.width, outside.depth, outside.height, align=BOTTOM)
         fillet(made.edges(Select.LAST).filter_by(Axis.Z), m.wall)
+        chamfer(edges_on(built(made), Plane.XY), m.fits.min_wall)
         with Locations(inside.at):
-            Box(inside.width, inside.depth, inside.height, align=BOTTOM, mode=Mode.SUBTRACT)
+            Box(
+                inside.width,
+                inside.depth,
+                inside.height,
+                align=BOTTOM,
+                mode=Mode.SUBTRACT,
+            )
         with Locations(*[foot_on(m.floor, of=spot) for spot in m.lid_spots]):
             side = 2 * m.lid_land
             Box(side, side, inside.height, align=BOTTOM)
@@ -75,5 +90,6 @@ def body(m: BoxMaster) -> Printed:
         body=built(made),
         bed="-z",
         exterior=True,
+        material=m.material,
         print_settings=m.print_settings,
     )

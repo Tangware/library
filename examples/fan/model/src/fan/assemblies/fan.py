@@ -33,6 +33,7 @@ from cad.library.shapes import OUTSIDE, Seat, round_faces, seat_of
 from cad.library.turns import UPSIDE_DOWN
 
 from fan import models
+from fan.catalogue import FAN_BLACK, TAPE_BLACK
 from fan.master import (
     BUMPER,
     BUTTON,
@@ -203,7 +204,7 @@ def turning_head(m: FanMaster) -> Fastening:
 @derived
 def fan(m: FanMaster) -> Fastening:
     lead = wired(FAN, m.fan_origin * Pos(X=m.fan_side / 2, Y=-(m.fan_depth + m.lead_reach / 2)))
-    held = Bought(name=FAN_NAME, pose=m.fan_at, item=FAN, connectors=lead)
+    held = Bought(name=FAN_NAME, pose=m.fan_at, item=FAN, connectors=lead, material=FAN_BLACK)
     mate = Mate(
         f"{FAN_NAME} in head",
         Kind.RIGID,
@@ -247,7 +248,7 @@ def driver_mounted(m: FanMaster) -> Fastening:
 
 
 def tape(m: FanMaster) -> Bought:
-    return Bought(name=TAPE_NAME, pose=m.tape_at, item=TAPE)
+    return Bought(name=TAPE_NAME, pose=m.tape_at, item=TAPE, material=TAPE_BLACK)
 
 
 @derived
@@ -287,12 +288,30 @@ def closed(m: FanMaster) -> Fastening:
 WIRED = "wired end"
 BUTTON_WIRES = ("switch", "ground")
 DRIVER_WIRES = ("AIN1", "AIN2", "BIN1", "BIN2", "VM", "GND")
+COLOURS = {
+    "switch": "wire white",
+    "ground": "wire black",
+    "AIN1": "wire yellow",
+    "AIN2": "wire green",
+    "BIN1": "wire blue",
+    "BIN2": "wire white",
+    "VM": "wire red",
+    "GND": "wire black",
+    "+5V": "wire red",
+    "A": "wire blue",
+    "B": "wire pink",
+    "C": "wire yellow",
+    "D": "wire orange",
+    "common": "wire red",
+}
 
 
 def hook_up(name: str, wires: tuple[str, ...], ends: tuple[str, str]) -> Cable:
     return Cable(
         name=name,
-        wires=tuple(Wire(name=wire, diameter=models.WIRE_26_AWG, colour=wire) for wire in wires),
+        wires=tuple(
+            Wire(name=wire, diameter=models.WIRE_26_AWG, colour=COLOURS[wire]) for wire in wires
+        ),
         plugs=tuple(Plug(name=end, model=None, pinout=wires) for end in ends),
         construction=Discrete(),
         twist_rating=0.0,
@@ -318,7 +337,7 @@ def shipped_lead(
 ) -> Cable:
     return Cable(
         name=name,
-        wires=tuple(Wire(name=wire, diameter=diameter, colour=wire) for wire in wires),
+        wires=tuple(Wire(name=wire, diameter=diameter, colour=COLOURS[wire]) for wire in wires),
         plugs=(
             Plug(name=ships_with, model=None, pinout=wires),
             Plug(name="soldered end", model=None, pinout=wires),
