@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from contextvars import Context
 
 from build123d import (
+    BuildPart,
     Circle,
     Edge,
     Hole,
@@ -12,11 +13,12 @@ from build123d import (
     Pos,
     Rectangle,
     Sketch,
+    chamfer,
     extrude,
     make_hull,
 )
+from cad.library.shapes import built, edges_on
 
-MATERIAL = "PETG white"
 THROUGH = 200.0
 
 
@@ -38,3 +40,7 @@ def bore(at: Location, diameter: float) -> None:
 def d_shape(radius: float, flat: float) -> Sketch:
     void = Pos(Y=flat - radius - radius) * Context().run(Rectangle, 2 * radius, 2 * radius)
     return Context().run(Circle, radius) - void
+
+
+def break_edges(made: BuildPart, faces: Sequence[Plane], size: float) -> None:
+    chamfer([edge for face in faces for edge in edges_on(built(made), face)], size)

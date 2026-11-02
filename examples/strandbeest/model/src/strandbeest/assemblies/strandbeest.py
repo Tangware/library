@@ -2,7 +2,7 @@ from collections.abc import Callable
 
 from build123d import Align, Axis, BuildPart, Cylinder, Location, Pos, Rot
 from cad.assembly.tree import Assembly, job
-from cad.cables.models import Cable, CutToFit, Jacketed, Plug, Route, RoutePoint, Wire
+from cad.cables.models import Cable, CutToFit, Discrete, Plug, Route, RoutePoint, Splice, Wire
 from cad.library.bought.catalogue import NO_BILL, Bill
 from cad.library.bought.vendor import Bought
 from cad.library.derived import derived
@@ -34,6 +34,7 @@ from strandbeest.master import (
     Module,
     StrandbeestMaster,
 )
+from strandbeest.models import wire
 from strandbeest.parts.crank import crank
 from strandbeest.parts.frame import (
     DECK,
@@ -58,35 +59,46 @@ FOOT_LAYER_MIDDLE = 2.0
 INNER_LAYER = 0.5
 OUTER_LAYER = 1.5
 FORE, AFT = True, False
-LEAD_WIRES = ("red", "black")
-AWG_24_MM = 0.511
-AWG_26_MM = 0.405
-LEADS_BUNDLE_MM = 3.0
+RED, BLACK = wire.CONDUCTORS
+SPLICE = "black splice"
 LEADS_LENGTH_MM = 150.0
-SWITCH_LEADS = Cable(
-    name="switch leads",
-    wires=tuple(Wire(name=name, diameter=AWG_24_MM, colour=name) for name in LEAD_WIRES),
-    plugs=(
-        Plug(name="switch", model=None, pinout=LEAD_WIRES),
-        Plug(name="motor", model=None, pinout=LEAD_WIRES),
-    ),
-    construction=Jacketed(diameter=LEADS_BUNDLE_MM),
-    twist_rating=0.0,
-    length=CutToFit(),
-    bill=NO_BILL,
-)
-LEADS = Cable(
-    name="battery holder leads",
-    wires=tuple(Wire(name=name, diameter=AWG_26_MM, colour=name) for name in LEAD_WIRES),
-    plugs=(
-        Plug(name="holder", model=None, pinout=LEAD_WIRES),
-        Plug(name="switch", model=None, pinout=LEAD_WIRES),
-    ),
-    construction=Jacketed(diameter=LEADS_BUNDLE_MM),
-    twist_rating=0.0,
-    length=LEADS_LENGTH_MM,
-    bill=Bill(ships_with=HOLDER_NAME),
-)
+
+
+def holder_leads(m: StrandbeestMaster) -> Cable:
+    return Cable(
+        name="battery holder leads",
+        wires=tuple(
+            Wire(name=name, diameter=m.holder_leads.diameter, colour=name)
+            for name in wire.CONDUCTORS
+        ),
+        plugs=(
+            Plug(name="holder", model=None, pinout=wire.CONDUCTORS),
+            Plug(name="switch", model=None, pinout=(RED,)),
+            Plug(name=SPLICE, model=None, pinout=(BLACK,)),
+        ),
+        construction=Discrete(),
+        twist_rating=0.0,
+        length=LEADS_LENGTH_MM,
+        bill=Bill(ships_with=HOLDER_NAME),
+    )
+
+
+def switch_leads(trunk: Cable) -> Cable:
+    return Cable(
+        name="switch leads",
+        wires=tuple(
+            Wire(name=name, diameter=wire.DIAMETER, colour=name) for name in wire.CONDUCTORS
+        ),
+        plugs=(
+            Plug(name="switch", model=None, pinout=(RED,)),
+            Plug(name="motor", model=None, pinout=wire.CONDUCTORS),
+            Plug(name=SPLICE, model=Splice(into=trunk), pinout=(BLACK,)),
+        ),
+        construction=Discrete(),
+        twist_rating=0.0,
+        length=CutToFit(),
+        bill=NO_BILL,
+    )
 
 
 def tube_name(x: float) -> str:
@@ -531,27 +543,32 @@ def sails(m: StrandbeestMaster) -> Fastening:
 
 def battery_leads(m: StrandbeestMaster, find: Callable[[str], Part]) -> list[Route]:
     holder, rocker, motor = find(HOLDER_NAME), find(SWITCH_NAME), find(MOTOR_NAME)
+    trunk = holder_leads(m)
+    splice = RoutePoint(part=rocker, at=rocker.pose.inverse() * m.lead_over_the_switch)
     return [
         Route(
-            cable=LEADS,
+            cable=trunk,
             plugged=(
                 RoutePoint(part=holder, at=holder.pose.inverse() * m.holder_leads_out),
-                RoutePoint(part=rocker, at=rocker.pose.inverse() * m.switch_terminals),
+                RoutePoint(part=rocker, at=m.switch_ends.supply),
+                splice,
             ),
-            through=((),),
+            through=((), ()),
         ),
         Route(
-            cable=SWITCH_LEADS,
+            cable=switch_leads(trunk),
             plugged=(
-                RoutePoint(part=rocker, at=rocker.pose.inverse() * m.switch_terminals),
+                RoutePoint(part=rocker, at=m.switch_ends.load),
                 RoutePoint(part=motor, at=motor.pose.inverse() * m.lead_end),
+                splice,
             ),
             through=(
                 (
-                    RoutePoint(part=rocker, at=rocker.pose.inverse() * m.lead_over_the_switch),
+                    splice,
                     RoutePoint(part=holder, at=holder.pose.inverse() * m.lead_over_the_edge),
                     RoutePoint(part=holder, at=holder.pose.inverse() * m.lead_above_the_cap),
                 ),
+                (),
             ),
         ),
     ]

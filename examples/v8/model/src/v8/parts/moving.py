@@ -1,8 +1,8 @@
-from build123d import Align, Box, BuildPart, Cylinder, Location, Locations, Mode, Pos, Rot
+from build123d import Align, Box, BuildPart, Cylinder, Location, Locations, Mode, Plane, Pos, Rot
 from cad.design.parts import part
 from cad.library.shapes import OUTSIDE, Outside, Printed, built
 
-from v8.features import MATERIAL, bore, web
+from v8.features import bore, break_edges, web
 from v8.master import V8Master
 
 ROD = "rod"
@@ -20,13 +20,15 @@ def rod(m: V8Master, at: Location) -> Printed:
         web([(big, m.big_end_radius)], m.rod_thickness)
         bore(small, m.fits.printed(m.wrist_pin_diameter))
         bore(big, m.pin_bore)
+        faces = [Plane.XY.offset(m.rod_thickness / 2), Plane.XY.offset(-m.rod_thickness / 2)]
+        break_edges(made, faces, m.fits.min_wall / 2)
     body = built(made)
     return Printed(
         name=ROD,
         pose=at,
         body=body,
         bed="-z",
-        material=MATERIAL,
+        material=m.moving_material,
         print_settings=m.print_settings,
         connectors={OUTSIDE: Outside(body)},
     )
@@ -54,13 +56,14 @@ def piston(m: V8Master, at: Location, number: int) -> Printed:
                 Cylinder(radius, RING_WIDTH, mode=Mode.SUBTRACT)
                 Cylinder(radius - RING_WIDTH, RING_WIDTH)
         bore(Rot(X=90.0), m.fits.pressed(m.wrist_pin_diameter))
+        break_edges(made, [Plane.XY.offset(m.compression_height)], m.fits.min_wall / 2)
     body = built(made)
     return Printed(
         name=f"{PISTON} {number}",
         pose=at,
         body=body,
         bed="+z",
-        material=MATERIAL,
+        material=m.moving_material,
         print_settings=m.print_settings,
         connectors={OUTSIDE: Outside(body)},
     )

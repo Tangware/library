@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from build123d import Axis, BoundBox, Location, Plane, Pos, Rot
 from cad.design.master import Master, Pose, given
-from cad.library.bought.catalogue import STEEL, Catalogue, Cleanup, Download
+from cad.library.bought.catalogue import Catalogue, Cleanup, Download
 from cad.library.bought.query import planes
 from cad.library.bought.vendor import solids_of, vendor_extent, vendor_reach
 from cad.library.features.planes import line_between
@@ -59,7 +59,7 @@ SWITCH = Catalogue(
     ),
 )
 CELL = Catalogue(
-    file="energizer_e91", grams=cell.GRAMS, model=cell.solid, cleanup=Cleanup(colour=STEEL)
+    file="energizer_e91", grams=cell.GRAMS, model=cell.solid, cleanup=Cleanup(colour=cell.LABEL)
 )
 CELLS = 4
 ARMS = range(8)
@@ -210,6 +210,25 @@ class OctopusMaster(Master):
     @property
     def insert_length(self) -> float:
         return insert_size(self.screw, fits=self.fits, stock=self.stock).length
+
+    shell_material: str = given(
+        "PETG Carmine Red",
+        "-",
+        why="The body, mantle and motor caps in one deep red, the animal's colour",
+        source="design input; the spool is in the catalogue",
+    )
+    arm_material: str = given(
+        "PETG Terracotta Light",
+        "-",
+        why="The arm segments one tone lighter, so the arms read as they curl",
+        source="design input; the spool is in the catalogue",
+    )
+    linkage_material: str = given(
+        "PETG Anthracite Grey",
+        "-",
+        why="The cranks and rods in a dark tone, so the drive reads against the arm",
+        source="design input; the spool is in the catalogue",
+    )
 
     @property
     def thin(self) -> float:
@@ -441,9 +460,16 @@ class OctopusMaster(Master):
         return Location((self.switch_face * Pos(Z=-self.switch_depth)).position)
 
     @property
+    def switch_ends(self) -> switch.Terminals:
+        return switch.terminals(SWITCH)
+
+    @property
+    def holder_leads(self) -> battery_holder.Leads:
+        return battery_holder.leads(BATTERY_HOLDER)
+
+    @property
     def holder_leads_out(self) -> Location:
-        end = self.holder_at * Pos(X=-self.holder_box.size.X / 2, Z=self.holder_box.size.Z / 2)
-        return Location(end.position)
+        return Location((self.holder_at * self.holder_leads.out).position)
 
     @property
     def switch_turn(self) -> float:

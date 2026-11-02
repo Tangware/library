@@ -9,6 +9,7 @@ from build123d import (
     Location,
     Locations,
     Mode,
+    Plane,
     Polygon,
     Pos,
     Rot,
@@ -18,7 +19,7 @@ from cad.design.parts import part
 from cad.library.features.hardware import insert_cut
 from cad.library.shapes import OUTSIDE, Outside, Printed, built
 
-from strandbeest.features import MATERIAL
+from strandbeest.features import break_edges
 from strandbeest.master import LEFT, RIGHT, Module, StrandbeestMaster
 from strandbeest.models import switch
 
@@ -39,6 +40,7 @@ def printed(
     bed: str,
     supports: str = "",
     exterior: bool = False,
+    material: str | None = None,
 ) -> Printed:
     body = built(made)
     return Printed(
@@ -48,7 +50,7 @@ def printed(
         bed=bed,
         supports=supports,
         exterior=exterior,
-        material=MATERIAL,
+        material=m.frame_material if material is None else material,
         print_settings=m.print_settings,
         connectors={OUTSIDE: Outside(body)},
     )
@@ -79,6 +81,7 @@ def plate(m: StrandbeestMaster, side: float, name: str) -> Printed:
             with Locations(local):
                 Hole(m.pivot_bore / 2, m.deck_screw_length - m.deck_thickness + m.fits.sliding)
             insert_cut(local, m.screw, fits=m.fits, stock=m.stock)
+        break_edges(made, [Plane.XY], m.fits.min_wall)
     return printed(m, name, made, frame, "-z", exterior=True)
 
 
@@ -96,8 +99,8 @@ def right_plate(m: StrandbeestMaster) -> Printed:
 def deck(m: StrandbeestMaster) -> Printed:
     long, wide = 2 * m.plate_half_length, 2 * m.plate_outer_y
     rim = m.fits.structural_wall
-    inside_x = m.holder_box.size.Y + 2 * m.fits.sliding
-    inside_y = m.holder_box.size.X + 2 * m.fits.sliding
+    inside_x = m.holder_width + 2 * m.fits.sliding
+    inside_y = m.holder_length + 2 * m.fits.sliding
     frame = Location((0.0, 0.0, m.deck_level))
     with BuildPart() as made:
         Box(long, wide, m.deck_thickness, align=FLOOR_UP)
@@ -105,7 +108,7 @@ def deck(m: StrandbeestMaster) -> Printed:
             Box(inside_x + 2 * rim, inside_y + 2 * rim, m.rim_height, align=FLOOR_UP)
             Box(inside_x, inside_y, m.rim_height, align=FLOOR_UP, mode=Mode.SUBTRACT)
         with Locations(frame.inverse() * m.switch_face):
-            Box(m.holder_box.size.Y, m.holder_box.size.Z, m.switch_panel, align=FACE_DOWN)
+            Box(m.holder_width, m.holder_height, m.switch_panel, align=FACE_DOWN)
             Box(
                 m.switch_cutout,
                 switch.CUTOUT_WIDTH,
@@ -123,6 +126,7 @@ def deck(m: StrandbeestMaster) -> Printed:
                 Cylinder(m.mast_diameter, m.mast_socket, align=FLOOR_UP)
             with Locations(at * Pos(Z=m.mast_socket)):
                 Hole(m.fits.printed(m.mast_diameter) / 2, m.mast_socket + m.deck_thickness)
+        break_edges(made, [Plane.XY], m.fits.min_wall)
     return printed(m, DECK, made, frame, "-z", exterior=True)
 
 
@@ -134,7 +138,7 @@ def sail(m: StrandbeestMaster, module: Module) -> Printed:
             extrude(Context().run(Polygon, *m.sail_outline, align=None), amount=m.sail_thickness)
         with Locations(Rot(X=-90.0)):
             Cylinder(m.mast_diameter / 2, m.sail_base, align=FLOOR_UP)
-    return printed(m, SAIL, made, frame, "-z")
+    return printed(m, SAIL, made, frame, "-z", material=m.sail_material)
 
 
 @part
@@ -158,4 +162,5 @@ def motor_cap(m: StrandbeestMaster) -> Printed:
             Box(width, 2 * wall, 2 * wall, mode=Mode.SUBTRACT)
         with Locations(*(Pos(X=x, Z=m.cap_flange) for x in (-m.cap_spot_x, m.cap_spot_x))):
             Hole(m.pivot_bore / 2, m.cap_flange)
+        break_edges(made, [Plane.XY.offset(depth)], m.fits.min_wall)
     return printed(m, MOTOR_CAP, made, frame, "-z", "in the cavity", exterior=True)

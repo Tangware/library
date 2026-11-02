@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from build123d import Axis, BoundBox, Edge, Location, Plane, Pos, Rot
 from cad.design.master import Master, Pose, given
-from cad.library.bought.catalogue import STEEL, Catalogue, Cleanup, Download
+from cad.library.bought.catalogue import Catalogue, Cleanup, Download
 from cad.library.bought.query import planes
 from cad.library.bought.vendor import solids_of, vendor_extent, vendor_reach
 from cad.library.features.planes import line_between, line_through, normal_to
@@ -12,7 +12,7 @@ from cad.library.printing import PRINT_SETTINGS_UNITS, PrintSettings
 from cad.library.standard.fasteners import STOCK_UNITS, Metric, Stock, clearance, insert_size
 from cad.standards import RatedTorque
 
-from cessna.models import battery_holder, cell, motor, switch
+from cessna.models import battery_holder, cell, motor, switch, wire
 
 DRIVE = "drive"
 TEARDOWN = "github.com/elvarofficial/teardown, sims/cessna-shared/gear.js, read 2026-11-01"
@@ -61,7 +61,7 @@ SWITCH = Catalogue(
     ),
 )
 CELL = Catalogue(
-    file="energizer_e91", grams=cell.GRAMS, model=cell.solid, cleanup=Cleanup(colour=STEEL)
+    file="energizer_e91", grams=cell.GRAMS, model=cell.solid, cleanup=Cleanup(colour=cell.LABEL)
 )
 CELLS = 4
 LEFT = -1.0
@@ -185,12 +185,6 @@ class CessnaMaster(Master):
     lead_room: float = given(24.0, "mm", why="The lead turns clear of parts", source=ESTIMATE)
     lead_rise: float = given(30.0, "mm", why="The lead's straight runs", source=ESTIMATE)
     holder_recess: float = given(2.0, "mm", why="Locates the battery holder", source=ESTIMATE)
-    lead_bend: float = given(
-        12.0,
-        "mm",
-        why="The leads' loose bend round the switch",
-        source="CENELEC HD 516: 4 x the leads' 3 mm bundle",
-    )
     switch_panel: float = given(
         2.0,
         "mm",
@@ -257,6 +251,25 @@ class CessnaMaster(Master):
         PRINT_SETTINGS_UNITS,
         why="Every printed part takes the structural preset",
         source="estimate: the library's example structural preset",
+    )
+
+    structure_material: str = given(
+        "PETG Anthracite Grey",
+        "-",
+        why="One dark tone for the stand, plate and brackets, so the gear reads against them",
+        source="design input; the spool is in the catalogue",
+    )
+    gear_material: str = given(
+        "PETG Signal White",
+        "-",
+        why="Every part that moves with the gear in one light tone, so the retraction reads",
+        source="design input; the spool is in the catalogue",
+    )
+    tyre_material: str = given(
+        "PETG Jet Black",
+        "-",
+        why="The wheels read as tyres",
+        source="design input; the spool is in the catalogue",
     )
 
     def mm(self, metres: float) -> float:
@@ -578,6 +591,18 @@ class CessnaMaster(Master):
         return vendor_extent(BATTERY_HOLDER)
 
     @property
+    def holder_length(self) -> float:
+        return self.holder_box.size.X
+
+    @property
+    def holder_width(self) -> float:
+        return self.holder_box.size.Y
+
+    @property
+    def holder_height(self) -> float:
+        return self.holder_box.size.Z
+
+    @property
     def holder_floor(self) -> float:
         return min(face.center().Z for face in planes(solids_of(BATTERY_HOLDER), Axis.Z.direction))
 
@@ -621,13 +646,24 @@ class CessnaMaster(Master):
         return self.switch_face * Pos(Z=-self.switch_seat)
 
     @property
+    def lead_bend(self) -> float:
+        return wire.BEND_DIAMETERS * wire.DIAMETER
+
+    @property
+    def switch_ends(self) -> switch.Terminals:
+        return switch.terminals(SWITCH)
+
+    @property
+    def holder_leads(self) -> battery_holder.Leads:
+        return battery_holder.leads(BATTERY_HOLDER)
+
+    @property
     def switch_terminals(self) -> Location:
         return Location((self.switch_face * Pos(Z=-self.switch_depth)).position)
 
     @property
     def holder_leads_out(self) -> Location:
-        end = self.holder_at * Pos(X=-self.holder_box.size.X / 2, Z=self.holder_box.size.Z / 2)
-        return Location(end.position)
+        return Location((self.holder_at * self.holder_leads.out).position)
 
     @property
     def lead_over_the_switch(self) -> Location:

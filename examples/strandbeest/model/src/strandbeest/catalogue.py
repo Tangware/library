@@ -6,9 +6,12 @@ ACCU = "Accu"
 ACCU_SCREWS = "https://accu.co.uk/socket-cap-screws/"
 ESTIMATE = "estimate: common hobby retail, page not opened"
 DIGIKEY = "DigiKey"
-E91 = "https://www.digikey.com/en/products/result?keywords=Energizer%20E91"
-HOOKUP_WIRE = "https://www.digikey.com/en/products/filter/hook-up-wire/468"
-WIRE = "estimate: 24 AWG stranded hookup wire cut from a reel, under 0.5 m, not quoted"
+DIGIKEY_READ = "1 unit, page opened 2026-11-02"
+E91 = "https://www.digikey.com/en/products/detail/energizer-battery-company/E91/7400186"
+HOOKUP_WIRE = "https://www.digikey.com/en/products/detail/alpha-wire/3049-RD005/266589"
+SPOOLS = f"{DIGIKEY} A3049R-100-ND red and 3049 BK005 black, 100 ft spools, {DIGIKEY_READ}"
+PRUSAMENT = "https://www.prusa3d.com/product/prusament-petg-{}-1kg-nfc/"
+SPOOL = "estimate: Prusament PETG 1 kg spool list price, not checked"
 
 
 def printed(name: str) -> Item:
@@ -35,6 +38,27 @@ def bought(name: str, supplier: str, url: str, price: float, source: str, pack: 
         stocked=True,
         moq=pack,
         pack=pack,
+    )
+
+
+def swatch(red: int, green: int, blue: int) -> tuple[float, float, float]:
+    return (red / 255, green / 255, blue / 255)
+
+
+def spool(colour: str, slug: str, rgb: tuple[float, float, float]) -> Item:
+    return Item(
+        name=f"Prusament PETG {colour}, 1.75 mm",
+        kind=Kind.CONSUMABLE,
+        supplier="Prusa Research",
+        part_number=f"Prusament PETG {colour} 1 kg",
+        url=PRUSAMENT.format(slug),
+        unit_price=29.99,
+        kg=1.0,
+        material=f"PETG {colour}",
+        colour=rgb,
+        price_source=SPOOL,
+        stocked=True,
+        moq=1,
     )
 
 
@@ -67,18 +91,27 @@ CATALOGUE = (
         "MPD BC4AAW 4-AA battery holder",
         DIGIKEY,
         "https://www.digikey.com/en/products/detail/mpd-memory-protection-devices/BC4AAW/66733",
-        2.69,
-        f"{DIGIKEY} BC4AAW-ND, 1 unit, from a search snapshot, page not opened",
+        2.77,
+        f"{DIGIKEY} BC4AAW-ND, {DIGIKEY_READ}",
     ),
     bought(
         "E-Switch RD11131121 rocker switch",
         DIGIKEY,
         "https://www.digikey.com/en/products/detail/e-switch/RD11131121/4029076",
-        0.90,
-        f"{DIGIKEY} EG5649-ND, 1 unit, from findchips, page not opened",
+        0.91,
+        f"{DIGIKEY} EG5649-ND, {DIGIKEY_READ}",
     ),
-    *(bought(f"Energizer E91 AA cell {k + 1}", DIGIKEY, E91, 0.75, ESTIMATE) for k in range(CELLS)),
-    bought("switch leads", DIGIKEY, HOOKUP_WIRE, 0.10, WIRE),
+    *(
+        bought(
+            f"Energizer E91 AA cell {k + 1}",
+            DIGIKEY,
+            E91,
+            1.05,
+            f"{DIGIKEY} E91-ND, {DIGIKEY_READ}; discontinued at {DIGIKEY}",
+        )
+        for k in range(CELLS)
+    ),
+    bought("switch leads", DIGIKEY, HOOKUP_WIRE, 2 * 73.19, SPOOLS),
     *(
         bought(f"M3 x {length} socket head cap screw", ACCU, ACCU_SCREWS, 0.08, ESTIMATE, 100)
         for length in (8, 16, 20)
@@ -127,16 +160,7 @@ CATALOGUE = (
         stocked=True,
         moq=1,
     ),
-    Item(
-        name="PETG, white, 1.75 mm",
-        kind=Kind.CONSUMABLE,
-        supplier="Prusa Research",
-        url="https://www.prusa3d.com/product/prusament-petg-signal-white-1kg/",
-        unit_price=29.99,
-        kg=1.0,
-        material="PETG white",
-        price_source="estimate: Prusament PETG 1 kg spool list price, not checked",
-        stocked=True,
-        moq=1,
-    ),
+    spool("Anthracite Grey", "anthracite-grey", swatch(0x3F, 0x46, 0x46)),  # filamentcolors 1577
+    spool("Mango Yellow", "mango-yellow", swatch(0xF2, 0xB7, 0x06)),  # filamentcolors 1337
+    spool("Signal White", "signal-white", swatch(0xE5, 0xE0, 0xE1)),  # filamentcolors 1338
 )

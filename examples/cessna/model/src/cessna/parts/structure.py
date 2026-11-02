@@ -7,6 +7,7 @@ from build123d import (
     Location,
     Locations,
     Mode,
+    Plane,
     Pos,
     Rot,
     extrude,
@@ -15,7 +16,7 @@ from cad.design.parts import part
 from cad.library.features.hardware import insert_cut
 from cad.library.shapes import OUTSIDE, Outside, Printed, built
 
-from cessna.features import MATERIAL, bore, outline
+from cessna.features import bore, break_edges, outline
 from cessna.master import SIDES, CessnaMaster, side_name
 from cessna.models import switch
 
@@ -47,7 +48,7 @@ def printed(
         bed=bed,
         supports=supports,
         exterior=exterior,
-        material=MATERIAL,
+        material=m.structure_material,
         print_settings=m.print_settings,
         connectors={OUTSIDE: Outside(body)},
     )
@@ -64,14 +65,14 @@ def stand(m: CessnaMaster) -> Printed:
             Box(m.column_width, m.column_depth, m.plate_bottom, align=FLOOR_UP)
         with Locations(m.holder_at):
             Box(
-                m.holder_box.size.X + 2 * m.fits.sliding,
-                m.holder_box.size.Y + 2 * m.fits.sliding,
+                m.holder_length + 2 * m.fits.sliding,
+                m.holder_width + 2 * m.fits.sliding,
                 m.holder_recess,
                 align=FLOOR_UP,
                 mode=Mode.SUBTRACT,
             )
         with Locations(m.switch_face):
-            Box(m.holder_box.size.Y, m.holder_box.size.Z, m.switch_panel, align=HANGING)
+            Box(m.holder_width, m.holder_height, m.switch_panel, align=HANGING)
             Box(
                 m.switch_cutout,
                 switch.CUTOUT_WIDTH,
@@ -82,6 +83,7 @@ def stand(m: CessnaMaster) -> Printed:
         for y in (fore, aft):
             for spot in m.column_spots(y):
                 insert_cut(spot, m.screw, fits=m.fits, stock=m.stock)
+        break_edges(made, [Plane.XY], m.fits.min_wall)
     return printed(m, STAND, made, Location(), "-z")
 
 
@@ -107,6 +109,7 @@ def main_plate(m: CessnaMaster) -> Printed:
             Box(m.gear_width + 2 * m.fits.sliding, 2 * m.rack_radius, t, mode=Mode.SUBTRACT)
         with Locations(*(frame.inverse() * spot * Pos(Z=t) for spot in holes)):
             Hole(m.pivot_bore / 2, t)
+        break_edges(made, [Plane.XY], m.fits.min_wall)
     return printed(m, MAIN_PLATE, made, frame, "-z", exterior=True)
 
 
@@ -120,6 +123,7 @@ def pillow_block(m: CessnaMaster, side: float) -> Printed:
         bore(frame.inverse() * m.shaft_at * ALONG_THE_SHAFT, m.bored)
         for spot in m.pillow_spots(side):
             insert_cut(frame.inverse() * spot, m.screw, fits=m.fits, stock=m.stock)
+        break_edges(made, [Plane.XY.offset(-drop)], m.fits.min_wall)
     return printed(m, side_name(side, PILLOW_BLOCK), made, frame, "+z")
 
 
@@ -163,6 +167,7 @@ def pivot_bracket(m: CessnaMaster) -> Printed:
         ):
             Hole(m.pivot_bore / 2, t)
         bore(frame.inverse() * m.pivot * ALONG_THE_SHAFT, m.fits.pressed(m.dowel_diameter))
+        break_edges(made, [Plane.XY], m.fits.min_wall)
     return printed(m, PIVOT_BRACKET, made, frame, "-z", "under the top bar")
 
 
@@ -185,4 +190,5 @@ def motor_saddle(m: CessnaMaster) -> Printed:
             )
         for spot in m.saddle_spots:
             insert_cut(frame.inverse() * spot, m.screw, fits=m.fits, stock=m.stock)
+        break_edges(made, [Plane.XY.offset(-depth)], m.fits.min_wall)
     return printed(m, MOTOR_SADDLE, made, frame, "+z", "in the motor pocket", exterior=True)

@@ -3,13 +3,14 @@ from contextvars import Context
 from build123d import (
     BuildPart,
     Location,
+    Plane,
     Pos,
     RegularPolygon,
 )
 from cad.design.parts import part
 from cad.library.shapes import OUTSIDE, Outside, Printed, built
 
-from strandbeest.features import MATERIAL, bore, cut_outline, web
+from strandbeest.features import bore, break_edges, cut_outline, web
 from strandbeest.master import StrandbeestMaster
 
 UPPER_LINK = "upper link"
@@ -19,6 +20,11 @@ COUPLER = "coupler"
 TRIANGLE = "triangle"
 FOOT = "foot"
 SIX_SIDED = 6
+
+
+def faces_broken(m: StrandbeestMaster, body: BuildPart, thickness: float) -> None:
+    faces = [Plane.XY.offset(thickness / 2), Plane.XY.offset(-thickness / 2)]
+    break_edges(body, faces, m.fits.min_wall / 2)
 
 
 def link(
@@ -31,7 +37,7 @@ def link(
         body=made,
         bed="-z",
         supports=supports,
-        material=MATERIAL,
+        material=m.leg_material,
         print_settings=m.print_settings,
         connectors={OUTSIDE: Outside(made)},
     )
@@ -44,6 +50,7 @@ def crank_link(m: StrandbeestMaster, name: str, length: float, at: Location) -> 
         web([(pin, m.pin_boss_radius)], m.link_thickness)
         bore(pin, m.pin_bore)
         bore(far, m.pivot_bore)
+        faces_broken(m, made, m.link_thickness)
     return link(m, name, made, at)
 
 
@@ -64,6 +71,7 @@ def rocker(m: StrandbeestMaster, at: Location) -> Printed:
         web([(pivot, m.tube_boss_radius), (far, m.pivot_radius)], m.link_thickness)
         bore(pivot, m.tube_bore)
         bore(far, m.pivot_bore)
+        faces_broken(m, made, m.link_thickness)
     return link(m, ROCKER, made, at)
 
 
@@ -74,6 +82,7 @@ def coupler(m: StrandbeestMaster, at: Location) -> Printed:
         web([(start, m.pivot_radius), (far, m.pivot_radius)], m.link_thickness)
         bore(start, m.pivot_bore)
         bore(far, m.pivot_bore)
+        faces_broken(m, made, m.link_thickness)
     return link(m, COUPLER, made, at)
 
 
@@ -92,6 +101,7 @@ def triangle(m: StrandbeestMaster, at: Location) -> Printed:
         bore(pivot, m.tube_bore)
         bore(upper, m.pivot_bore)
         bore(outer, m.pivot_bore)
+        faces_broken(m, made, m.link_thickness)
     return link(m, TRIANGLE, made, at)
 
 
@@ -112,4 +122,5 @@ def foot(m: StrandbeestMaster, at: Location) -> Printed:
         bore(knee, m.pivot_bore)
         nut_pocket(m, lower)
         nut_pocket(m, knee)
+        faces_broken(m, made, m.foot_thickness)
     return link(m, FOOT, made, at, "under the overhangs")

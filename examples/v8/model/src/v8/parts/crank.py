@@ -5,7 +5,7 @@ from cad.design.parts import part
 from cad.library.features.hardware import insert_cut
 from cad.library.shapes import OUTSIDE, Outside, Printed, built
 
-from v8.features import MATERIAL, cut_outline, web
+from v8.features import cut_outline, web
 from v8.master import (
     MOTOR_SHAFT,
     MOTOR_SHAFT_DIAMETER,
@@ -67,7 +67,7 @@ def crank(m: V8Master, piece: CrankPiece) -> Printed:
         body=body,
         bed="-z",
         supports="under the webs",
-        material=MATERIAL,
+        material=m.moving_material,
         print_settings=m.print_settings,
         connectors={OUTSIDE: Outside(body)},
     )

@@ -6,6 +6,7 @@ from build123d import (
     Location,
     Locations,
     Mode,
+    Plane,
     Pos,
     Rot,
     add,
@@ -16,7 +17,7 @@ from cad.library.features.hardware import insert_cut
 from cad.library.gears import Gear, gear_solid, spur_teeth
 from cad.library.shapes import OUTSIDE, Outside, Printed, built
 
-from v8.features import MATERIAL, bore, d_shape, web
+from v8.features import bore, break_edges, d_shape, web
 from v8.master import CYLINDERS, REST_TURN_DEG, VALVES, V8Master, Valve
 from v8.models import switch
 
@@ -56,6 +57,7 @@ def printed(
     bed: str = "-z",
     supports: str = "",
     exterior: bool = False,
+    material: str | None = None,
 ) -> Printed:
     body = built(made)
     return Printed(
@@ -65,7 +67,7 @@ def printed(
         bed=bed,
         supports=supports,
         exterior=exterior,
-        material=MATERIAL,
+        material=m.moving_material if material is None else material,
         print_settings=m.print_settings,
         connectors={OUTSIDE: Outside(body)},
     )
@@ -78,7 +80,7 @@ def gear(m: V8Master, name: str, made: BuildPart, pose: Location, teeth: int) ->
         pose=pose,
         body=body,
         bed="-z",
-        material=MATERIAL,
+        material=m.moving_material,
         print_settings=m.print_settings,
         teeth=teeth,
         module=m.timing_module,
@@ -104,6 +106,9 @@ def lobe(m: V8Master, valve: Valve) -> Printed:
             Cylinder(m.lobe_radius, thin)
         flat = Pos(Z=-thin / 2) * Rot(Z=turned) * d_shape(m.cam_bore / 2, FLAT)
         extrude(flat, amount=thin, mode=Mode.SUBTRACT)
+        break_edges(
+            made, [Plane.XY.offset(thin / 2), Plane.XY.offset(-thin / 2)], m.fits.min_wall / 2
+        )
     return printed(m, LOBE, made, frame)
 
 
@@ -113,10 +118,12 @@ def strap(m: V8Master, valve: Valve) -> Printed:
     pin = m.lifter_pin(valve, REST_TURN_DEG)
     frame = m.hinge_on(centre, pin)
     small = Pos(X=m.strap_length)
+    thin = m.layer - 2 * m.fits.sliding
     with BuildPart() as made:
-        web([(Location(), m.strap_radius), (small, m.eye)], m.layer - 2 * m.fits.sliding)
+        web([(Location(), m.strap_radius), (small, m.eye)], thin)
         bore(Location(), m.fits.printed(2 * m.lobe_radius))
         stub(m, small)
+        break_edges(made, [Plane.XY.offset(-thin / 2)], m.fits.min_wall / 2)
     return printed(m, STRAP, made, frame)
 
 
@@ -136,10 +143,12 @@ def lifter(m: V8Master, valve: Valve) -> Printed:
 def pushrod(m: V8Master, valve: Valve) -> Printed:
     frame = m.pushrod_frame(valve)
     end = Pos(X=m.pushrod_length(valve))
+    thin = m.layer - 2 * m.fits.sliding
     with BuildPart() as made:
-        web([(Location(), m.eye), (end, m.eye)], m.layer - 2 * m.fits.sliding)
+        web([(Location(), m.eye), (end, m.eye)], thin)
         stub(m, Location())
         stub(m, end)
+        break_edges(made, [Plane.XY.offset(-thin / 2)], m.fits.min_wall / 2)
     return printed(m, PUSHROD, made, frame)
 
 
@@ -148,11 +157,15 @@ def rocker(m: V8Master, valve: Valve) -> Printed:
     frame = m.rocker_frame(valve)
     arm = Pos(X=m.rocker_arm)
     nose = Rot(Z=m.nose_bend(valve)) * Pos(X=m.rocker_nose)
+    thin = m.layer - 2 * m.fits.sliding
     with BuildPart() as made:
-        web([(arm, m.eye), (Location(), m.eye), (nose, m.eye)], m.layer - 2 * m.fits.sliding)
+        web([(arm, m.eye), (Location(), m.eye), (nose, m.eye)], thin)
         bore(Location(), m.fits.printed(m.rocker_shaft))
         bore(arm, m.stub_hole)
         bore(nose, m.stub_hole)
+        break_edges(
+            made, [Plane.XY.offset(thin / 2), Plane.XY.offset(-thin / 2)], m.fits.min_wall / 2
+        )
     return printed(m, f"{valve.name} rocker", made, frame)
 
 
@@ -160,10 +173,12 @@ def rocker(m: V8Master, valve: Valve) -> Printed:
 def toggle_link(m: V8Master, valve: Valve) -> Printed:
     frame = m.link_frame(valve)
     end = Pos(X=m.link_length)
+    thin = m.layer - 2 * m.fits.sliding
     with BuildPart() as made:
-        web([(Location(), m.eye), (end, m.eye)], m.layer - 2 * m.fits.sliding)
+        web([(Location(), m.eye), (end, m.eye)], thin)
         stub(m, Location())
         stub(m, end)
+        break_edges(made, [Plane.XY.offset(-thin / 2)], m.fits.min_wall / 2)
     return printed(m, LINK, made, frame)
 
 
@@ -176,6 +191,8 @@ def valve_stem(m: V8Master, valve: Valve) -> Printed:
             Cylinder(m.stem_diameter / 2, length - 2 * m.eye, align=UP_FROM)
         with Locations(Pos(Z=-length)):
             Cylinder(m.valve_head, m.valve_head_thickness, align=HANGING)
+        face = Plane.XY.offset(-length - m.valve_head_thickness)
+        break_edges(made, [face], m.fits.min_wall / 2)
     return printed(m, f"{valve.name} stem", made, frame)
 
 
@@ -225,7 +242,8 @@ def head(m: V8Master, deg: float, name: str) -> Printed:
             bore(frame.inverse() * spot, m.pivot_bore)
         for spot in m.header_spots(deg):
             insert_cut(frame.inverse() * spot, m.screw, fits=m.fits, stock=m.stock)
-    return printed(m, name, made, frame, "+z", exterior=True)
+        break_edges(made, [Plane.XY], m.fits.min_wall / 2)
+    return printed(m, name, made, frame, "+z", exterior=True, material=m.block_material)
 
 
 @part
@@ -308,7 +326,8 @@ def crank_gear(m: V8Master) -> Gear:
 def spark_plug(m: V8Master, at: Location) -> Printed:
     with BuildPart() as made:
         Cylinder(m.plug_diameter / 2, m.plug_length, align=UP_FROM)
-    return printed(m, SPARK_PLUG, made, at)
+        break_edges(made, [Plane.XY.offset(m.plug_length)], m.fits.min_wall / 2)
+    return printed(m, SPARK_PLUG, made, at, material=m.plug_material)
 
 
 def header(m: V8Master, deg: float, name: str) -> Printed:
@@ -317,7 +336,9 @@ def header(m: V8Master, deg: float, name: str) -> Printed:
         Cylinder(m.header_diameter / 2, m.length, rotation=(90.0, 0.0, 0.0))
         for spot in m.header_spots(deg):
             bore(frame.inverse() * spot, m.pivot_bore)
-    return printed(m, name, made, frame)
+        ends = [Plane.XZ.offset(m.length / 2), Plane.XZ.offset(-m.length / 2)]
+        break_edges(made, ends, m.fits.min_wall / 2)
+    return printed(m, name, made, frame, material=m.exhaust_material)
 
 
 @part
@@ -340,7 +361,7 @@ def battery_tray(m: V8Master) -> Printed:
         with Locations(Pos(Y=m.tab_thickness / 2)):
             Box(m.tab_width, m.tab_thickness, m.tab_height, align=UP_FROM)
         with Locations(frame.inverse() * m.switch_face):
-            Box(m.holder_box.size.Y, m.holder_box.size.Z, m.switch_panel, align=HANGING)
+            Box(m.holder_width, m.holder_height, m.switch_panel, align=HANGING)
             Box(
                 m.switch_cutout,
                 switch.CUTOUT_WIDTH,
@@ -350,4 +371,5 @@ def battery_tray(m: V8Master) -> Printed:
             )
         for spot in m.tray_spots:
             bore(frame.inverse() * spot, m.pivot_bore)
-    return printed(m, BATTERY_TRAY, made, frame)
+        break_edges(made, [Plane.XY], m.fits.min_wall)
+    return printed(m, BATTERY_TRAY, made, frame, material=m.exhaust_material)

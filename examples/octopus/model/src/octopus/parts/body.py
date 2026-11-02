@@ -8,6 +8,7 @@ from build123d import (
     Location,
     Locations,
     Mode,
+    Plane,
     Pos,
     Rot,
     Sphere,
@@ -16,7 +17,7 @@ from cad.design.parts import part
 from cad.library.features.hardware import insert_cut
 from cad.library.shapes import OUTSIDE, Outside, Printed, built
 
-from octopus.features import MATERIAL, bore, web_at
+from octopus.features import bore, break_edges, web_at
 from octopus.master import ARMS, OctopusMaster
 from octopus.models import switch
 
@@ -45,7 +46,7 @@ def printed(
         bed=bed,
         supports=supports,
         exterior=exterior,
-        material=MATERIAL,
+        material=m.shell_material,
         print_settings=m.print_settings,
         connectors={OUTSIDE: Outside(body_part)},
     )
@@ -102,6 +103,7 @@ def body(m: OctopusMaster) -> Printed:
         for arm in ARMS:
             with Locations(m.lead_hole(arm)):
                 Hole(m.pivot_bore, m.shelf_thickness)
+        break_edges(made, [Plane.XY], m.fits.min_wall)
     return printed(m, BODY, made, Location(), "-z", "under the overhangs", exterior=True)
 
 
@@ -114,6 +116,7 @@ def motor_cap(m: OctopusMaster, arm: int) -> Printed:
             *(frame.inverse() * each * Pos(Z=m.cap_thickness) for each in m.saddle_spots(arm))
         ):
             Hole(m.pivot_bore / 2, m.cap_thickness)
+        break_edges(made, [Plane.XY.offset(m.cap_thickness)], m.fits.min_wall)
     return printed(m, MOTOR_CAP, made, frame, "-z", exterior=True)
 
 
@@ -146,4 +149,5 @@ def mantle(m: OctopusMaster) -> Printed:
             )
         with Locations(*(frame.inverse() * spot * Pos(Z=m.flange) for spot in m.mantle_spots)):
             Hole(m.pivot_bore / 2, m.flange)
+        break_edges(made, [Plane.XY], m.fits.min_wall)
     return printed(m, MANTLE, made, frame, "+z", "inside the dome", exterior=True)

@@ -1,9 +1,21 @@
 from collections.abc import Sequence
 from contextvars import Context
 
-from build123d import Hole, Location, Locations, Mode, Polygon, Pos, Sketch, extrude
+from build123d import (
+    BuildPart,
+    Hole,
+    Location,
+    Locations,
+    Mode,
+    Plane,
+    Polygon,
+    Pos,
+    Sketch,
+    chamfer,
+    extrude,
+)
+from cad.library.shapes import built, edges_on
 
-MATERIAL = "PETG white"
 THROUGH = 400.0
 
 
@@ -18,3 +30,7 @@ def bore(at: Location, diameter: float) -> None:
 
 def outline(points: Sequence[tuple[float, float]]) -> Sketch:
     return Context().run(Polygon, *points, align=None)
+
+
+def break_edges(made: BuildPart, faces: Sequence[Plane], size: float) -> None:
+    chamfer([edge for face in faces for edge in edges_on(built(made), face)], size)

@@ -10,6 +10,7 @@ from build123d import (
     Location,
     Locations,
     Mode,
+    Plane,
     Pos,
     Rectangle,
     Rot,
@@ -21,7 +22,7 @@ from cad.library.features.hardware import insert_cut
 from cad.library.gears import Gear, gear_solid, spur_teeth
 from cad.library.shapes import OUTSIDE, Outside, Printed, built
 
-from cessna.features import MATERIAL, bore, cut_outline, outline
+from cessna.features import bore, break_edges, cut_outline, outline
 from cessna.master import (
     MOTOR_SHAFT,
     MOTOR_SHAFT_DIAMETER,
@@ -45,7 +46,13 @@ SPOKES = 3
 
 
 def printed(
-    m: CessnaMaster, name: str, made: BuildPart, pose: Location, bed: str, supports: str = ""
+    m: CessnaMaster,
+    name: str,
+    made: BuildPart,
+    pose: Location,
+    bed: str,
+    supports: str = "",
+    material: str | None = None,
 ) -> Printed:
     body = built(made)
     return Printed(
@@ -54,7 +61,7 @@ def printed(
         body=body,
         bed=bed,
         supports=supports,
-        material=MATERIAL,
+        material=m.gear_material if material is None else material,
         print_settings=m.print_settings,
         connectors={OUTSIDE: Outside(body)},
     )
@@ -76,7 +83,7 @@ def gear(
         body=body,
         bed="-z",
         supports=supports,
-        material=MATERIAL,
+        material=m.gear_material,
         print_settings=m.print_settings,
         teeth=teeth,
         module=m.module,
@@ -98,6 +105,12 @@ def fork(m: CessnaMaster, turned: Location, down: float, base: float) -> None:
     bore(turned * Rot(Y=90.0), m.pivot_bore)
 
 
+def fork_cheeks(m: CessnaMaster, made: BuildPart) -> None:
+    outside = m.fork_half + m.fork_wall
+    cheeks = [Plane.YZ.offset(outside), Plane.YZ.offset(-outside)]
+    break_edges(made, cheeks, m.fits.min_wall / 2)
+
+
 @part
 def output_shaft(m: CessnaMaster) -> Gear:
     width = m.gear_width
@@ -109,6 +122,8 @@ def output_shaft(m: CessnaMaster) -> Gear:
             Cylinder(m.shaft_diameter / 2, 2 * m.shaft_half, align=UP_FROM)
         for side in SIDES:
             bore(m.shaft_frame.inverse() * m.hub_pin(side), m.fits.printed(m.dowel_diameter))
+        ends = [Plane.XY.offset(m.shaft_half), Plane.XY.offset(-m.shaft_half)]
+        break_edges(made, ends, m.fits.min_wall / 2)
     return gear(m, OUTPUT_SHAFT, made, m.shaft_frame, m.output_teeth, width)
 
 
@@ -158,6 +173,7 @@ def shaft_yoke(m: CessnaMaster, side: float) -> Printed:
         with Locations(Pos(Z=-m.fork_reach)):
             Hole(m.bored / 2, m.fork_base)
         bore(frame.inverse() * m.hub_pin(side), m.fits.pressed(m.dowel_diameter))
+        fork_cheeks(m, made)
     return printed(m, side_name(side, SHAFT_YOKE), made, frame, "-z", "under the fork")
 
 
@@ -168,6 +184,8 @@ def spider(m: CessnaMaster, side: float) -> Printed:
         Box(m.spider, m.spider, m.spider)
         for spot in (*m.yoke_screw_spots(side), *m.tube_screw_spots(side)):
             insert_cut(frame.inverse() * spot, m.screw, fits=m.fits, stock=m.stock)
+        faces = [Plane.XY.offset(m.spider / 2), Plane.XY.offset(-m.spider / 2)]
+        break_edges(made, faces, m.fits.min_wall / 2)
     return printed(m, side_name(side, SPIDER), made, frame, "-z")
 
 
@@ -184,6 +202,9 @@ def side_tube(m: CessnaMaster, side: float) -> Printed:
                 align=UP_FROM,
             )
         bore(frame.inverse() * m.leg_pin(side), m.fits.printed(m.dowel_diameter))
+        fork_cheeks(m, made)
+        tip = Plane.XY.offset(m.tube_length + m.boss_radius)
+        break_edges(made, [tip], m.fits.min_wall / 2)
     return printed(m, side_name(side, SIDE_TUBE), made, frame, "-z")
 
 
@@ -213,4 +234,8 @@ def wheel(m: CessnaMaster, side: float) -> Printed:
         with Locations(Pos(Z=half)):
             Cylinder(m.wheel_radius / 2, m.head_room, align=DOWN_FROM, mode=Mode.SUBTRACT)
         bore(Location(), m.pivot_bore)
-    return printed(m, side_name(side, WHEEL), made, frame, "-z", "under the overhangs")
+        faces = [Plane.XY.offset(half), Plane.XY.offset(-half)]
+        break_edges(made, faces, m.fits.min_wall)
+    return printed(
+        m, side_name(side, WHEEL), made, frame, "-z", "under the overhangs", m.tyre_material
+    )

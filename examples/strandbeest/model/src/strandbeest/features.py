@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from contextvars import Context
 
 from build123d import (
+    BuildPart,
     Edge,
     Hole,
     Location,
@@ -10,11 +11,12 @@ from build123d import (
     Plane,
     Pos,
     Sketch,
+    chamfer,
     extrude,
     make_hull,
 )
+from cad.library.shapes import built, edges_on
 
-MATERIAL = "PETG white"
 THROUGH = 200.0
 
 
@@ -31,3 +33,7 @@ def cut_outline(outline: Sketch, at: Location, depth: float) -> None:
 def bore(at: Location, diameter: float) -> None:
     with Locations(at * Pos(Z=THROUGH / 2)):
         Hole(diameter / 2, THROUGH)
+
+
+def break_edges(made: BuildPart, faces: Sequence[Plane], size: float) -> None:
+    chamfer([edge for face in faces for edge in edges_on(built(made), face)], size)

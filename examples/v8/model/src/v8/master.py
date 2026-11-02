@@ -3,7 +3,7 @@ from enum import StrEnum
 
 from build123d import Axis, BoundBox, Edge, Location, Plane, Pos, Rot, Triangle
 from cad.design.master import Master, Pose, given
-from cad.library.bought.catalogue import STEEL, Catalogue, Cleanup, Download
+from cad.library.bought.catalogue import Catalogue, Cleanup, Download
 from cad.library.bought.query import planes
 from cad.library.bought.vendor import solids_of, vendor_extent, vendor_reach
 from cad.library.features.planes import line_between, line_through
@@ -14,7 +14,7 @@ from cad.library.standard.fasteners import STOCK_UNITS, Metric, Stock, clearance
 from cad.library.turns import turn_to
 from cad.standards import RatedTorque
 
-from v8.models import battery_holder, cell, motor, switch
+from v8.models import battery_holder, cell, motor, switch, wire
 
 CRANK = "crank"
 INCH = 25.4
@@ -65,7 +65,7 @@ SWITCH = Catalogue(
     ),
 )
 CELL = Catalogue(
-    file="energizer_e91", grams=cell.GRAMS, model=cell.solid, cleanup=Cleanup(colour=STEEL)
+    file="energizer_e91", grams=cell.GRAMS, model=cell.solid, cleanup=Cleanup(colour=cell.LABEL)
 )
 CELLS = 4
 ALONG = (1.0, 0.0, 0.0)
@@ -219,12 +219,6 @@ class V8Master(Master):
     tab_thickness: float = given(6.0, "mm", why="Battery tray's tab", source=ESTIMATE)
     tray_lip: float = given(4.0, "mm", why="Tray past the holder", source=ESTIMATE)
     lead_rise: float = given(24.0, "mm", why="The lead turns down to the cap", source=ESTIMATE)
-    lead_bend: float = given(
-        12.0,
-        "mm",
-        why="The leads' loose bend round the switch",
-        source="CENELEC HD 516: 4 x the leads' 3 mm bundle",
-    )
     switch_panel: float = given(
         2.0,
         "mm",
@@ -320,6 +314,31 @@ class V8Master(Master):
     @property
     def compression_height(self) -> float:
         return self.compression_height_inches * INCH * self.scale
+
+    block_material: str = given(
+        "PETG Prusa Orange",
+        "-",
+        why="The block, heads and rear plate in one engine-paint orange, like a small-block",
+        source="design input; the spool is in the catalogue",
+    )
+    moving_material: str = given(
+        "PETG Urban Grey",
+        "-",
+        why="Every part that turns or slides in one steel grey, so the motion reads",
+        source="design input; the spool is in the catalogue",
+    )
+    exhaust_material: str = given(
+        "PETG Anthracite Grey",
+        "-",
+        why="The headers and the battery tray in a dark cast-iron tone",
+        source="design input; the spool is in the catalogue",
+    )
+    plug_material: str = given(
+        "PETG Signal White",
+        "-",
+        why="The spark plugs read by their white insulators",
+        source="design input; the spool is in the catalogue",
+    )
 
     @property
     def rod_thickness(self) -> float:
@@ -889,6 +908,14 @@ class V8Master(Master):
         return vendor_extent(BATTERY_HOLDER)
 
     @property
+    def holder_width(self) -> float:
+        return self.holder_box.size.Y
+
+    @property
+    def holder_height(self) -> float:
+        return self.holder_box.size.Z
+
+    @property
     def holder_floor(self) -> float:
         return min(face.center().Z for face in planes(solids_of(BATTERY_HOLDER), Axis.Z.direction))
 
@@ -936,9 +963,20 @@ class V8Master(Master):
         return Location((self.switch_face * Pos(Z=-self.switch_depth)).position)
 
     @property
+    def lead_bend(self) -> float:
+        return wire.BEND_DIAMETERS * wire.DIAMETER
+
+    @property
+    def switch_ends(self) -> switch.Terminals:
+        return switch.terminals(SWITCH)
+
+    @property
+    def holder_leads(self) -> battery_holder.Leads:
+        return battery_holder.leads(BATTERY_HOLDER)
+
+    @property
     def holder_leads_out(self) -> Location:
-        end = self.holder_at * Pos(X=-self.holder_box.size.X / 2, Z=self.holder_box.size.Z / 2)
-        return Location(end.position)
+        return Location((self.holder_at * self.holder_leads.out).position)
 
     @property
     def lead_over_the_switch(self) -> Location:

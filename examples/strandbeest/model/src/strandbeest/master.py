@@ -4,7 +4,7 @@ from itertools import pairwise
 
 from build123d import Axis, BoundBox, Location, Plane, Pos, Rot, Triangle
 from cad.design.master import Master, Pose, given
-from cad.library.bought.catalogue import STEEL, Catalogue, Cleanup, Download
+from cad.library.bought.catalogue import Catalogue, Cleanup, Download
 from cad.library.bought.query import planes
 from cad.library.bought.vendor import solids_of, vendor_extent, vendor_reach
 from cad.library.fits import FITS_UNITS, STAINLESS_A2_70, Fits
@@ -20,7 +20,7 @@ from cad.library.standard.fasteners import (
 from cad.library.standard.profiles import TubeSize
 from cad.standards import RatedTorque
 
-from strandbeest.models import battery_holder, cell, lock_nut, motor, switch
+from strandbeest.models import battery_holder, cell, lock_nut, motor, switch, wire
 
 CRANK = "crank"
 HOLY = "Theo Jansen's link proportions, en.wikipedia.org/wiki/Jansen's_linkage, read 2026-11-01"
@@ -70,7 +70,7 @@ SWITCH = Catalogue(
     ),
 )
 CELL = Catalogue(
-    file="energizer_e91", grams=cell.GRAMS, model=cell.solid, cleanup=Cleanup(colour=STEEL)
+    file="energizer_e91", grams=cell.GRAMS, model=cell.solid, cleanup=Cleanup(colour=cell.LABEL)
 )
 CELLS = 4
 LEFT = -1.0
@@ -269,17 +269,30 @@ class StrandbeestMaster(Master):
     rim_height: float = given(
         5.0, "mm", why="Keeps the battery holder on the deck", source="estimate"
     )
-    lead_bend: float = given(
-        12.0,
-        "mm",
-        why="The leads' loose bend round the switch",
-        source="CENELEC HD 516: 4 x the leads' 3 mm bundle",
-    )
     switch_panel: float = given(
         2.0,
         "mm",
         why="Within the switch's panel range, so its clips hold",
         source="E-Switch RD11131100 drawing, suggested panel cutout",
+    )
+
+    frame_material: str = given(
+        "PETG Anthracite Grey",
+        "-",
+        why="One dark tone for the plates, deck and motor cap, so the legs read against them",
+        source="design input; the spool is in the catalogue",
+    )
+    leg_material: str = given(
+        "PETG Mango Yellow",
+        "-",
+        why="Every link and the crank in one bright tone, so the walk reads",
+        source="design input; the spool is in the catalogue",
+    )
+    sail_material: str = given(
+        "PETG Signal White",
+        "-",
+        why="The sails read as sailcloth above the frame",
+        source="design input; the spool is in the catalogue",
     )
 
     @property
@@ -567,6 +580,18 @@ class StrandbeestMaster(Master):
         return vendor_extent(BATTERY_HOLDER)
 
     @property
+    def holder_length(self) -> float:
+        return self.holder_box.size.X
+
+    @property
+    def holder_width(self) -> float:
+        return self.holder_box.size.Y
+
+    @property
+    def holder_height(self) -> float:
+        return self.holder_box.size.Z
+
+    @property
     def holder_floor(self) -> float:
         return min(face.center().Z for face in planes(solids_of(BATTERY_HOLDER), Axis.Z.direction))
 
@@ -614,9 +639,20 @@ class StrandbeestMaster(Master):
         return Location((self.switch_face * Pos(Z=-self.switch_depth)).position)
 
     @property
+    def lead_bend(self) -> float:
+        return wire.BEND_DIAMETERS * wire.DIAMETER
+
+    @property
+    def switch_ends(self) -> switch.Terminals:
+        return switch.terminals(SWITCH)
+
+    @property
+    def holder_leads(self) -> battery_holder.Leads:
+        return battery_holder.leads(BATTERY_HOLDER)
+
+    @property
     def holder_leads_out(self) -> Location:
-        end = self.holder_at * Pos(X=-self.holder_box.size.X / 2, Z=self.holder_box.size.Z / 2)
-        return Location(end.position)
+        return Location((self.holder_at * self.holder_leads.out).position)
 
     @property
     def lead_over_the_switch(self) -> Location:

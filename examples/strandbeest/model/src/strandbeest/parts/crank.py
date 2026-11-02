@@ -14,7 +14,7 @@ from cad.design.parts import part
 from cad.library.features.hardware import insert_cut
 from cad.library.shapes import OUTSIDE, Outside, Printed, built
 
-from strandbeest.features import MATERIAL, cut_outline, web
+from strandbeest.features import cut_outline, web
 from strandbeest.master import (
     MOTOR_SHAFT,
     MOTOR_SHAFT_DIAMETER,
@@ -71,7 +71,7 @@ def crank(m: StrandbeestMaster, piece: CrankPiece) -> Printed:
         body=body,
         bed="-z",
         supports="under the arms",
-        material=MATERIAL,
+        material=m.leg_material,
         print_settings=m.print_settings,
         connectors={OUTSIDE: Outside(body)},
     )

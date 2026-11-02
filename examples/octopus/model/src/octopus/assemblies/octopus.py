@@ -2,7 +2,7 @@ from collections.abc import Callable
 
 from build123d import Axis, Location, Pos
 from cad.assembly.tree import Assembly, job
-from cad.cables.models import Cable, CutToFit, Jacketed, Plug, Route, RoutePoint, Wire
+from cad.cables.models import Cable, CutToFit, Discrete, Plug, Route, RoutePoint, Splice, Wire
 from cad.library.bought.catalogue import NO_BILL, Bill
 from cad.library.bought.vendor import Bought
 from cad.library.derived import derived
@@ -24,6 +24,7 @@ from octopus.master import (
     OctopusMaster,
     crank_joint,
 )
+from octopus.models import wire
 from octopus.parts.arm import (
     EVEN,
     crank,
@@ -40,34 +41,42 @@ HOLDER_NAME = "MPD BC4AAW 4-AA battery holder"
 SWITCH_NAME = "E-Switch RD11131121 rocker switch"
 CELL_NAME = "Energizer E91 AA cell"
 FROM_ABOVE = -Axis.Z
-LEAD_WIRES = ("red", "black")
-AWG_24_MM = 0.511
-AWG_26_MM = 0.405
-LEADS_BUNDLE_MM = 1.8
+RED, BLACK = wire.CONDUCTORS
+SPLICE = "black splice"
 LEADS_LENGTH_MM = 150.0
-LEADS = Cable(
-    name="battery holder leads",
-    wires=tuple(Wire(name=name, diameter=AWG_26_MM, colour=name) for name in LEAD_WIRES),
-    plugs=(
-        Plug(name="holder", model=None, pinout=LEAD_WIRES),
-        Plug(name="switch", model=None, pinout=LEAD_WIRES),
-    ),
-    construction=Jacketed(diameter=LEADS_BUNDLE_MM),
-    twist_rating=0.0,
-    length=LEADS_LENGTH_MM,
-    bill=Bill(ships_with=HOLDER_NAME),
-)
 
 
-def lead(arm: int) -> Cable:
+def holder_leads(m: OctopusMaster) -> Cable:
+    return Cable(
+        name="battery holder leads",
+        wires=tuple(
+            Wire(name=name, diameter=m.holder_leads.diameter, colour=name)
+            for name in wire.CONDUCTORS
+        ),
+        plugs=(
+            Plug(name="holder", model=None, pinout=wire.CONDUCTORS),
+            Plug(name="switch", model=None, pinout=(RED,)),
+            Plug(name=SPLICE, model=None, pinout=(BLACK,)),
+        ),
+        construction=Discrete(),
+        twist_rating=0.0,
+        length=LEADS_LENGTH_MM,
+        bill=Bill(ships_with=HOLDER_NAME),
+    )
+
+
+def lead(arm: int, trunk: Cable) -> Cable:
     return Cable(
         name=f"arm {arm + 1} lead",
-        wires=tuple(Wire(name=name, diameter=AWG_24_MM, colour=name) for name in LEAD_WIRES),
-        plugs=(
-            Plug(name="switch", model=None, pinout=LEAD_WIRES),
-            Plug(name="motor", model=None, pinout=LEAD_WIRES),
+        wires=tuple(
+            Wire(name=name, diameter=wire.DIAMETER, colour=name) for name in wire.CONDUCTORS
         ),
-        construction=Jacketed(diameter=LEADS_BUNDLE_MM),
+        plugs=(
+            Plug(name="switch", model=None, pinout=(RED,)),
+            Plug(name="motor", model=None, pinout=wire.CONDUCTORS),
+            Plug(name=SPLICE, model=Splice(into=trunk), pinout=(BLACK,)),
+        ),
+        construction=Discrete(),
         twist_rating=0.0,
         length=CutToFit(),
         bill=NO_BILL,
@@ -332,22 +341,28 @@ def battery_leads(m: OctopusMaster, find: Callable[[str], Part]) -> list[Route]:
     def from_holder(at: Location) -> RoutePoint:
         return RoutePoint(part=holder, at=holder.pose.inverse() * at)
 
-    from_switch = RoutePoint(part=rocker, at=rocker.pose.inverse() * m.switch_terminals)
+    trunk = holder_leads(m)
+    splice = RoutePoint(part=rocker, at=rocker.pose.inverse() * m.switch_terminals)
     routes = [
         Route(
-            cable=LEADS,
-            plugged=(from_holder(m.holder_leads_out), from_switch),
-            through=((),),
+            cable=trunk,
+            plugged=(
+                from_holder(m.holder_leads_out),
+                RoutePoint(part=rocker, at=m.switch_ends.supply),
+                splice,
+            ),
+            through=((), ()),
         )
     ]
     for arm in ARMS:
         motor = find(f"{MOTOR_NAME} {arm + 1}")
         routes.append(
             Route(
-                cable=lead(arm),
+                cable=lead(arm, trunk),
                 plugged=(
-                    from_switch,
+                    RoutePoint(part=rocker, at=m.switch_ends.load),
                     RoutePoint(part=motor, at=motor.pose.inverse() * m.lead_end(arm)),
+                    splice,
                 ),
                 through=(
                     (
@@ -356,6 +371,7 @@ def battery_leads(m: OctopusMaster, find: Callable[[str], Part]) -> list[Route]:
                         from_holder(m.lead_hole(arm)),
                         *((from_holder(m.lead_low(arm)),) if arm in LOW_ARMS else ()),
                     ),
+                    (),
                 ),
             )
         )

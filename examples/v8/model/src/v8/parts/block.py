@@ -1,9 +1,21 @@
-from build123d import Align, Box, BuildPart, Cylinder, Hole, Location, Locations, Mode, Pos, Rot
+from build123d import (
+    Align,
+    Box,
+    BuildPart,
+    Cylinder,
+    Hole,
+    Location,
+    Locations,
+    Mode,
+    Plane,
+    Pos,
+    Rot,
+)
 from cad.design.parts import part
 from cad.library.features.hardware import insert_cut
 from cad.library.shapes import OUTSIDE, Outside, Printed, built
 
-from v8.features import MATERIAL, bore
+from v8.features import bore, break_edges
 from v8.master import CYLINDERS, JOURNALS, LEFT_BANK_DEG, RIGHT_BANK_DEG, V8Master
 
 BLOCK = "block"
@@ -31,7 +43,7 @@ def printed(
         bed=bed,
         supports=supports,
         exterior=exterior,
-        material=MATERIAL,
+        material=m.block_material,
         print_settings=m.print_settings,
         connectors={OUTSIDE: Outside(body)},
     )
@@ -94,6 +106,7 @@ def block(m: V8Master) -> Printed:
         for bank in (LEFT_BANK_DEG, RIGHT_BANK_DEG):
             for spot in (*m.head_spots(bank), *m.rail_spots(bank), *m.keeper_spots(bank)):
                 insert_cut(spot, m.screw, fits=m.fits, stock=m.stock)
+        break_edges(made, [Plane(Pos(Y=m.front) * ALONG_THE_CRANK)], m.fits.min_wall / 2)
     return printed(m, BLOCK, made, Location(), "-z", "under the overhangs", exterior=True)
 
 
@@ -112,6 +125,7 @@ def rear_plate(m: V8Master) -> Printed:
             insert_cut(frame.inverse() * spot, m.screw, fits=m.fits, stock=m.stock)
         for spot in m.tray_spots:
             insert_cut(frame.inverse() * spot, m.screw, fits=m.fits, stock=m.stock)
+        break_edges(made, [Plane.XY], m.fits.min_wall)
     return printed(m, REAR_PLATE, made, frame, "-y", exterior=True)
 
 
@@ -136,4 +150,5 @@ def motor_cap(m: V8Master) -> Printed:
             Box(width, 2 * wall, 2 * wall, mode=Mode.SUBTRACT)
         with Locations(*(Pos(X=x, Z=m.cap_flange) for x in (-m.cap_spot_x, m.cap_spot_x))):
             Hole(m.pivot_bore / 2, m.cap_flange)
+        break_edges(made, [Plane.XY.offset(depth)], m.fits.min_wall)
     return printed(m, MOTOR_CAP, made, frame, "-z", "in the cavity", exterior=True)

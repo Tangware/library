@@ -1,10 +1,21 @@
 from contextvars import Context
 
-from build123d import Align, BuildPart, Circle, Cylinder, Location, Locations, Pos, Rectangle, Rot
+from build123d import (
+    Align,
+    BuildPart,
+    Circle,
+    Cylinder,
+    Location,
+    Locations,
+    Plane,
+    Pos,
+    Rectangle,
+    Rot,
+)
 from cad.design.parts import part
 from cad.library.shapes import OUTSIDE, Outside, Printed, built
 
-from octopus.features import MATERIAL, bore, cut_outline, web
+from octopus.features import bore, break_edges, cut_outline, web
 from octopus.master import (
     MOTOR_SHAFT,
     MOTOR_SHAFT_DIAMETER,
@@ -36,14 +47,14 @@ def crank_name(arm: int) -> str:
     return f"arm {arm + 1} crank"
 
 
-def printed(m: OctopusMaster, name: str, made: BuildPart, pose: Location) -> Printed:
+def printed(m: OctopusMaster, name: str, made: BuildPart, pose: Location, material: str) -> Printed:
     body_part = built(made)
     return Printed(
         name=name,
         pose=pose,
         body=body_part,
         bed="-z",
-        material=MATERIAL,
+        material=material,
         print_settings=m.print_settings,
         connectors={OUTSIDE: Outside(body_part)},
     )
@@ -89,7 +100,7 @@ def segment(m: OctopusMaster, arm: int, k: int) -> Printed:
             bore(at, m.stub_hole)
         if k == 1:
             bore(lever, m.stub_hole)
-    return printed(m, segment_name(arm, k), made, frame)
+    return printed(m, segment_name(arm, k), made, frame, m.arm_material)
 
 
 @part
@@ -101,7 +112,8 @@ def rod(m: OctopusMaster, arm: int, k: int) -> Printed:
         web([(Location(), m.eye), (end, m.eye)], m.thin)
         stub(m, Location(), sign)
         stub(m, end, sign)
-    return printed(m, rod_name(arm, k), made, frame)
+        break_edges(made, [Plane.XY.offset(-sign * m.thin / 2)], m.fits.min_wall / 2)
+    return printed(m, rod_name(arm, k), made, frame, m.linkage_material)
 
 
 @part
@@ -112,7 +124,8 @@ def drive_rod(m: OctopusMaster, arm: int) -> Printed:
         web([(Location(), m.eye), (end, m.eye)], m.thin)
         stub(m, end, DOWN, 2 * m.layer)
         bore(Location(), m.stub_hole)
-    return printed(m, drive_rod_name(arm), made, frame)
+        break_edges(made, [Plane.XY.offset(m.thin / 2)], m.fits.min_wall / 2)
+    return printed(m, drive_rod_name(arm), made, frame, m.linkage_material)
 
 
 @part
@@ -128,4 +141,5 @@ def crank(m: OctopusMaster, arm: int) -> Printed:
             Rectangle, MOTOR_SHAFT_DIAMETER, MOTOR_SHAFT_DIAMETER
         )
         cut_outline(d_shape, Pos(Z=m.thin / 2 - MOTOR_SHAFT) * Rot(Z=90.0), MOTOR_SHAFT)
-    return printed(m, crank_name(arm), made, frame)
+        break_edges(made, [Plane.XY.offset(-m.thin / 2)], m.fits.min_wall / 2)
+    return printed(m, crank_name(arm), made, frame, m.linkage_material)
