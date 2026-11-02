@@ -491,14 +491,13 @@ class CessnaMaster(Master):
     @property
     def rack_ends(self) -> tuple[float, float]:
         mesh = -90.0
-        return (
-            mesh
-            - self.rack_lead_deg
-            - self.rack_travel_deg
-            - self.rack_margin_deg
-            - self.rack_phase,
-            mesh + self.rack_margin_deg - self.rack_phase,
-        )
+        start = mesh - self.rack_lead_deg - self.rack_travel_deg - self.rack_margin_deg
+        end = mesh + self.rack_margin_deg
+        return self.rack_gap(start - self.rack_phase), self.rack_gap(end - self.rack_phase)
+
+    def rack_gap(self, angle: float) -> float:
+        pitch = 360.0 / self.rack_teeth
+        return (round(angle / pitch - 1 / 2) + 1 / 2) * pitch
 
     @property
     def rack_wedge(self) -> tuple[tuple[float, float], ...]:
