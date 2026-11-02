@@ -1,20 +1,28 @@
 from dataclasses import dataclass
 from functools import cache, cached_property
 
-from build123d import Axis, BoundBox, Compound, Location, Plane, PolarLocations, Pos
+from build123d import Axis, BoundBox, Compound, Edge, Location, Plane, PolarLocations, Pos
 from cad.design.master import Envelope, KeepOut, Master, Pose, given
 from cad.library.bought.boards import BoardMount, board_mount
 from cad.library.bought.catalogue import BoardKind, Catalogue, Download, Piece
 from cad.library.bought.query import Hole, axis_of, bores, by_axis, cylinders, exactly
 from cad.library.bought.vendor import named_solids, piece, solids_of, vendor_extent
 from cad.library.features.hardware import insert_land
-from cad.library.features.planes import between, halfway
+from cad.library.features.planes import (
+    between,
+    chord_end,
+    crossings,
+    halfway,
+    line_between,
+    normal_to,
+    parallel,
+)
 from cad.library.fits import FITS_UNITS, STAINLESS_A2_70, Fits
 from cad.library.mates import JointRange
 from cad.library.printing import PRINT_SETTINGS_UNITS, PrintSettings
 from cad.library.shapes import Block, radius_of
 from cad.library.standard.fasteners import STOCK_UNITS, Metric, Stock, head_height, insert_size
-from cad.library.turns import ALONG_X, HALF_TURN
+from cad.library.turns import ALONG_X, ANTICLOCKWISE_QUARTER, HALF_TURN
 from cad.standards import RatedTorque
 
 from fan import models
@@ -404,7 +412,9 @@ class FanMaster(Master):
     @property
     def xiao_at(self) -> Location:
         port = xiao_port()
-        mouth = (self.inside_radius**2 - port.max.X**2) ** 0.5
+        across = Location(self.floor_top) * ANTICLOCKWISE_QUARTER
+        on_wall = chord_end(across, self.inside_radius, beside=-port.max.X)
+        mouth = between(normal_to(self.floor_top.y_dir, through=across), Plane(on_wall))
         return Location(self.floor_top) * Pos(Y=mouth - port.max.Y, Z=models.TAPE_THICKNESS)
 
     @property
@@ -415,9 +425,11 @@ class FanMaster(Master):
     def driver_at(self) -> Location:
         wall = self.inside_radius - self.fits.sliding
         long, short = models.DRIVER_LENGTH / 2, models.DRIVER_WIDTH / 2
-        corner_on_wall = ((2 * wall**2 - (long - short) ** 2) ** 0.5 - (long + short)) / 2
+        far_corner = Location(self.floor_top) * Pos(X=-long, Y=-short)
+        outward = line_between(far_corner, far_corner * Pos(X=-wall, Y=-wall))
+        (on_wall,) = crossings(Edge.make_circle(wall, self.floor_top), outward)
         lift = self.standoff - self.driver_mount.board_bottom
-        return Location(self.floor_top) * Pos(X=-corner_on_wall, Y=-corner_on_wall, Z=lift)
+        return Location(parallel(self.floor_top, through=on_wall)) * Pos(X=long, Y=short, Z=lift)
 
     @property
     def harness_level(self) -> Plane:

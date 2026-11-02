@@ -8,6 +8,7 @@ from cad.design.catalogue import Kind as Bill
 from cad.library.bought.vendor import Bought
 from cad.library.extension_spring import ExtensionSpring
 from cad.library.features.hardware import Fastening
+from cad.library.features.planes import line_between
 from cad.library.mates import Kind, Mate
 from cad.library.shapes import Brep, Part, Printed
 
@@ -226,7 +227,7 @@ def test_r5_it_stands_with_the_heaviest_phone_at_every_pose(
             world, kilograms, pose.joints.get(PAN, 0.0), pose.joints.get(TILT, 0.0)
         )
         x, y = centre
-        assert (x * x + y * y) ** 0.5 < MASTER.radius
+        assert line_between(Pos(), Pos(x, y)).length < MASTER.radius
 
 
 @pytest.mark.check(

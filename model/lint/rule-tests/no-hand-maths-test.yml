@@ -1,0 +1,12 @@
+id: no-hand-maths
+valid:
+  - side * 2
+  - make(**options)
+  - "{**OPEN, **added}"
+  - line_between(start, end).length
+invalid:
+  - side ** 0.5
+  - (reach**2 - side**2) ** 0.5
+  - side**3
+  - pow(side, 2)
+  - side **= 2

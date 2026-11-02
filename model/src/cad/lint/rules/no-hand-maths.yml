@@ -1,0 +1,17 @@
+id: no-hand-maths
+language: python
+severity: error
+message: Maths lives only in the folders M18 names.
+files:
+  - src/**
+  - tests/**
+ignores:
+  - src/cad/generators/**
+  - src/cad/cables/**
+rule:
+  any:
+    - kind: binary_operator
+      has: { field: operator, regex: "^\\*\\*$" }
+    - kind: augmented_assignment
+      has: { field: operator, regex: "^\\*\\*=$" }
+    - pattern: pow($$$)

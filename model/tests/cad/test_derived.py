@@ -18,4 +18,4 @@ def test_m3_a_part_is_the_same_wherever_its_builder_is_called() -> None:
     with BuildPart(), Locations((20, 0, 0), (40, 0, 0)):
         inside = cube()
 
-    assert inside.volume == pytest.approx(SIDE_MM**3)
+    assert inside.volume == pytest.approx(Box(SIDE_MM, SIDE_MM, SIDE_MM).volume)
