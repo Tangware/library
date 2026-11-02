@@ -4,6 +4,7 @@ from build123d import (
     Align,
     Box,
     BuildPart,
+    BuildSketch,
     Circle,
     Cylinder,
     Hole,
@@ -11,6 +12,7 @@ from build123d import (
     Locations,
     Mode,
     Plane,
+    Polygon,
     Pos,
     Rectangle,
     Rot,
@@ -19,7 +21,7 @@ from build123d import (
 )
 from cad.design.parts import part
 from cad.library.features.hardware import insert_cut
-from cad.library.gears import Gear, gear_solid, spur_teeth
+from cad.library.gears import Gear, gear_solid, root_radius, spur_teeth
 from cad.library.shapes import OUTSIDE, Outside, Printed, built
 
 from cessna.features import bore, break_edges, cut_outline, outline
@@ -139,6 +141,11 @@ def rack(m: CessnaMaster) -> Gear:
         spur_teeth()
         Cylinder(radius - m.rack_rim, width, mode=Mode.SUBTRACT)
         extrude(Pos(Z=-width / 2) * wedge, amount=width, mode=Mode.INTERSECT)
+        with BuildSketch(Pos(Z=-width / 2)):
+            Circle(root_radius(m.rack_teeth, m.module))
+            Circle(radius - m.rack_rim, mode=Mode.SUBTRACT)
+            Polygon(*m.rack_blank_wedge, align=None, mode=Mode.INTERSECT)
+        extrude(amount=width)
         Cylinder(2 * m.fork_wall, width)
         for n in range(SPOKES):
             angle = start + n * (end - start) / (SPOKES - 1)

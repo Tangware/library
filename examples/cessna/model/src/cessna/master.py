@@ -143,7 +143,7 @@ class CessnaMaster(Master):
     )
     motor_teeth: int = given(12, "-", why="Turns the sector within one turn", source=ESTIMATE)
     rack_teeth: int = given(
-        120, "-", why="A long radius, so the rack runs nearly straight", source=ESTIMATE
+        100, "-", why="A long radius, so the rack runs nearly straight", source=ESTIMATE
     )
     gear_width: float = given(9.0, "mm", why="The motor shaft's length", source=ESTIMATE)
     rack_width: float = given(6.0, "mm", why="Sector thickness", source=ESTIMATE)
@@ -501,7 +501,15 @@ class CessnaMaster(Master):
 
     @property
     def rack_wedge(self) -> tuple[tuple[float, float], ...]:
+        return self.wedge(*self.rack_ends)
+
+    @property
+    def rack_blank_wedge(self) -> tuple[tuple[float, float], ...]:
         start, end = self.rack_ends
+        half_pitch = 180.0 / self.rack_teeth
+        return self.wedge(start - half_pitch, end + half_pitch)
+
+    def wedge(self, start: float, end: float) -> tuple[tuple[float, float], ...]:
         reach = 2 * self.rack_radius
         rays = [Rot(Z=angle) * Pos(X=reach) for angle in (start, (start + end) / 2, end)]
         return ((0.0, 0.0), *((ray.position.X, ray.position.Y) for ray in rays))
