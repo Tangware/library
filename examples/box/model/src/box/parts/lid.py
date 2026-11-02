@@ -17,5 +17,10 @@ def lid(m: BoxMaster) -> Printed:
         fillet(made.edges(Select.LAST).filter_by(Axis.Z), m.wall)
         screw_holes(m.rim, m.lid_spots, m.lid_screw, m.wall, LIPS, fits=m.fits)
     return Printed(
-        name="lid", pose=Location(), body=built(made), bed="+z", print_settings=m.print_settings
+        name="lid",
+        pose=Location(),
+        body=built(made),
+        bed="+z",
+        exterior=True,
+        print_settings=m.print_settings,
     )

@@ -34,5 +34,10 @@ def floor(m: FanMaster) -> Printed:
         register(FEET, m.floor_bottom, [FacesOn(plane=-m.floor_bottom)])
         register(TAPE_SEAT, m.floor_top, [FacesOn(plane=m.floor_top)])
     return Printed(
-        name="floor", pose=Location(), body=built(made), bed="-z", print_settings=m.print_settings
+        name="floor",
+        pose=Location(),
+        body=built(made),
+        bed="-z",
+        exterior=True,
+        print_settings=m.print_settings,
     )

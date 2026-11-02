@@ -48,7 +48,13 @@ FLAT = 0.5
 
 
 def printed(
-    m: V8Master, name: str, made: BuildPart, pose: Location, bed: str = "-z", supports: str = ""
+    m: V8Master,
+    name: str,
+    made: BuildPart,
+    pose: Location,
+    bed: str = "-z",
+    supports: str = "",
+    exterior: bool = False,
 ) -> Printed:
     body = built(made)
     return Printed(
@@ -57,6 +63,7 @@ def printed(
         body=body,
         bed=bed,
         supports=supports,
+        exterior=exterior,
         material=MATERIAL,
         print_settings=m.print_settings,
         connectors={OUTSIDE: Outside(body)},
@@ -217,7 +224,7 @@ def head(m: V8Master, deg: float, name: str) -> Printed:
             bore(frame.inverse() * spot, m.pivot_bore)
         for spot in m.header_spots(deg):
             insert_cut(frame.inverse() * spot, m.screw, fits=m.fits, stock=m.stock)
-    return printed(m, name, made, frame, "+z")
+    return printed(m, name, made, frame, "+z", exterior=True)
 
 
 @part

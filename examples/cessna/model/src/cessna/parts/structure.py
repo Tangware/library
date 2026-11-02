@@ -31,7 +31,13 @@ ALONG_THE_SHAFT = Rot(Y=90.0)
 
 
 def printed(
-    m: CessnaMaster, name: str, made: BuildPart, pose: Location, bed: str, supports: str = ""
+    m: CessnaMaster,
+    name: str,
+    made: BuildPart,
+    pose: Location,
+    bed: str,
+    supports: str = "",
+    exterior: bool = False,
 ) -> Printed:
     body = built(made)
     return Printed(
@@ -40,6 +46,7 @@ def printed(
         body=body,
         bed=bed,
         supports=supports,
+        exterior=exterior,
         material=MATERIAL,
         print_settings=m.print_settings,
         connectors={OUTSIDE: Outside(body)},
@@ -91,7 +98,7 @@ def main_plate(m: CessnaMaster) -> Printed:
             Box(m.gear_width + 2 * m.fits.sliding, 2 * m.rack_radius, t, mode=Mode.SUBTRACT)
         with Locations(*(frame.inverse() * spot * Pos(Z=t) for spot in holes)):
             Hole(m.pivot_bore / 2, t)
-    return printed(m, MAIN_PLATE, made, frame, "-z")
+    return printed(m, MAIN_PLATE, made, frame, "-z", exterior=True)
 
 
 @part
@@ -169,4 +176,4 @@ def motor_saddle(m: CessnaMaster) -> Printed:
             )
         for spot in m.saddle_spots:
             insert_cut(frame.inverse() * spot, m.screw, fits=m.fits, stock=m.stock)
-    return printed(m, MOTOR_SADDLE, made, frame, "+z", "in the motor pocket")
+    return printed(m, MOTOR_SADDLE, made, frame, "+z", "in the motor pocket", exterior=True)

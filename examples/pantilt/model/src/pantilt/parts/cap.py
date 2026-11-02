@@ -29,6 +29,7 @@ def cap(m: ProductMaster) -> Printed:
         pose=Location(),
         body=built(made),
         bed="+x",
+        exterior=True,
         material="PAHT-CF black",
         print_settings=m.print_settings,
     )

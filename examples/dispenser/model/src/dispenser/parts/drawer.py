@@ -61,6 +61,7 @@ def drawer(m: DispenserMaster) -> Printed:
         pose=Location(),
         body=built(made),
         bed="-z",
+        exterior=True,
         material=m.material,
         print_settings=m.print_settings,
     )

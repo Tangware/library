@@ -28,7 +28,13 @@ EYES = (-1.0, 1.0)
 
 
 def printed(
-    m: OctopusMaster, name: str, made: BuildPart, pose: Location, bed: str, supports: str = ""
+    m: OctopusMaster,
+    name: str,
+    made: BuildPart,
+    pose: Location,
+    bed: str,
+    supports: str = "",
+    exterior: bool = False,
 ) -> Printed:
     body_part = built(made)
     return Printed(
@@ -37,6 +43,7 @@ def printed(
         body=body_part,
         bed=bed,
         supports=supports,
+        exterior=exterior,
         material=MATERIAL,
         print_settings=m.print_settings,
         connectors={OUTSIDE: Outside(body_part)},
@@ -94,7 +101,7 @@ def body(m: OctopusMaster) -> Printed:
         for arm in ARMS:
             with Locations(m.lead_hole(arm)):
                 Hole(m.pivot_bore, m.shelf_thickness)
-    return printed(m, BODY, made, Location(), "-z", "under the overhangs")
+    return printed(m, BODY, made, Location(), "-z", "under the overhangs", exterior=True)
 
 
 @part
@@ -106,7 +113,7 @@ def motor_cap(m: OctopusMaster, arm: int) -> Printed:
             *(frame.inverse() * each * Pos(Z=m.cap_thickness) for each in m.saddle_spots(arm))
         ):
             Hole(m.pivot_bore / 2, m.cap_thickness)
-    return printed(m, MOTOR_CAP, made, frame, "-z")
+    return printed(m, MOTOR_CAP, made, frame, "-z", exterior=True)
 
 
 @part
@@ -127,4 +134,4 @@ def mantle(m: OctopusMaster) -> Printed:
         Cylinder(r - m.mantle_wall, m.flange, align=UP_FROM, mode=Mode.SUBTRACT)
         with Locations(*(frame.inverse() * spot * Pos(Z=m.flange) for spot in m.mantle_spots)):
             Hole(m.pivot_bore / 2, m.flange)
-    return printed(m, MANTLE, made, frame, "+z", "inside the dome")
+    return printed(m, MANTLE, made, frame, "+z", "inside the dome", exterior=True)

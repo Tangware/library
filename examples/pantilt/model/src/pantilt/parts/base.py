@@ -76,6 +76,7 @@ def base(m: ProductMaster) -> Printed:
         pose=Location(),
         body=built(made),
         bed="-z",
+        exterior=True,
         material="PAHT-CF black",
         print_settings=m.print_settings,
     )

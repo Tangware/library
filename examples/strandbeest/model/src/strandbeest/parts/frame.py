@@ -32,7 +32,13 @@ FACE_DOWN = (Align.CENTER, Align.CENTER, Align.MAX)
 
 
 def printed(
-    m: StrandbeestMaster, name: str, made: BuildPart, pose: Location, bed: str, supports: str = ""
+    m: StrandbeestMaster,
+    name: str,
+    made: BuildPart,
+    pose: Location,
+    bed: str,
+    supports: str = "",
+    exterior: bool = False,
 ) -> Printed:
     body = built(made)
     return Printed(
@@ -41,6 +47,7 @@ def printed(
         body=body,
         bed=bed,
         supports=supports,
+        exterior=exterior,
         material=MATERIAL,
         print_settings=m.print_settings,
         connectors={OUTSIDE: Outside(body)},
@@ -72,7 +79,7 @@ def plate(m: StrandbeestMaster, side: float, name: str) -> Printed:
             with Locations(local):
                 Hole(m.pivot_bore / 2, m.deck_screw_length - m.deck_thickness + m.fits.sliding)
             insert_cut(local, m.screw, fits=m.fits, stock=m.stock)
-    return printed(m, name, made, frame, "-z")
+    return printed(m, name, made, frame, "-z", exterior=True)
 
 
 @part
@@ -107,7 +114,7 @@ def deck(m: StrandbeestMaster) -> Printed:
                 Cylinder(m.mast_diameter, m.mast_socket, align=FLOOR_UP)
             with Locations(at * Pos(Z=m.mast_socket)):
                 Hole(m.fits.printed(m.mast_diameter) / 2, m.mast_socket + m.deck_thickness)
-    return printed(m, DECK, made, frame, "-z")
+    return printed(m, DECK, made, frame, "-z", exterior=True)
 
 
 @part
@@ -142,4 +149,4 @@ def motor_cap(m: StrandbeestMaster) -> Printed:
             Box(width, 2 * wall, 2 * wall, mode=Mode.SUBTRACT)
         with Locations(*(Pos(X=x, Z=m.cap_flange) for x in (-m.cap_spot_x, m.cap_spot_x))):
             Hole(m.pivot_bore / 2, m.cap_flange)
-    return printed(m, MOTOR_CAP, made, frame, "-z", "in the cavity")
+    return printed(m, MOTOR_CAP, made, frame, "-z", "in the cavity", exterior=True)

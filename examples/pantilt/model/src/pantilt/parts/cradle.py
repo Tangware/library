@@ -100,6 +100,7 @@ def cradle(m: ProductMaster) -> Printed:
         pose=Location(),
         body=built(made),
         bed="+y",
+        exterior=True,
         material="PAHT-CF black",
         print_settings=m.print_settings,
     )

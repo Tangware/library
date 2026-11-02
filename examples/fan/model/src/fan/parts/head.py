@@ -91,5 +91,10 @@ def head(m: FanMaster) -> Printed:
                 mode=Mode.SUBTRACT,
             )
     return Printed(
-        name="head", pose=Location(), body=built(made), bed="-y", print_settings=m.print_settings
+        name="head",
+        pose=Location(),
+        body=built(made),
+        bed="-y",
+        exterior=True,
+        print_settings=m.print_settings,
     )

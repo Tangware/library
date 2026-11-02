@@ -15,7 +15,13 @@ ALONG_THE_CRANK = Rot(X=-90.0)
 
 
 def printed(
-    m: V8Master, name: str, made: BuildPart, pose: Location, bed: str, supports: str = ""
+    m: V8Master,
+    name: str,
+    made: BuildPart,
+    pose: Location,
+    bed: str,
+    supports: str = "",
+    exterior: bool = False,
 ) -> Printed:
     body = built(made)
     return Printed(
@@ -24,6 +30,7 @@ def printed(
         body=body,
         bed=bed,
         supports=supports,
+        exterior=exterior,
         material=MATERIAL,
         print_settings=m.print_settings,
         connectors={OUTSIDE: Outside(body)},
@@ -87,7 +94,7 @@ def block(m: V8Master) -> Printed:
         for bank in (LEFT_BANK_DEG, RIGHT_BANK_DEG):
             for spot in (*m.head_spots(bank), *m.rail_spots(bank), *m.keeper_spots(bank)):
                 insert_cut(spot, m.screw, fits=m.fits, stock=m.stock)
-    return printed(m, BLOCK, made, Location(), "-z", "under the overhangs")
+    return printed(m, BLOCK, made, Location(), "-z", "under the overhangs", exterior=True)
 
 
 @part
@@ -105,7 +112,7 @@ def rear_plate(m: V8Master) -> Printed:
             insert_cut(frame.inverse() * spot, m.screw, fits=m.fits, stock=m.stock)
         for spot in m.tray_spots:
             insert_cut(frame.inverse() * spot, m.screw, fits=m.fits, stock=m.stock)
-    return printed(m, REAR_PLATE, made, frame, "-y")
+    return printed(m, REAR_PLATE, made, frame, "-y", exterior=True)
 
 
 @part
@@ -129,4 +136,4 @@ def motor_cap(m: V8Master) -> Printed:
             Box(width, 2 * wall, 2 * wall, mode=Mode.SUBTRACT)
         with Locations(*(Pos(X=x, Z=m.cap_flange) for x in (-m.cap_spot_x, m.cap_spot_x))):
             Hole(m.pivot_bore / 2, m.cap_flange)
-    return printed(m, MOTOR_CAP, made, frame, "-z", "in the cavity")
+    return printed(m, MOTOR_CAP, made, frame, "-z", "in the cavity", exterior=True)

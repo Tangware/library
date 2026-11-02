@@ -21,5 +21,10 @@ def cover(m: FanMaster) -> Printed:
         spots = [m.facing_back(at, m.fan_back) for at in m.fan_screws]
         screw_holes(Plane(spots[0]), spots, m.screw, m.wall, LIPS, fits=m.fits)
     return Printed(
-        name="cover", pose=Location(), body=built(made), bed="+y", print_settings=m.print_settings
+        name="cover",
+        pose=Location(),
+        body=built(made),
+        bed="+y",
+        exterior=True,
+        print_settings=m.print_settings,
     )

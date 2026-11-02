@@ -47,5 +47,10 @@ def puck(m: FanMaster) -> Printed:
                 mode=Mode.SUBTRACT,
             )
     return Printed(
-        name="puck", pose=Location(), body=built(made), bed="+z", print_settings=m.print_settings
+        name="puck",
+        pose=Location(),
+        body=built(made),
+        bed="+z",
+        exterior=True,
+        print_settings=m.print_settings,
     )

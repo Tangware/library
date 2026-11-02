@@ -70,5 +70,10 @@ def body(m: BoxMaster) -> Printed:
         ]
         register_each(MAGNETS, Location(Plane.XY), pockets)
     return Printed(
-        name="body", pose=Location(), body=built(made), bed="-z", print_settings=m.print_settings
+        name="body",
+        pose=Location(),
+        body=built(made),
+        bed="-z",
+        exterior=True,
+        print_settings=m.print_settings,
     )
