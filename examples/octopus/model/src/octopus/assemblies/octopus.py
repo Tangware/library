@@ -2,8 +2,8 @@ from collections.abc import Callable
 
 from build123d import Axis, Location, Pos
 from cad.assembly.tree import Assembly, job
-from cad.cables.models import Cable, Jacketed, Plug, Route, RoutePoint, Wire
-from cad.library.bought.catalogue import Bill
+from cad.cables.models import Cable, CutToFit, Jacketed, Plug, Route, RoutePoint, Wire
+from cad.library.bought.catalogue import NO_BILL, Bill
 from cad.library.bought.vendor import Bought
 from cad.library.derived import derived
 from cad.library.features.hardware import Fastening, insert_seat
@@ -14,11 +14,13 @@ from cad.library.standard.fasteners import UNDER_HEAD, Screw, ThreadedInsert
 from octopus.master import (
     ARMS,
     BATTERY_HOLDER,
+    CELL,
     HIGH_ARMS,
     LOW_ARMS,
     MASTER,
     MOTOR,
     MOTOR_OUTPUT,
+    SWITCH,
     OctopusMaster,
     crank_joint,
 )
@@ -34,12 +36,27 @@ from octopus.parts.arm import (
 from octopus.parts.body import BODY, body, mantle, motor_cap
 
 MOTOR_NAME = "Pololu 3069 298:1 Micro Metal Gearmotor HPCB 6V"
-HOLDER_NAME = "Pololu 1159 4-AA battery holder with switch"
+HOLDER_NAME = "MPD BC4AAW 4-AA battery holder"
+SWITCH_NAME = "E-Switch RD11131121 rocker switch"
+CELL_NAME = "Energizer E91 AA cell"
 FROM_ABOVE = -Axis.Z
 LEAD_WIRES = ("red", "black")
 AWG_24_MM = 0.511
+AWG_26_MM = 0.405
 LEADS_BUNDLE_MM = 1.8
-LEADS_LENGTH_MM = 152.0
+LEADS_LENGTH_MM = 150.0
+LEADS = Cable(
+    name="battery holder leads",
+    wires=tuple(Wire(name=name, diameter=AWG_26_MM, colour=name) for name in LEAD_WIRES),
+    plugs=(
+        Plug(name="holder", model=None, pinout=LEAD_WIRES),
+        Plug(name="switch", model=None, pinout=LEAD_WIRES),
+    ),
+    construction=Jacketed(diameter=LEADS_BUNDLE_MM),
+    twist_rating=0.0,
+    length=LEADS_LENGTH_MM,
+    bill=Bill(ships_with=HOLDER_NAME),
+)
 
 
 def lead(arm: int) -> Cable:
@@ -47,13 +64,13 @@ def lead(arm: int) -> Cable:
         name=f"arm {arm + 1} lead",
         wires=tuple(Wire(name=name, diameter=AWG_24_MM, colour=name) for name in LEAD_WIRES),
         plugs=(
-            Plug(name="holder", model=None, pinout=LEAD_WIRES),
+            Plug(name="switch", model=None, pinout=LEAD_WIRES),
             Plug(name="motor", model=None, pinout=LEAD_WIRES),
         ),
         construction=Jacketed(diameter=LEADS_BUNDLE_MM),
         twist_rating=0.0,
-        length=LEADS_LENGTH_MM,
-        bill=Bill(ships_with=HOLDER_NAME),
+        length=CutToFit(),
+        bill=NO_BILL,
     )
 
 
@@ -278,13 +295,20 @@ def the_drive_rod(m: OctopusMaster, arm: int) -> Fastening:
 @derived
 def the_mantle(m: OctopusMaster) -> Fastening:
     holder = Bought(name=HOLDER_NAME, pose=m.holder_at, item=BATTERY_HOLDER)
+    cells = [
+        Bought(name=f"{CELL_NAME} {k + 1}", pose=spot, item=CELL)
+        for k, spot in enumerate(m.cell_spots)
+    ]
     shell = mantle(m)
+    rocker = Bought(name=SWITCH_NAME, pose=m.switch_at, item=SWITCH)
     screws = [screw_at("mantle screw", m, spot * Pos(Z=m.flange)) for spot in m.mantle_spots]
     return Fastening(
-        parts=[holder, shell, *screws],
+        parts=[holder, *cells, shell, rocker, *screws],
         mates=[
             fixed(on(holder), on(BODY), FROM_ABOVE),
+            *(fixed(on(each), on(holder), FROM_ABOVE) for each in cells),
             fixed(on(shell), on(BODY), FROM_ABOVE),
+            fixed(on(rocker), on(shell), inward(m.switch_at)),
             *(
                 fixed(Connector(each, UNDER_HEAD), on(shell), FROM_ABOVE, n)
                 for n, each in enumerate(screws)
@@ -303,19 +327,26 @@ def arm_jobs(m: OctopusMaster, arm: int) -> Assembly:
 
 
 def battery_leads(m: OctopusMaster, find: Callable[[str], Part]) -> list[Route]:
-    holder = find(HOLDER_NAME)
+    holder, rocker = find(HOLDER_NAME), find(SWITCH_NAME)
 
     def from_holder(at: Location) -> RoutePoint:
         return RoutePoint(part=holder, at=holder.pose.inverse() * at)
 
-    routes = []
+    from_switch = RoutePoint(part=rocker, at=rocker.pose.inverse() * m.switch_terminals)
+    routes = [
+        Route(
+            cable=LEADS,
+            plugged=(from_holder(m.holder_leads_out), from_switch),
+            through=((),),
+        )
+    ]
     for arm in ARMS:
         motor = find(f"{MOTOR_NAME} {arm + 1}")
         routes.append(
             Route(
                 cable=lead(arm),
                 plugged=(
-                    from_holder(m.lead_start),
+                    from_switch,
                     RoutePoint(part=motor, at=motor.pose.inverse() * m.lead_end(arm)),
                 ),
                 through=(

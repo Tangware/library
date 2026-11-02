@@ -2,8 +2,8 @@ from collections.abc import Callable
 
 from build123d import Align, Axis, BuildPart, Cylinder, Location, Pos, Rot
 from cad.assembly.tree import Assembly, job
-from cad.cables.models import Cable, Jacketed, Plug, Route, RoutePoint, Wire
-from cad.library.bought.catalogue import Bill
+from cad.cables.models import Cable, CutToFit, Jacketed, Plug, Route, RoutePoint, Wire
+from cad.library.bought.catalogue import NO_BILL, Bill
 from cad.library.bought.vendor import Bought
 from cad.library.derived import derived
 from cad.library.features.hardware import Fastening, insert_seat
@@ -22,11 +22,13 @@ from cad.library.standard.profiles import StockTube, ThreadedRod
 
 from strandbeest.master import (
     BATTERY_HOLDER,
+    CELL,
     CRANK,
     LOCK_NUT,
     MASTER,
     MOTOR,
     MOTOR_OUTPUT,
+    SWITCH,
     CrankPiece,
     Joints,
     Module,
@@ -46,7 +48,9 @@ from strandbeest.parts.frame import (
 from strandbeest.parts.links import coupler, foot, lower_link, rocker, triangle, upper_link
 
 MOTOR_NAME = "Pololu 3069 298:1 Micro Metal Gearmotor HPCB 6V"
-HOLDER_NAME = "Pololu 1159 4-AA battery holder with switch"
+HOLDER_NAME = "MPD BC4AAW 4-AA battery holder"
+SWITCH_NAME = "E-Switch RD11131121 rocker switch"
+CELL_NAME = "Energizer E91 AA cell"
 LOCK_NUT_NAME = "M3 DIN 985 nylon-insert lock nut"
 FROM_THE_RIGHT = -Axis.Y
 FROM_ABOVE = -Axis.Z
@@ -56,14 +60,27 @@ OUTER_LAYER = 1.5
 FORE, AFT = True, False
 LEAD_WIRES = ("red", "black")
 AWG_24_MM = 0.511
+AWG_26_MM = 0.405
 LEADS_BUNDLE_MM = 3.0
-LEADS_LENGTH_MM = 152.0
-LEADS = Cable(
-    name="battery holder leads",
+LEADS_LENGTH_MM = 150.0
+SWITCH_LEADS = Cable(
+    name="switch leads",
     wires=tuple(Wire(name=name, diameter=AWG_24_MM, colour=name) for name in LEAD_WIRES),
     plugs=(
-        Plug(name="holder", model=None, pinout=LEAD_WIRES),
+        Plug(name="switch", model=None, pinout=LEAD_WIRES),
         Plug(name="motor", model=None, pinout=LEAD_WIRES),
+    ),
+    construction=Jacketed(diameter=LEADS_BUNDLE_MM),
+    twist_rating=0.0,
+    length=CutToFit(),
+    bill=NO_BILL,
+)
+LEADS = Cable(
+    name="battery holder leads",
+    wires=tuple(Wire(name=name, diameter=AWG_26_MM, colour=name) for name in LEAD_WIRES),
+    plugs=(
+        Plug(name="holder", model=None, pinout=LEAD_WIRES),
+        Plug(name="switch", model=None, pinout=LEAD_WIRES),
     ),
     construction=Jacketed(diameter=LEADS_BUNDLE_MM),
     twist_rating=0.0,
@@ -428,13 +445,18 @@ def deck_inserts(m: StrandbeestMaster) -> Fastening:
 @derived
 def top(m: StrandbeestMaster) -> Fastening:
     sheet = deck(m)
-    holder = Bought(name=HOLDER_NAME, pose=m.deck_top, item=BATTERY_HOLDER)
+    holder = Bought(name=HOLDER_NAME, pose=m.holder_at, item=BATTERY_HOLDER)
+    cells = [
+        Bought(name=f"{CELL_NAME} {k + 1}", pose=spot, item=CELL)
+        for k, spot in enumerate(m.cell_spots)
+    ]
+    rocker = Bought(name=SWITCH_NAME, pose=m.switch_at, item=SWITCH)
     screws = [
         screw_at("deck screw", m, spot * Pos(Z=m.deck_thickness), m.deck_screw_length)
         for spot in m.deck_spots
     ]
     return Fastening(
-        parts=[sheet, holder, *screws],
+        parts=[sheet, holder, *cells, rocker, *screws],
         mates=[
             Mate(
                 f"{DECK} on {RIGHT_PLATE}",
@@ -468,6 +490,23 @@ def top(m: StrandbeestMaster) -> Fastening:
                 parent=on(sheet),
                 approach=FROM_ABOVE,
             ),
+            *(
+                Mate(
+                    f"{each.name} in the holder",
+                    Kind.RIGID,
+                    child=on(each),
+                    parent=on(holder),
+                    approach=FROM_ABOVE,
+                )
+                for each in cells
+            ),
+            Mate(
+                f"{SWITCH_NAME} on {DECK}",
+                Kind.RIGID,
+                child=on(rocker),
+                parent=on(sheet),
+                approach=-Axis(m.switch_at),
+            ),
         ],
     )
 
@@ -491,21 +530,30 @@ def sails(m: StrandbeestMaster) -> Fastening:
 
 
 def battery_leads(m: StrandbeestMaster, find: Callable[[str], Part]) -> list[Route]:
-    holder, motor = find(HOLDER_NAME), find(MOTOR_NAME)
+    holder, rocker, motor = find(HOLDER_NAME), find(SWITCH_NAME), find(MOTOR_NAME)
     return [
         Route(
             cable=LEADS,
             plugged=(
-                RoutePoint(part=holder, at=holder.pose.inverse() * m.lead_start),
+                RoutePoint(part=holder, at=holder.pose.inverse() * m.holder_leads_out),
+                RoutePoint(part=rocker, at=rocker.pose.inverse() * m.switch_terminals),
+            ),
+            through=((),),
+        ),
+        Route(
+            cable=SWITCH_LEADS,
+            plugged=(
+                RoutePoint(part=rocker, at=rocker.pose.inverse() * m.switch_terminals),
                 RoutePoint(part=motor, at=motor.pose.inverse() * m.lead_end),
             ),
             through=(
                 (
+                    RoutePoint(part=rocker, at=rocker.pose.inverse() * m.lead_over_the_switch),
                     RoutePoint(part=holder, at=holder.pose.inverse() * m.lead_over_the_edge),
                     RoutePoint(part=holder, at=holder.pose.inverse() * m.lead_above_the_cap),
                 ),
             ),
-        )
+        ),
     ]
 
 

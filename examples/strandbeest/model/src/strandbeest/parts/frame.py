@@ -20,7 +20,7 @@ from cad.library.shapes import OUTSIDE, Outside, Printed, built
 
 from strandbeest.features import MATERIAL
 from strandbeest.master import LEFT, RIGHT, Module, StrandbeestMaster
-from strandbeest.models import battery_holder
+from strandbeest.models import switch
 
 LEFT_PLATE = "left plate"
 RIGHT_PLATE = "right plate"
@@ -96,14 +96,23 @@ def right_plate(m: StrandbeestMaster) -> Printed:
 def deck(m: StrandbeestMaster) -> Printed:
     long, wide = 2 * m.plate_half_length, 2 * m.plate_outer_y
     rim = m.fits.structural_wall
-    inside_x = battery_holder.LENGTH + 2 * m.fits.sliding
-    inside_y = battery_holder.WIDTH + 2 * m.fits.sliding
+    inside_x = m.holder_box.size.Y + 2 * m.fits.sliding
+    inside_y = m.holder_box.size.X + 2 * m.fits.sliding
     frame = Location((0.0, 0.0, m.deck_level))
     with BuildPart() as made:
         Box(long, wide, m.deck_thickness, align=FLOOR_UP)
         with Locations(Pos(Z=m.deck_thickness)):
             Box(inside_x + 2 * rim, inside_y + 2 * rim, m.rim_height, align=FLOOR_UP)
             Box(inside_x, inside_y, m.rim_height, align=FLOOR_UP, mode=Mode.SUBTRACT)
+        with Locations(frame.inverse() * m.switch_face):
+            Box(m.holder_box.size.Y, m.holder_box.size.Z, m.switch_panel, align=FACE_DOWN)
+            Box(
+                m.switch_cutout,
+                switch.CUTOUT_WIDTH,
+                m.switch_panel,
+                align=FACE_DOWN,
+                mode=Mode.SUBTRACT,
+            )
         with Locations(
             *(frame.inverse() * spot * Pos(Z=m.deck_thickness) for spot in m.deck_spots)
         ):

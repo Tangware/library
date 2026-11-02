@@ -2,8 +2,8 @@ from collections.abc import Callable
 
 from build123d import Axis, Location, Pos
 from cad.assembly.tree import Assembly, job
-from cad.cables.models import Cable, Jacketed, Plug, Route, RoutePoint, Wire
-from cad.library.bought.catalogue import Bill
+from cad.cables.models import Cable, CutToFit, Jacketed, Plug, Route, RoutePoint, Wire
+from cad.library.bought.catalogue import NO_BILL, Bill
 from cad.library.bought.vendor import Bought
 from cad.library.derived import derived
 from cad.library.features.hardware import Fastening, insert_seat
@@ -13,6 +13,7 @@ from cad.library.standard.fasteners import DOWEL, UNDER_HEAD, Pin, Screw, Thread
 
 from cessna.master import (
     BATTERY_HOLDER,
+    CELL,
     DRIVE,
     LEFT,
     MASTER,
@@ -20,6 +21,7 @@ from cessna.master import (
     MOTOR_OUTPUT,
     RETRACTED_DEG,
     RIGHT,
+    SWITCH,
     CessnaMaster,
     side_name,
 )
@@ -56,25 +58,40 @@ from cessna.parts.structure import (
 )
 
 MOTOR_NAME = "Pololu 3069 298:1 Micro Metal Gearmotor HPCB 6V"
-HOLDER_NAME = "Pololu 1159 4-AA battery holder with switch"
+HOLDER_NAME = "MPD BC4AAW 4-AA battery holder"
+SWITCH_NAME = "E-Switch RD11131121 rocker switch"
+CELL_NAME = "Energizer E91 AA cell"
 FROM_ABOVE = -Axis.Z
 FROM_BELOW = Axis.Z
 FROM_THE_LEFT = Axis.X
 LEAD_WIRES = ("red", "black")
 AWG_24_MM = 0.511
+AWG_26_MM = 0.405
 LEADS_BUNDLE_MM = 3.0
-LEADS_LENGTH_MM = 200.0
+LEADS_LENGTH_MM = 150.0
 LEADS = Cable(
     name="battery holder leads",
-    wires=tuple(Wire(name=name, diameter=AWG_24_MM, colour=name) for name in LEAD_WIRES),
+    wires=tuple(Wire(name=name, diameter=AWG_26_MM, colour=name) for name in LEAD_WIRES),
     plugs=(
         Plug(name="holder", model=None, pinout=LEAD_WIRES),
-        Plug(name="motor", model=None, pinout=LEAD_WIRES),
+        Plug(name="switch", model=None, pinout=LEAD_WIRES),
     ),
     construction=Jacketed(diameter=LEADS_BUNDLE_MM),
     twist_rating=0.0,
     length=LEADS_LENGTH_MM,
     bill=Bill(ships_with=HOLDER_NAME),
+)
+SWITCH_LEADS = Cable(
+    name="switch leads",
+    wires=tuple(Wire(name=name, diameter=AWG_24_MM, colour=name) for name in LEAD_WIRES),
+    plugs=(
+        Plug(name="switch", model=None, pinout=LEAD_WIRES),
+        Plug(name="motor", model=None, pinout=LEAD_WIRES),
+    ),
+    construction=Jacketed(diameter=LEADS_BUNDLE_MM),
+    twist_rating=0.0,
+    length=CutToFit(),
+    bill=NO_BILL,
 )
 
 
@@ -152,11 +169,21 @@ def along_the_tube(m: CessnaMaster, side: float) -> Axis:
 def the_stand(m: CessnaMaster) -> Fastening:
     made = stand(m)
     holder = Bought(name=HOLDER_NAME, pose=m.holder_at, item=BATTERY_HOLDER)
+    cells = [
+        Bought(name=f"{CELL_NAME} {k + 1}", pose=spot, item=CELL)
+        for k, spot in enumerate(m.cell_spots)
+    ]
+    rocker = Bought(name=SWITCH_NAME, pose=m.switch_at, item=SWITCH)
     spots = (*m.column_spots(m.fore_column_y), *m.column_spots(m.aft_column_y))
     inserts = inserts_on("column insert", m, spots, made)
     return Fastening(
-        parts=[made, holder, *inserts.parts],
-        mates=[fixed(on(holder), on(made), FROM_ABOVE), *inserts.mates],
+        parts=[made, holder, *cells, rocker, *inserts.parts],
+        mates=[
+            fixed(on(holder), on(made), FROM_ABOVE),
+            *(fixed(on(each), on(holder), FROM_ABOVE) for each in cells),
+            fixed(on(rocker), on(made), inward(m.switch_at)),
+            *inserts.mates,
+        ],
     )
 
 
@@ -444,23 +471,31 @@ def side_fixings(m: CessnaMaster, side: float) -> Fastening:
 
 
 def battery_leads(m: CessnaMaster, find: Callable[[str], Part]) -> list[Route]:
-    holder, motor = find(HOLDER_NAME), find(MOTOR_NAME)
+    holder, rocker, motor = find(HOLDER_NAME), find(SWITCH_NAME), find(MOTOR_NAME)
     return [
         Route(
             cable=LEADS,
             plugged=(
-                RoutePoint(part=holder, at=holder.pose.inverse() * m.lead_start),
+                RoutePoint(part=holder, at=holder.pose.inverse() * m.holder_leads_out),
+                RoutePoint(part=rocker, at=rocker.pose.inverse() * m.switch_terminals),
+            ),
+            through=((),),
+        ),
+        Route(
+            cable=SWITCH_LEADS,
+            plugged=(
+                RoutePoint(part=rocker, at=rocker.pose.inverse() * m.switch_terminals),
                 RoutePoint(part=motor, at=motor.pose.inverse() * m.lead_end),
             ),
             through=(
                 (
-                    RoutePoint(part=holder, at=holder.pose.inverse() * m.lead_off_the_holder),
+                    RoutePoint(part=rocker, at=rocker.pose.inverse() * m.lead_over_the_switch),
                     RoutePoint(part=holder, at=holder.pose.inverse() * m.lead_up_the_column),
                     RoutePoint(part=holder, at=holder.pose.inverse() * m.lead_under_the_motor),
                     RoutePoint(part=holder, at=holder.pose.inverse() * m.lead_behind_the_motor),
                 ),
             ),
-        )
+        ),
     ]
 
 

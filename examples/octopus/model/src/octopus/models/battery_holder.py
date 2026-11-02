@@ -1,10 +1,11 @@
-from build123d import Align, Box, Solid
+from collections.abc import Sequence
 
-LENGTH = 71.0
-WIDTH = 65.0
-HEIGHT = 20.0
-GRAMS_ESTIMATED = 25.0
+from build123d import Keep, Plane, Solid
+
+LENGTH = 56.8
+GRAMS_ESTIMATED = 11.76
 
 
-def solid() -> Solid:
-    return Solid(Box(LENGTH, WIDTH, HEIGHT, align=(Align.CENTER, Align.CENTER, Align.MIN)).wrapped)
+def without_leads(solids: list[Solid]) -> Sequence[Solid | None]:
+    end_wall = Plane.YZ.offset(-LENGTH / 2)
+    return [solid.split(end_wall, keep=Keep.TOP) for solid in solids]

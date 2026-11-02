@@ -1,16 +1,17 @@
 from dataclasses import dataclass
 
-from build123d import Axis, Location, Plane, Pos, Rot
+from build123d import Axis, BoundBox, Location, Plane, Pos, Rot
 from cad.design.master import Master, Pose, given
-from cad.library.bought.catalogue import Catalogue, Cleanup, Download
-from cad.library.bought.vendor import vendor_extent, vendor_reach
+from cad.library.bought.catalogue import STEEL, Catalogue, Cleanup, Download
+from cad.library.bought.query import planes
+from cad.library.bought.vendor import solids_of, vendor_extent, vendor_reach
 from cad.library.features.planes import line_between
 from cad.library.fits import FITS_UNITS, STAINLESS_A2_70, Fits
 from cad.library.printing import PRINT_SETTINGS_UNITS, PrintSettings
 from cad.library.standard.fasteners import STOCK_UNITS, Metric, Stock, clearance, insert_size
 from cad.standards import RatedTorque
 
-from octopus.models import battery_holder, motor
+from octopus.models import battery_holder, cell, motor, switch
 
 ESTIMATE = "estimate"
 LOOK = "docs/octopus.gif of github.com/elvarofficial/teardown, read by eye 2026-11-01"
@@ -38,9 +39,29 @@ MOTOR_OUTPUT = Catalogue(
     download=MOTOR_STEP,
     cleanup=Cleanup(correct=motor.shaft),
 )
-BATTERY_HOLDER = Catalogue(
-    file="pololu_1159", grams=battery_holder.GRAMS_ESTIMATED, model=battery_holder.solid
+HOLDER_STEP = Download(
+    url="https://www.memoryprotectiondevices.com/3D/download.php?pn=BC4AAW&id=1128",
+    sha256="519a122d7cbe67743a60f53c39d0c0ae0a357e3c907473270d59d9688d3601b3",
 )
+BATTERY_HOLDER = Catalogue(
+    file="mpd_bc4aaw",
+    grams=battery_holder.GRAMS_ESTIMATED,
+    download=HOLDER_STEP,
+    frame=Plane(origin=(0.0, 0.0, 0.0), x_dir=(1.0, 0.0, 0.0), z_dir=(0.0, 1.0, 0.0)),
+    cleanup=Cleanup(centred=True, correct=battery_holder.without_leads),
+)
+SWITCH = Catalogue(
+    file="e_switch_rd11131121",
+    grams=switch.GRAMS_ESTIMATED,
+    download=Download(
+        url="https://configured-product-images.s3.amazonaws.com/stp3dmodels/RD111x1121.stp",
+        sha256="859448e73c12301613201f681d6fafb3808db4bfabf7075e29ba1eea382e606a",
+    ),
+)
+CELL = Catalogue(
+    file="energizer_e91", grams=cell.GRAMS, model=cell.solid, cleanup=Cleanup(colour=STEEL)
+)
+CELLS = 4
 ARMS = range(8)
 SEGMENTS = (1, 2, 3, 4)
 RODS = (1, 2, 3)
@@ -48,6 +69,7 @@ ARM_STEP_DEG = 45.0
 POSE_COUNT = 8
 UP = (0.0, 0.0, 1.0)
 ACROSS = (0.0, 1.0, 0.0)
+OUTWARD = (1.0, 0.0, 0.0)
 MANTLE_SPOTS_DEG = (0.0, 90.0, 150.0, 270.0)
 LOW_ARMS = (0, 2, 4, 6)
 HIGH_ARMS = (1, 3, 5, 7)
@@ -121,6 +143,12 @@ class OctopusMaster(Master):
     lead_turn: float = given(12.0, "mm", why="Lead's last turn, under the rods", source=ESTIMATE)
     lead_clear: float = given(10.0, "mm", why="Past the next arm's drive rod", source=ESTIMATE)
     lead_rise: float = given(16.0, "mm", why="Over the holder", source=ESTIMATE)
+    switch_panel: float = given(
+        2.0,
+        "mm",
+        why="Within the switch's panel range, so its clips hold",
+        source="E-Switch RD11131100 drawing, suggested panel cutout",
+    )
     screw: Metric = given(Metric.M3, "-", why="One screw type", source="ISO 4762")
     short_screw: float = given(
         10.0, "mm", why="Through a cap or the shelf", source="ISO 4762 nominal lengths"
@@ -371,11 +399,74 @@ class OctopusMaster(Master):
 
     @property
     def holder_at(self) -> Location:
-        return self.mantle_seat
+        return self.mantle_seat * Rot(Z=self.switch_turn - 180.0)
 
     @property
-    def lead_start(self) -> Location:
-        return self.holder_at * Pos(Z=battery_holder.HEIGHT)
+    def holder_box(self) -> BoundBox:
+        return vendor_extent(BATTERY_HOLDER)
+
+    @property
+    def holder_floor(self) -> float:
+        return min(face.center().Z for face in planes(solids_of(BATTERY_HOLDER), Axis.Z.direction))
+
+    @property
+    def cell_spots(self) -> tuple[Location, ...]:
+        pitch = self.holder_box.size.Y / CELLS
+        lift = self.holder_floor + cell.DIAMETER / 2
+        return tuple(
+            self.holder_at
+            * Pos(X=-cell.LENGTH / 2, Y=(k - (CELLS - 1) / 2) * pitch, Z=lift)
+            * Rot(Y=90.0)
+            for k in range(CELLS)
+        )
+
+    @property
+    def switch_seat(self) -> float:
+        return vendor_reach(SWITCH, Axis.Z) - switch.ABOVE_THE_PANEL
+
+    @property
+    def switch_depth(self) -> float:
+        return self.switch_seat + vendor_reach(SWITCH, -Axis.Z)
+
+    @property
+    def switch_cutout(self) -> float:
+        return switch.cutout_length(self.switch_panel)
+
+    @property
+    def switch_at(self) -> Location:
+        return self.switch_face * Pos(Z=-self.switch_seat)
+
+    @property
+    def switch_terminals(self) -> Location:
+        return Location((self.switch_face * Pos(Z=-self.switch_depth)).position)
+
+    @property
+    def holder_leads_out(self) -> Location:
+        end = self.holder_at * Pos(X=-self.holder_box.size.X / 2, Z=self.holder_box.size.Z / 2)
+        return Location(end.position)
+
+    @property
+    def switch_turn(self) -> float:
+        _, side, back, _ = MANTLE_SPOTS_DEG
+        return (side + back) / 2
+
+    @property
+    def switch_face(self) -> Location:
+        over_the_flange = self.flange + switch.BEZEL_WIDTH / 2 + self.fits.sliding
+        inside = self.mantle_radius - self.mantle_wall
+        return (
+            self.mantle_seat
+            * Rot(Z=self.switch_turn)
+            * Location(Plane(origin=(inside, 0.0, over_the_flange), x_dir=ACROSS, z_dir=OUTWARD))
+        )
+
+    @property
+    def recess_length(self) -> float:
+        return switch.BEZEL_LENGTH + 2 * self.fits.sliding
+
+    @property
+    def recess_width(self) -> float:
+        return switch.BEZEL_WIDTH + 2 * self.fits.sliding
 
     def lead_hole(self, arm: int) -> Location:
         y = self.saddle_y - self.motor_length + 2 * self.eye
@@ -385,7 +476,7 @@ class OctopusMaster(Master):
         )
 
     def lead_up(self) -> Location:
-        return self.lead_start * Pos(Z=self.lead_rise)
+        return self.holder_at * Pos(Z=self.holder_box.size.Z + self.lead_rise)
 
     def lead_over(self, arm: int) -> Location:
         top = (self.lead_hole(arm).inverse() * self.lead_up()).position.Z
@@ -415,14 +506,6 @@ class OctopusMaster(Master):
     @property
     def lug_foot(self) -> float:
         return -self.saddle_floor
-
-    @property
-    def holder_width(self) -> float:
-        return battery_holder.LENGTH + 2 * self.fits.sliding
-
-    @property
-    def holder_depth(self) -> float:
-        return battery_holder.WIDTH + 2 * self.fits.sliding
 
     @property
     def poses(self) -> tuple[Pose, ...]:

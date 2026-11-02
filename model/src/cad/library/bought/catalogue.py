@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
@@ -99,7 +99,7 @@ class Cleanup:
     keep_above: float | None = None
     trim_radius: float | None = None
     piece: Piece | None = None
-    correct: Callable[[list[Solid]], list[Solid]] | None = None
+    correct: Callable[[list[Solid]], Sequence[Solid | None]] | None = None
     colour: Rgb | None = None
     paint: Rgb | None = None
     triangles: int = TRIANGLES

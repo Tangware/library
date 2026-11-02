@@ -2,8 +2,8 @@ from collections.abc import Callable
 
 from build123d import Axis, Location, Pos
 from cad.assembly.tree import Assembly, Job, job
-from cad.cables.models import Cable, Jacketed, Plug, Route, RoutePoint, Wire
-from cad.library.bought.catalogue import Bill
+from cad.cables.models import Cable, CutToFit, Jacketed, Plug, Route, RoutePoint, Wire
+from cad.library.bought.catalogue import NO_BILL, Bill
 from cad.library.bought.vendor import Bought
 from cad.library.derived import derived
 from cad.library.features.hardware import Fastening, insert_seat
@@ -13,6 +13,7 @@ from cad.library.standard.fasteners import DOWEL, UNDER_HEAD, Pin, Screw, Thread
 
 from v8.master import (
     BATTERY_HOLDER,
+    CELL,
     CRANK,
     CYLINDERS,
     JOURNALS,
@@ -22,6 +23,7 @@ from v8.master import (
     MOTOR_OUTPUT,
     REST_TURN_DEG,
     RIGHT_BANK_DEG,
+    SWITCH,
     VALVES,
     CrankPiece,
     Cylinder,
@@ -62,26 +64,41 @@ from v8.parts.valvetrain import (
 )
 
 MOTOR_NAME = "Pololu 3069 298:1 Micro Metal Gearmotor HPCB 6V"
-HOLDER_NAME = "Pololu 1159 4-AA battery holder with switch"
+HOLDER_NAME = "MPD BC4AAW 4-AA battery holder"
+SWITCH_NAME = "E-Switch RD11131121 rocker switch"
+CELL_NAME = "Energizer E91 AA cell"
 FROM_THE_REAR = -Axis.Y
 FROM_THE_FRONT = Axis.Y
 FROM_ABOVE = -Axis.Z
 ALONG_THE_LAYERS = Axis.Y
 LEAD_WIRES = ("red", "black")
 AWG_24_MM = 0.511
+AWG_26_MM = 0.405
 LEADS_BUNDLE_MM = 3.0
-LEADS_LENGTH_MM = 152.0
+LEADS_LENGTH_MM = 150.0
 LEADS = Cable(
     name="battery holder leads",
-    wires=tuple(Wire(name=name, diameter=AWG_24_MM, colour=name) for name in LEAD_WIRES),
+    wires=tuple(Wire(name=name, diameter=AWG_26_MM, colour=name) for name in LEAD_WIRES),
     plugs=(
         Plug(name="holder", model=None, pinout=LEAD_WIRES),
-        Plug(name="motor", model=None, pinout=LEAD_WIRES),
+        Plug(name="switch", model=None, pinout=LEAD_WIRES),
     ),
     construction=Jacketed(diameter=LEADS_BUNDLE_MM),
     twist_rating=0.0,
     length=LEADS_LENGTH_MM,
     bill=Bill(ships_with=HOLDER_NAME),
+)
+SWITCH_LEADS = Cable(
+    name="switch leads",
+    wires=tuple(Wire(name=name, diameter=AWG_24_MM, colour=name) for name in LEAD_WIRES),
+    plugs=(
+        Plug(name="switch", model=None, pinout=LEAD_WIRES),
+        Plug(name="motor", model=None, pinout=LEAD_WIRES),
+    ),
+    construction=Jacketed(diameter=LEADS_BUNDLE_MM),
+    twist_rating=0.0,
+    length=CutToFit(),
+    bill=NO_BILL,
 )
 
 
@@ -592,16 +609,31 @@ def plugs_and_header(m: V8Master, deg: float) -> Fastening:
 def the_tray(m: V8Master) -> Fastening:
     tray = battery_tray(m)
     bolts = screws_at("tray screw", m, m.tray_spots, tray, m.tab_thickness, m.plate_screw_length)
+    rocker = Bought(name=SWITCH_NAME, pose=m.switch_at, item=SWITCH)
     return Fastening(
-        parts=[tray, *bolts.parts],
-        mates=[fixed(on(tray), on(REAR_PLATE), FROM_THE_REAR), *bolts.mates],
+        parts=[tray, *bolts.parts, rocker],
+        mates=[
+            fixed(on(tray), on(REAR_PLATE), FROM_THE_REAR),
+            *bolts.mates,
+            fixed(on(rocker), on(tray), inward(m.switch_at)),
+        ],
     )
 
 
 @derived
 def the_holder(m: V8Master) -> Fastening:
     holder = Bought(name=HOLDER_NAME, pose=m.holder_at, item=BATTERY_HOLDER)
-    return Fastening(parts=[holder], mates=[fixed(on(holder), on(BATTERY_TRAY), FROM_ABOVE)])
+    cells = [
+        Bought(name=f"{CELL_NAME} {k + 1}", pose=spot, item=CELL)
+        for k, spot in enumerate(m.cell_spots)
+    ]
+    return Fastening(
+        parts=[holder, *cells],
+        mates=[
+            fixed(on(holder), on(BATTERY_TRAY), FROM_ABOVE),
+            *(fixed(on(each), on(holder), FROM_ABOVE) for each in cells),
+        ],
+    )
 
 
 def cylinder_columns(m: V8Master, cylinder: Cylinder) -> Assembly:
@@ -642,21 +674,29 @@ def bank_jobs(m: V8Master, deg: float) -> Assembly:
 
 
 def battery_leads(m: V8Master, find: Callable[[str], Part]) -> list[Route]:
-    holder, motor = find(HOLDER_NAME), find(MOTOR_NAME)
+    holder, rocker, motor = find(HOLDER_NAME), find(SWITCH_NAME), find(MOTOR_NAME)
     return [
         Route(
             cable=LEADS,
             plugged=(
-                RoutePoint(part=holder, at=holder.pose.inverse() * m.lead_start),
+                RoutePoint(part=holder, at=holder.pose.inverse() * m.holder_leads_out),
+                RoutePoint(part=rocker, at=rocker.pose.inverse() * m.switch_terminals),
+            ),
+            through=((),),
+        ),
+        Route(
+            cable=SWITCH_LEADS,
+            plugged=(
+                RoutePoint(part=rocker, at=rocker.pose.inverse() * m.switch_terminals),
                 RoutePoint(part=motor, at=motor.pose.inverse() * m.lead_end),
             ),
             through=(
                 (
-                    RoutePoint(part=holder, at=holder.pose.inverse() * m.lead_over_the_holder),
+                    RoutePoint(part=rocker, at=rocker.pose.inverse() * m.lead_over_the_switch),
                     RoutePoint(part=holder, at=holder.pose.inverse() * m.lead_above),
                 ),
             ),
-        )
+        ),
     ]
 
 

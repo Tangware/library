@@ -1,10 +1,14 @@
 from cad.design.catalogue import IN_HOUSE, Item, Kind
 
-from v8.master import CYLINDERS, MASTER, MOTOR_PAGE, VALVES
+from v8.master import CELLS, CYLINDERS, MASTER, MOTOR_PAGE, VALVES
 
 ACCU = "Accu"
 ACCU_SCREWS = "https://accu.co.uk/socket-cap-screws/"
 ESTIMATE = "estimate: common hobby retail, page not opened"
+DIGIKEY = "DigiKey"
+E91 = "https://www.digikey.com/en/products/result?keywords=Energizer%20E91"
+HOOKUP_WIRE = "https://www.digikey.com/en/products/filter/hook-up-wire/468"
+WIRE = "estimate: 24 AWG stranded hookup wire cut from a reel, under 0.5 m, not quoted"
 
 
 def printed(name: str) -> Item:
@@ -97,12 +101,21 @@ CATALOGUE = (
         ESTIMATE,
     ),
     bought(
-        "Pololu 1159 4-AA battery holder with switch",
-        "Pololu",
-        "https://www.pololu.com/product/1159",
-        3.0,
-        ESTIMATE,
+        "MPD BC4AAW 4-AA battery holder",
+        DIGIKEY,
+        "https://www.digikey.com/en/products/detail/mpd-memory-protection-devices/BC4AAW/66733",
+        2.69,
+        f"{DIGIKEY} BC4AAW-ND, 1 unit, from a search snapshot, page not opened",
     ),
+    bought(
+        "E-Switch RD11131121 rocker switch",
+        DIGIKEY,
+        "https://www.digikey.com/en/products/detail/e-switch/RD11131121/4029076",
+        0.90,
+        f"{DIGIKEY} EG5649-ND, 1 unit, from findchips, page not opened",
+    ),
+    *(bought(f"Energizer E91 AA cell {k + 1}", DIGIKEY, E91, 0.75, ESTIMATE) for k in range(CELLS)),
+    bought("switch leads", DIGIKEY, HOOKUP_WIRE, 0.10, WIRE),
     bought(
         "CNCKitchen M3 x 5.7 heat-set insert 4270002316409",
         "CNC Kitchen",

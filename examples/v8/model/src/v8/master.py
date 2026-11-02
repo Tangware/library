@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from enum import StrEnum
 
-from build123d import Axis, Edge, Location, Plane, Pos, Rot, Triangle
+from build123d import Axis, BoundBox, Edge, Location, Plane, Pos, Rot, Triangle
 from cad.design.master import Master, Pose, given
-from cad.library.bought.catalogue import Catalogue, Cleanup, Download
-from cad.library.bought.vendor import vendor_extent, vendor_reach
+from cad.library.bought.catalogue import STEEL, Catalogue, Cleanup, Download
+from cad.library.bought.query import planes
+from cad.library.bought.vendor import solids_of, vendor_extent, vendor_reach
 from cad.library.features.planes import line_between, line_through
 from cad.library.fits import FITS_UNITS, STAINLESS_A2_70, Fits
 from cad.library.gears import mesh_phase, pitch_radius
@@ -13,7 +14,7 @@ from cad.library.standard.fasteners import STOCK_UNITS, Metric, Stock, clearance
 from cad.library.turns import turn_to
 from cad.standards import RatedTorque
 
-from v8.models import battery_holder, motor
+from v8.models import battery_holder, cell, motor, switch
 
 CRANK = "crank"
 INCH = 25.4
@@ -44,11 +45,32 @@ MOTOR_OUTPUT = Catalogue(
     download=MOTOR_STEP,
     cleanup=Cleanup(correct=motor.shaft),
 )
-BATTERY_HOLDER = Catalogue(
-    file="pololu_1159", grams=battery_holder.GRAMS_ESTIMATED, model=battery_holder.solid
+HOLDER_STEP = Download(
+    url="https://www.memoryprotectiondevices.com/3D/download.php?pn=BC4AAW&id=1128",
+    sha256="519a122d7cbe67743a60f53c39d0c0ae0a357e3c907473270d59d9688d3601b3",
 )
+BATTERY_HOLDER = Catalogue(
+    file="mpd_bc4aaw",
+    grams=battery_holder.GRAMS_ESTIMATED,
+    download=HOLDER_STEP,
+    frame=Plane(origin=(0.0, 0.0, 0.0), x_dir=(1.0, 0.0, 0.0), z_dir=(0.0, 1.0, 0.0)),
+    cleanup=Cleanup(centred=True, correct=battery_holder.without_leads),
+)
+SWITCH = Catalogue(
+    file="e_switch_rd11131121",
+    grams=switch.GRAMS_ESTIMATED,
+    download=Download(
+        url="https://configured-product-images.s3.amazonaws.com/stp3dmodels/RD111x1121.stp",
+        sha256="859448e73c12301613201f681d6fafb3808db4bfabf7075e29ba1eea382e606a",
+    ),
+)
+CELL = Catalogue(
+    file="energizer_e91", grams=cell.GRAMS, model=cell.solid, cleanup=Cleanup(colour=STEEL)
+)
+CELLS = 4
 ALONG = (1.0, 0.0, 0.0)
 ACROSS = (0.0, 1.0, 0.0)
+OUT_OF_THE_END = (-1.0, 0.0, 0.0)
 TOWARD_THE_FRONT = (0.0, -1.0, 0.0)
 LEFT_BANK_DEG = 45.0
 RIGHT_BANK_DEG = -45.0
@@ -197,6 +219,18 @@ class V8Master(Master):
     tab_thickness: float = given(6.0, "mm", why="Battery tray's tab", source=ESTIMATE)
     tray_lip: float = given(4.0, "mm", why="Tray past the holder", source=ESTIMATE)
     lead_rise: float = given(24.0, "mm", why="The lead turns down to the cap", source=ESTIMATE)
+    lead_bend: float = given(
+        12.0,
+        "mm",
+        why="The leads' loose bend round the switch",
+        source="CENELEC HD 516: 4 x the leads' 3 mm bundle",
+    )
+    switch_panel: float = given(
+        2.0,
+        "mm",
+        why="Within the switch's panel range, so its clips hold",
+        source="E-Switch RD11131100 drawing, suggested panel cutout",
+    )
     foot: float = given(8.0, "mm", why="Block's feet, wide enough for inserts", source=ESTIMATE)
     plate_thickness: float = given(6.0, "mm", why="Takes the rear plate's inserts", source=ESTIMATE)
     screw: Metric = given(Metric.M3, "-", why="One screw type", source="ISO 4762")
@@ -757,11 +791,11 @@ class V8Master(Master):
 
     @property
     def tray_width(self) -> float:
-        return battery_holder.LENGTH + self.tray_lip
+        return self.holder_box.size.Y + self.tray_lip
 
     @property
     def tray_length(self) -> float:
-        return self.motor_behind_plate + self.lead_rise + battery_holder.WIDTH + self.tray_lip
+        return self.motor_behind_plate + self.lead_rise + self.holder_box.size.X + self.switch_bay
 
     @property
     def tab_height(self) -> float:
@@ -847,21 +881,74 @@ class V8Master(Master):
     @property
     def holder_at(self) -> Location:
         lead = self.motor_behind_plate + self.lead_rise
-        return Location((0.0, self.plate_outer_y + lead + battery_holder.WIDTH / 2, self.tray_top))
+        at = Location((0.0, self.plate_outer_y + lead + self.holder_box.size.X / 2, self.tray_top))
+        return at * Rot(Z=-90.0)
 
     @property
-    def lead_start(self) -> Location:
-        return self.holder_at * Pos(Z=battery_holder.HEIGHT)
+    def holder_box(self) -> BoundBox:
+        return vendor_extent(BATTERY_HOLDER)
+
+    @property
+    def holder_floor(self) -> float:
+        return min(face.center().Z for face in planes(solids_of(BATTERY_HOLDER), Axis.Z.direction))
+
+    @property
+    def cell_spots(self) -> tuple[Location, ...]:
+        pitch = self.holder_box.size.Y / CELLS
+        lift = self.holder_floor + cell.DIAMETER / 2
+        return tuple(
+            self.holder_at
+            * Pos(X=-cell.LENGTH / 2, Y=(k - (CELLS - 1) / 2) * pitch, Z=lift)
+            * Rot(Y=90.0)
+            for k in range(CELLS)
+        )
+
+    @property
+    def switch_seat(self) -> float:
+        return vendor_reach(SWITCH, Axis.Z) - switch.ABOVE_THE_PANEL
+
+    @property
+    def switch_depth(self) -> float:
+        return self.switch_seat + vendor_reach(SWITCH, -Axis.Z)
+
+    @property
+    def switch_cutout(self) -> float:
+        return switch.cutout_length(self.switch_panel)
+
+    @property
+    def switch_bay(self) -> float:
+        return self.fits.sliding + self.lead_bend + self.switch_depth + self.switch_panel
+
+    @property
+    def switch_face(self) -> Location:
+        end = self.holder_box.size.X / 2 + self.switch_bay
+        middle = self.holder_box.size.Z / 2
+        return self.holder_at * Location(
+            Plane(origin=(-end, 0.0, middle), x_dir=ACROSS, z_dir=OUT_OF_THE_END)
+        )
+
+    @property
+    def switch_at(self) -> Location:
+        return self.switch_face * Pos(Z=-self.switch_seat)
+
+    @property
+    def switch_terminals(self) -> Location:
+        return Location((self.switch_face * Pos(Z=-self.switch_depth)).position)
+
+    @property
+    def holder_leads_out(self) -> Location:
+        end = self.holder_at * Pos(X=-self.holder_box.size.X / 2, Z=self.holder_box.size.Z / 2)
+        return Location(end.position)
+
+    @property
+    def lead_over_the_switch(self) -> Location:
+        return self.switch_terminals * Pos(Z=self.lead_bend)
 
     @property
     def lead_end(self) -> Location:
         return Location(
             (0.0, self.plate_outer_y + self.motor_behind_plate, self.axle_height)
         ) * Pos(Z=self.motor_pocket_height / 2 + self.fits.structural_wall)
-
-    @property
-    def lead_over_the_holder(self) -> Location:
-        return self.lead_start * Pos(Z=self.lead_rise)
 
     @property
     def lead_above(self) -> Location:

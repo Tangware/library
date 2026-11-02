@@ -18,6 +18,7 @@ from cad.library.shapes import OUTSIDE, Outside, Printed, built
 
 from v8.features import MATERIAL, bore, d_shape, web
 from v8.master import CYLINDERS, REST_TURN_DEG, VALVES, V8Master, Valve
+from v8.models import switch
 
 LEFT_HEAD = "left head"
 RIGHT_HEAD = "right head"
@@ -338,6 +339,15 @@ def battery_tray(m: V8Master) -> Printed:
             Box(m.tray_width, m.tray_length, t, align=UP_FROM)
         with Locations(Pos(Y=m.tab_thickness / 2)):
             Box(m.tab_width, m.tab_thickness, m.tab_height, align=UP_FROM)
+        with Locations(frame.inverse() * m.switch_face):
+            Box(m.holder_box.size.Y, m.holder_box.size.Z, m.switch_panel, align=HANGING)
+            Box(
+                m.switch_cutout,
+                switch.CUTOUT_WIDTH,
+                m.switch_panel,
+                align=HANGING,
+                mode=Mode.SUBTRACT,
+            )
         for spot in m.tray_spots:
             bore(frame.inverse() * spot, m.pivot_bore)
     return printed(m, BATTERY_TRAY, made, frame)

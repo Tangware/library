@@ -5,11 +5,11 @@ import os
 import tempfile
 import zipfile
 from collections import Counter
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass, replace
 from http.client import BAD_GATEWAY, GATEWAY_TIMEOUT, OK, SERVICE_UNAVAILABLE, HTTPSConnection
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlunsplit
 
 from build123d import (
     Axis,
@@ -72,7 +72,9 @@ def _fetched(address: str) -> bytes:
     url = urlsplit(address)
     for _ in range(DOWNLOAD_ATTEMPTS):
         connection = HTTPSConnection(url.netloc, timeout=DOWNLOAD_TIMEOUT_SECONDS)
-        connection.request("GET", url.path, headers={"User-Agent": USER_AGENT})
+        connection.request(
+            "GET", urlunsplit(("", "", url.path, url.query, "")), headers={"User-Agent": USER_AGENT}
+        )
         response = connection.getresponse()
         body = response.read()
         connection.close()
@@ -107,7 +109,7 @@ def simplified_step(path: Path) -> list[Named]:
 @derived
 def placed_solids(
     shape: Path | Download | Callable[[], Brep],
-    correct: Callable[[list[Solid]], list[Solid]] | None,
+    correct: Callable[[list[Solid]], Sequence[Solid | None]] | None,
     detailed: bool,
 ) -> tuple[Named, ...]:
     read = coloured_step if detailed else simplified_step
@@ -130,6 +132,7 @@ def placed_solids(
     return tuple(
         (new, look if new is old else evenly(new, look), name)
         for (old, look, name), new in zip(found, corrected, strict=True)
+        if new is not None
     )
 
 

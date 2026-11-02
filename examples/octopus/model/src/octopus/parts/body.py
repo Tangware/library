@@ -18,6 +18,7 @@ from cad.library.shapes import OUTSIDE, Outside, Printed, built
 
 from octopus.features import MATERIAL, bore, web_at
 from octopus.master import ARMS, OctopusMaster
+from octopus.models import switch
 
 BODY = "body"
 MANTLE = "mantle"
@@ -132,6 +133,17 @@ def mantle(m: OctopusMaster) -> Printed:
             Box(4 * r, 4 * r, 2 * r, align=HANGING, mode=Mode.SUBTRACT)
         Cylinder(m.flange_radius, m.flange, align=UP_FROM)
         Cylinder(r - m.mantle_wall, m.flange, align=UP_FROM, mode=Mode.SUBTRACT)
+        with Locations(frame.inverse() * m.switch_face):
+            pad = 2 * m.fits.min_wall
+            Box(m.recess_length + pad, m.recess_width + pad, m.switch_panel, align=HANGING)
+            Box(m.recess_length, m.recess_width, m.mantle_wall, align=UP_FROM, mode=Mode.SUBTRACT)
+            Box(
+                m.switch_cutout,
+                switch.CUTOUT_WIDTH,
+                m.switch_panel,
+                align=HANGING,
+                mode=Mode.SUBTRACT,
+            )
         with Locations(*(frame.inverse() * spot * Pos(Z=m.flange) for spot in m.mantle_spots)):
             Hole(m.pivot_bore / 2, m.flange)
     return printed(m, MANTLE, made, frame, "+z", "inside the dome", exterior=True)

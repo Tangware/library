@@ -17,7 +17,7 @@ from cad.library.shapes import OUTSIDE, Outside, Printed, built
 
 from cessna.features import MATERIAL, bore, outline
 from cessna.master import SIDES, CessnaMaster, side_name
-from cessna.models import battery_holder
+from cessna.models import switch
 
 STAND = "stand"
 MAIN_PLATE = "main plate"
@@ -64,10 +64,19 @@ def stand(m: CessnaMaster) -> Printed:
             Box(m.column_width, m.column_depth, m.plate_bottom, align=FLOOR_UP)
         with Locations(m.holder_at):
             Box(
-                battery_holder.LENGTH + 2 * m.fits.sliding,
-                battery_holder.WIDTH + 2 * m.fits.sliding,
+                m.holder_box.size.X + 2 * m.fits.sliding,
+                m.holder_box.size.Y + 2 * m.fits.sliding,
                 m.holder_recess,
                 align=FLOOR_UP,
+                mode=Mode.SUBTRACT,
+            )
+        with Locations(m.switch_face):
+            Box(m.holder_box.size.Y, m.holder_box.size.Z, m.switch_panel, align=HANGING)
+            Box(
+                m.switch_cutout,
+                switch.CUTOUT_WIDTH,
+                m.switch_panel,
+                align=HANGING,
                 mode=Mode.SUBTRACT,
             )
         for y in (fore, aft):
