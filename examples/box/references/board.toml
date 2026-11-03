@@ -1,2 +1,2 @@
-# One [[item]] per reference: title, image (path or url), job, note,
+# One [[item]] per reference: title, images (paths in references/), source, job, note,
 # set = "core" | "negative" | "decoy".
